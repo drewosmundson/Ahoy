@@ -6,8 +6,6 @@
 
 
 // ==== ui.events.js ====
-
-
 export const NavigationEvents = {
   NAVIGATE_MAIN_MENU: 'nav:main_menu',
   NAVIGATE_SINGLE_PLAYER_MENU: 'nav:single_player_menu',
@@ -34,4 +32,4 @@ export const UIEvents = {
   CLICK_LEAVE_LOBBY: 'ui:click_leave_lobby',
 
   SOCKET_DISCONNECTED: 'ui:socket_disconnected',
-}
+};
