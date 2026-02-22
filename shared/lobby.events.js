@@ -4,7 +4,7 @@
 // ==== lobby.events.js ====
 
 // ---- Client -> Server ----
-export const ClientEvents = {
+export const ClientLobbyEvents = {
   CREATE_LOBBY: 'lobby:create',
   JOIN_LOBBY: 'lobby:join',
   LEAVE_LOBBY: 'lobby:leave',
@@ -13,7 +13,7 @@ export const ClientEvents = {
 } 
 
 // ---- Server -> Client ----
-export const ServerEvents = {
+export const ServerLobbyEvents = {
   LOBBY_CREATED: 'lobby:created',
   LOBBY_JOINED: 'lobby:joined',
   LOBBY_UPDATED: 'lobby:updated',

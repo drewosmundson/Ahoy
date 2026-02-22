@@ -1,4 +1,5 @@
 import { HeightmapGenerator } from '../server_utils/HeightmapGenerator.js';
+import { ClientLobbyEvents, ServerLobbyEvents } from '../shared/events/lobby.events.js';
 
 // make the heigtmap use a seed for everyone to use the same map
 // or run on the server so that there is reduced loading times creating a map
@@ -10,27 +11,27 @@ export class LobbyManager {
   }
   initializeSockets(socket) {
     // Lobby-related event handlers
-    socket.on("startGame", (data) => {
+    socket.on(ClientLobbyEvents.START_GAME, (data) => {
       this.startGame(socket, data);
     });
 
-    socket.on("terrainGenerated", (terrainData) => {
+    socket.on(ClientLobbyEvents.TERRAIN_GENERATED, (terrainData) => {
       this.handleTerrainGenerated(socket, terrainData);
     });
     
-    socket.on("createLobbyRequest", (data) => {
+    socket.on(ClientLobbyEvents.CREATE_LOBBY_REQUEST, (data) => {
       this.createLobby(socket, data);
     });
 
-    socket.on("joinLobbyRequest", (data) => {
+    socket.on(ClientLobbyEvents.JOIN_LOBBY_REQUEST, (data) => {
       this.joinLobby(socket, data);
     });
 
-    socket.on("leaveLobbyRequest", () => {
+    socket.on(ClientLobbyEvents.LEAVE_LOBBY_REQUEST, () => {
       this.leaveLobby(socket);
     });
 
-    socket.on("confirmGameStart", (data) => {
+    socket.on(ClientLobbyEvents.CONFIRM_GAME_START, (data) => {
       this.confirmGameStart(socket, data);
     });
   }
@@ -40,11 +41,11 @@ export class LobbyManager {
   }
   //this.lobbies[socket.currentLobby]
   startGame(socket) {
-    if (socket.currentLobby && this.lobbies[socket.currentLobby] && 
-       this.lobbies[socket.currentLobby].host === socket.id) {
+    if (socket.currentLobby && this.lobbies.get(socket.currentLobby) && 
+       this.lobbies.get(socket.currentLobby).host === socket.id) {
 
       this.updateLobby(socket.currentLobby, { gameStarted: true });
-      this.io.to(socket.currentLobby).emit("gameStarted");
+      this.io.to(socket.currentLobby).emit(ServerLobbyEvents.GAME_STARTED);
 
       console.log("Game started for lobby", socket.currentLobby);
     }
@@ -64,8 +65,8 @@ export class LobbyManager {
         terrainData: terrainData.terrainData
       };
 
-      socket.to(currentLobby).emit("gameStarted", gameStartedData);
-      socket.to(currentLobby).emit("terrainDataReceived", gameStartedData);
+      socket.to(currentLobby).emit(ServerLobbyEvents.GAME_STARTED, gameStartedData);
+      socket.to(currentLobby).emit(ServerLobbyEvents.TERRAIN_DATA_RECEIVED, gameStartedData);
     }
   }
   createLobby(socket, data) {
@@ -75,7 +76,7 @@ export class LobbyManager {
     const heightmap = heightmapGenerator.heightmap;
     const heightmapOverlay = heightmapGenerator.heightmapOverlay;
 
-    this.lobbies[lobbyCode] = {
+    this.lobbies.set(lobbyCode, {
       id: lobbyCode,
       host: socket.id,
       heightmap: heightmap,
@@ -94,26 +95,26 @@ export class LobbyManager {
       },
       gameStarted: false,
       chatMessages: []
-    };
+    });
 
     socket.join(lobbyCode);
     socket.currentLobby = lobbyCode;
 
     console.log(`Lobby created: ${lobbyCode} by ${socket.id}`);
 
-    socket.emit("lobbyCreated", {
+    socket.emit(ServerLobbyEvents.LOBBY_CREATED, {
       lobbyId: lobbyCode,
       lobbyName,
-      players: this.lobbies[lobbyCode].players,
-      heightmap: this.lobbies[lobbyCode].heightmap,
-      heightmapOverlay: this.lobbies[lobbyCode].heightmapOverlay
+      players: this.lobbies.get(lobbyCode).players,
+      heightmap: this.lobbies.get(lobbyCode).heightmap,
+      heightmapOverlay: this.lobbies.get(lobbyCode).heightmapOverlay
     });
   }
 
   joinLobby(socket, data) {
     const { lobbyId } = data;
 
-    if (this.lobbies[lobbyId]) {
+    if (this.lobbies.get(lobbyId)) {
       const playerData = {
         id: socket.id,
         name: `Player ${socket.id.substr(0, 4)}`,
@@ -123,16 +124,16 @@ export class LobbyManager {
         alive: true
       };
 
-      this.lobbies[lobbyId].players.push(playerData);
+      this.lobbies.get(lobbyId).players.push(playerData);
       socket.join(lobbyId);
       socket.currentLobby = lobbyId;
 
       console.log(`Player ${socket.id} joined lobby ${lobbyId}`);
 
-      const lobby = this.lobbies[lobbyId];
+      const lobby = this.lobbies.get(lobbyId);
 
       // Send player the current lobby state
-      socket.emit("lobbyJoined", {
+      socket.emit(ServerLobbyEvents.LOBBY_JOINED, {
         lobbyId,
         lobbyName: lobby.name,
         players: lobby.players,
@@ -143,39 +144,40 @@ export class LobbyManager {
 
       // If game is already started, send terrain data
       if (lobby.gameStarted && lobby.terrainData) {
-        socket.emit("gameStarted", {
+        socket.emit(ServerLobbyEvents.GAME_STARTED, {
           terrainData: lobby.terrainData.terrainData
         });
       }
 
       // Notify others about updated player list
-      socket.to(lobbyId).emit("lobbyUpdated", {
+      socket.to(lobbyId).emit(ServerLobbyEvents.LOBBY_UPDATED, {
         players: lobby.players
       });
     } else {
-      socket.emit("error", { message: "Lobby not found" });
+      socket.emit(ServerLobbyEvents.ERROR, { message: "Lobby not found" });
     }
   }
 
   leaveLobby(socket) {
     const currentLobby = socket.currentLobby;
     
-    if (currentLobby && this.lobbies[currentLobby]) {
-      this.lobbies[currentLobby].players = this.lobbies[currentLobby].players.filter(
+    if (currentLobby && this.lobbies.get(currentLobby)) {
+      const lobby = this.lobbies.get(currentLobby);
+      lobby.players = lobby.players.filter(
         player => player.id !== socket.id
       );
 
       console.log(`Player ${socket.id} left lobby ${currentLobby}`);
 
       // Handle host transfer or lobby deletion
-      if (this.lobbies[currentLobby].host === socket.id) {
-        if (this.lobbies[currentLobby].players.length > 0) {
-          const newHost = this.lobbies[currentLobby].players[0];
-          this.lobbies[currentLobby].host = newHost.id;
+      if (lobby.host === socket.id) {
+        if (lobby.players.length > 0) {
+          const newHost = lobby.players[0];
+          lobby.host = newHost.id;
           newHost.isHost = true;
-          this.io.to(newHost.id).emit("becameHost");
+          this.io.to(newHost.id).emit(ServerLobbyEvents.BECAME_HOST);
         } else {
-          delete this.lobbies[currentLobby];
+          this.lobbies.delete(currentLobby);
           socket.currentLobby = null;
           return;
         }
@@ -183,9 +185,9 @@ export class LobbyManager {
 
       socket.leave(currentLobby);
 
-      if (this.lobbies[currentLobby]) {
-        this.io.to(currentLobby).emit("lobbyUpdated", {
-          players: this.lobbies[currentLobby].players
+      if (this.lobbies.get(currentLobby)) {
+        this.io.to(currentLobby).emit(ServerLobbyEvents.LOBBY_UPDATED, {
+          players: this.lobbies.get(currentLobby).players
         });
       }
 
@@ -196,19 +198,20 @@ export class LobbyManager {
   confirmGameStart(socket, data) {
     const { lobbyId, socketId } = data;
 
-    if (this.lobbies[lobbyId]) {
-      const existingPlayer = this.lobbies[lobbyId].players.find(p => p.id === socketId);
+    if (this.lobbies.get(lobbyId)) {
+      const lobby = this.lobbies.get(lobbyId);
+      const existingPlayer = lobby.players.find(p => p.id === socketId);
 
       if (!existingPlayer) {
-        const wasHost = this.lobbies[lobbyId].host === socketId;
-        const playerIndex = this.lobbies[lobbyId].players.findIndex(p =>
+        const wasHost = lobby.host === socketId;
+        const playerIndex = lobby.players.findIndex(p =>
           p.id !== socketId && p.isHost === wasHost
         );
 
         if (playerIndex !== -1) {
-          this.lobbies[lobbyId].players[playerIndex].id = socket.id;
+          lobby.players[playerIndex].id = socket.id;
           if (wasHost) {
-            this.lobbies[lobbyId].host = socket.id;
+            lobby.host = socket.id;
           }
         }
       }
@@ -219,8 +222,7 @@ export class LobbyManager {
   }
 
   handleDisconnection(socket) {
-    for (const lobbyId in this.lobbies) {
-      const lobby = this.lobbies[lobbyId];
+    for (const [lobbyId, lobby] of this.lobbies) {
       const index = lobby.players.findIndex(p => p.id === socket.id);
 
       if (index !== -1) {
@@ -239,11 +241,11 @@ export class LobbyManager {
 
         // Delete empty lobby
         if (lobby.players.length === 0) {
-          delete this.lobbies[lobbyId];
+          this.lobbies.delete(lobbyId);
           console.log(`Deleted empty lobby ${lobbyId}`);
         } else {
           // Notify remaining players
-          this.io.to(lobbyId).emit("lobbyUpdated", {
+          this.io.to(lobbyId).emit(ServerLobbyEvents.LOBBY_UPDATED, {
             players: lobby.players
           });
         }
@@ -256,12 +258,13 @@ export class LobbyManager {
 
   // Getters for other managers
   getLobby(lobbyId) {
-    return this.lobbies[lobbyId];
+    return this.lobbies.get(lobbyId);
   }
 
   updateLobby(lobbyId, updateData) {
-    if (this.lobbies[lobbyId]) {
-      Object.assign(this.lobbies[lobbyId], updateData);
+    const lobby = this.lobbies.get(lobbyId);
+    if (lobby) {
+      Object.assign(lobby, updateData);
     }
   }
 
