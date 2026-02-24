@@ -8,10 +8,12 @@ export class GameManager {
 
 
 
-    
+
   }
 
+  start(){
 
+  }
 
 
 

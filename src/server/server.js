@@ -5,10 +5,9 @@ import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { CONSTANTS } from './utils/CONSTANTS';
 
-import { LobbyManager } from './managers/LobbyManager.js';
-import { GameManager } from './managers/GameManager.js';
+import { LobbyManager } from './managers/lobby.manager.js';
+import { GameManager } from './managers/game.manager.js';
 
 const PORT = process.env.PORT || 3000;
 

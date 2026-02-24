@@ -2,4 +2,18 @@
 
 
 
-export
+export class LobbyManager {
+
+
+
+  constructor () {
+
+
+  } 
+
+
+  start() {
+
+    
+  }
+}
