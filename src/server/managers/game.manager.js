@@ -1,0 +1,18 @@
+
+
+
+export class GameManager {
+
+  constructor() {
+
+
+
+
+    
+  }
+
+
+
+
+
+}
