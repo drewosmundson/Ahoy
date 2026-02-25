@@ -50,7 +50,6 @@ function bootstrap() {
   const lobbyManager = new LobbyManager(io);
   const gameManager = new GameManager(io);
 
-
   io.on("connection", (socket) => {
     console.log(`Player connected: ${socket.id}`);
 

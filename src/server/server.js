@@ -32,7 +32,9 @@ server.listen(PORT, () => {
 // Serve static files
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '../public')));
+
+
 
 // Initialize managers
 const lobbyManager = new LobbyManager();
