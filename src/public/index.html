@@ -1,3 +1,15 @@
+
+
+<!--
+screen-<context>
+section-<context> 
+btn-<action>
+input-<field>
+list-<entity>
+text-<purpose>
+form-<purpose> 
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,86 +27,78 @@
   </script>
 </head>
 <body>
-  <div id="homeScreen">
+  <div id="screen-home">
     <div class="container">
       <h1>Ahoy.io</h1>
 
       <!-- Main Menu -->
-      <div id="mainMenuScreen" class="section">
-        <button id="singlePlayerMenuButton">Single Player</button>
-        <button id="joinLobbyMenuButton">Join Lobby</button> 
-        <button id="createLobbyMenuButton">Create Lobby</button>
+      <div id="screen-menu-main" class="section">
+        <button id="button-main-singleplayer">Single Player</button>
+        <button id="button-main-multiplayer-join">Join Lobby</button> 
+        <button id="button-main-multiplayer-create">Create Lobby</button>
       </div>
 
       <!-- Single Player Menu -->
-      <div id="singlePlayerMenuScreen" class="section hidden">
-        <button id="singlePlayerStartButton">Start Game</button>
+      <div id="screen-menu-singleplayer" class="section hidden">
+        <button id="button-singleplayer-start">Start Game</button>
       </div>
 
-      <div id="createLobbyScreen" class="section hidden">
-        <div id="createLobbyForm">
-          <label for="hostNickname">Your Name:</label>
-          <input type="text" id="hostNickname" name="hostNickname"/>
-          <button id="createLobbyButton">Create Lobby</button>
+      <!-- Host Create Lobby -->
+      <div id="screen-lobby-create" class="section hidden">
+        <div class="form-lobby-create">
+          <label for="input-host-name">Your Name:</label>
+          <input type="text" id="input-host-name" name="hostNickname"/>
+          <button id="button-lobby-create">Create Lobby</button>
         </div>
       </div>
 
-      <div id="joinLobbyScreen" class="section hidden">
-        <div id="joinLobbyForm">
-            <label for="lobbyCode">Lobby Code:</label>
-            <input type="text" id="lobbyCode" name="lobbyCode" required />
+      <!-- Participant join lobby -->
+      <div id="screen-lobby-join" class="section hidden">
+        <div class="form-lobby-join">
+            <label for="input-lobby-code">Lobby Code:</label>
+            <input type="text" id="input-lobby-code" name="lobbyCode" required />
           <div>
-            <button id="joinLobbyButton">Join Lobby</button>
+            <button id="button-lobby-join">Join Lobby</button>
           </div>
         </div>
       </div>
 
 
-      <div id="hostLobbyScreen" class="section hidden">
-        <div id="lobbyInfo">
+      <div id="screen-lobby-host" class="section hidden">
+        <div class="lobby-info">
           <p>Lobby Code: <span id="lobbyCodeDisplay"></span></p>
         </div>
         <div id="playerList">
           <h3>Players:</h3>
           <ul id="playerListItems"></ul>
         </div>
-        <button id="startGameButton">Start Game</button>
+        <button id="button-multiplayer-start">Start Game</button>
         <button id="leaveLobbyButton">Leave Lobby</button>
 
       </div>
 
 
-      <div id="participantLobbyScreen" class="section hidden">
-        <div id="lobbyInfo">
-          <p>Lobby Code: <span id="lobbyCodeDisplay"></span></p>
+      <div id="screen-lobby-participant" class="section hidden">
+        <div class="lobby-info">
+          <p>Lobby Code: <span id="lobby-code"></span></p>
         </div>
-        <div id="playerList">
+        <div class="lobby-players">
           <h3>Players:</h3>
-          <ul id="playerListItems"></ul>
+          <ul class="lobby-player-list"></ul>
         </div>
-        <button id="leaveLobbyButton">Leave Lobby</button>
-        <div id="watingForHost">
+        <button class="button-lea">Leave Lobby</button>
+        <div class="watingForHost">
           <h2>Waiting for host to start the game...</h2>
         </div>
       </div>
 
-      <div id="participantLobbyGameStartedScreen" class="section hidden">
-        <div id="lobbyInfo">
-          <p>Lobby Code: <span id="lobbyCodeDisplay"></span></p>
-        </div>
-        <div id="playerList">
-          <h3>Players:</h3>
-          <ul id="playerListItems"></ul>
-        </div>
-        <button id="leaveLobbyButton">Leave Lobby</button>
-        <button id="joinStartedGame">Join Game</button>
-        </div>
       </div>
-
     </div>
   </div>
-  <div id="gameContainer">
-    <canvas id="gameCanvas"></canvas>
+
+  <!-- Game Container -->
+  <div id="screen-game">
+    <canvas id="canvas-game"></canvas>
   </div>
 
   <script type="module" src="../client/main.js"></script>

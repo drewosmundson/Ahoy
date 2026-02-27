@@ -1,5 +1,5 @@
 import { HeightmapGenerator } from '../server_utils/HeightmapGenerator.js';
-import { ClientLobbyEvents, ServerLobbyEvents } from '../shared/events/lobby.events.js';
+import { ClientLobbyEvents, ServerLobbyEvents } from '../shared/lobby.events.js';
 
 // make the heigtmap use a seed for everyone to use the same map
 // or run on the server so that there is reduced loading times creating a map
