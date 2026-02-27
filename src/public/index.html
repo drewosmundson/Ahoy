@@ -43,7 +43,7 @@ form-<purpose>
         <button id="button-singleplayer-start">Start Game</button>
       </div>
 
-      <!-- Host Create Lobby -->
+      <!-- Host's Create Lobby Menu -->
       <div id="screen-lobby-create" class="section hidden">
         <div class="form-lobby-create">
           <label for="input-host-name">Your Name:</label>
@@ -52,7 +52,20 @@ form-<purpose>
         </div>
       </div>
 
-      <!-- Participant join lobby -->
+      <!-- Host's Lobby -->
+      <div id="screen-lobby-host" class="section hidden">
+        <div class="lobby-info">
+          <p>Lobby Code: <span id="lobbyCodeDisplay"></span></p>
+        </div>
+        <div class="list-players">
+          <h3>Players:</h3>
+          <ul class="e"></ul>
+        </div>
+        <button id="button-multiplayer-start">Start Game</button>
+        <button class="button-lobby-leave">Leave Lobby</button>
+      </div>
+
+      <!-- Participant's Join lobby Menu -->
       <div id="screen-lobby-join" class="section hidden">
         <div class="form-lobby-join">
             <label for="input-lobby-code">Lobby Code:</label>
@@ -63,21 +76,7 @@ form-<purpose>
         </div>
       </div>
 
-
-      <div id="screen-lobby-host" class="section hidden">
-        <div class="lobby-info">
-          <p>Lobby Code: <span id="lobbyCodeDisplay"></span></p>
-        </div>
-        <div id="playerList">
-          <h3>Players:</h3>
-          <ul id="playerListItems"></ul>
-        </div>
-        <button id="button-multiplayer-start">Start Game</button>
-        <button id="leaveLobbyButton">Leave Lobby</button>
-
-      </div>
-
-
+      <!-- Participant's Lobby -->
       <div id="screen-lobby-participant" class="section hidden">
         <div class="lobby-info">
           <p>Lobby Code: <span id="lobby-code"></span></p>
@@ -86,13 +85,12 @@ form-<purpose>
           <h3>Players:</h3>
           <ul class="lobby-player-list"></ul>
         </div>
-        <button class="button-lea">Leave Lobby</button>
-        <div class="watingForHost">
+        <button class="button-lobby-leave">Leave Lobby</button>
+        <div class="text-waiting">
           <h2>Waiting for host to start the game...</h2>
         </div>
       </div>
 
-      </div>
     </div>
   </div>
 
