@@ -10,12 +10,12 @@
 // start socket layer
 
 import { Game } from './Game.js';
-import { Lobby } from './Lobby.js';
+import { Lobby } from './Home.js';
 
 
 document.addEventListener('DOMContentLoaded', () => {
   // ---- Dom Elements ----
-
+  
 
 
 });
