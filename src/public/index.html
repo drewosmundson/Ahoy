@@ -53,6 +53,13 @@ form-<purpose>
       <button id="button-lobby-create">Create Lobby</button>
     </div>
 
+    <!-- Participant's Join lobby Menu -->
+    <div id="screen-lobby-join" class="section hidden">
+      <label for="input-lobby-code">Lobby Code:</label>
+      <input type="text" id="input-lobby-code" name="lobbyCode" required />
+      <button id="button-lobby-join">Join Lobby</button>
+    </div>
+
     <!-- Host's Lobby -->
     <div id="screen-lobby-host" class="section hidden">
       <p>Lobby Code: <span id="lobbyCodeDisplay"></span></p>
@@ -61,14 +68,6 @@ form-<purpose>
       <button id="button-lobby-start">Start Game</button>
       <button class="button-lobby-leave">Leave Lobby</button>
     </div>
-
-    <!-- Participant's Join lobby Menu -->
-    <div id="screen-lobby-join" class="section hidden">
-      <label for="input-lobby-code">Lobby Code:</label>
-      <input type="text" id="input-lobby-code" name="lobbyCode" required />
-      <button id="button-lobby-join">Join Lobby</button>
-    </div>
-
     <!-- Participant's Lobby -->
     <div id="screen-lobby-participant" class="section hidden">
       <p>Lobby Code: <span id="lobby-code"></span></p>

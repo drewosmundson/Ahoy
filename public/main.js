@@ -82,8 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update browser history
     history.pushState(state, state.title, `#${stateName}`);
     document.title = state.title;
-    
-    console.log('Pushed navigation state:', stateName, state);
+
   }
 
   function navigateToScreen(stateName, additionalData = {}, pushState = true) {
@@ -179,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
       participantLobbyScreen
     ].forEach(screen => {
       if (screen) screen.classList.add('hidden');
-    });
+    }); 
     
     // Also handle game screen visibility
     if (gameCanvas.style.display === 'block') {
