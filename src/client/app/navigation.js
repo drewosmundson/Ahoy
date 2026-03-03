@@ -7,10 +7,10 @@
 
   }
 
-
   export function navigateToScreen(allScreens, screen) {
     hideAllScreens(allScreens);
     showScreen(screen);
+    updateTitle(screen)
     updateNavigationHistory(screen)
   }
 
@@ -34,8 +34,7 @@
   }
 
   function updateTitle(screen){
-
-
+   
   }
 
 

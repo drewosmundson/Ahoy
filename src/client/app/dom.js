@@ -1,18 +1,11 @@
+import SCREEN_CONFIG from "../../shared/constants.js"
+
 
 
 export const dom = { 
   // ---- Screens ----
-  screen: {
-    home:                  document.getElementById("screen-home"),
-    mainMenu:              document.getElementById("screen-main"),
-    singleplayer:          document.getElementById("screen-singleplayer"),
-    mmo:                   document.getElementById("screen-mmo"),//To be implemented
-    lobbyCreate:           document.getElementById("screen-lobby-create"),
-    lobbyJoin:             document.getElementById("screen-lobby-join"),
-    lobbyHost:             document.getElementById("screen-lobby-host"),
-    lobbyParticipant:      document.getElementById("screen-lobby-participant"),
-    game:                  document.getElementById("screen-game")
-  },
+  // populated from constants
+  screens: {},
 
   // ---- Buttons ----
   button: {
@@ -43,3 +36,8 @@ export const dom = {
     game:                 document.getElementById("canvas-game")
   }
 }
+
+
+Object.keys(SCREEN_CONFIG).forEach(key => {
+  dom.screens[key] = document.getElementById(SCREEN_CONFIG[key].id);
+});
