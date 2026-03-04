@@ -1,4 +1,4 @@
-import SCREEN_CONFIG from "../../shared/constants.js"
+import SCREEN_CONFIG, { ALL_SCREENS } from "../../shared/constants.js"
 
 
 
@@ -37,7 +37,7 @@ export const dom = {
   }
 }
 
-
-Object.keys(SCREEN_CONFIG).forEach(key => {
-  dom.screens[key] = document.getElementById(SCREEN_CONFIG[key].id);
+// ---- Load Screen Doms ----
+Object.keys(ALL_SCREENS).forEach(screen => {
+  dom.screens[screen] = document.getElementById(SCREEN_CONFIG[screen].id);
 });

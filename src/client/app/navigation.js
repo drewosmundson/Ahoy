@@ -1,14 +1,14 @@
 
-
-  const HIDDEN_CLASS = "hidden";
+import CSS_HIDDEN_CLASS from "../../shared/constants.js"
+import { ALL_SCREENS } from "../../shared/constants.js";
   
   export function initNavigation() {
 
 
   }
 
-  export function navigateToScreen(allScreens, screen) {
-    hideAllScreens(allScreens);
+  export function navigateToScreen(screen) {
+    hideAllScreens(ALL_SCREENS);
     showScreen(screen);
     updateTitle(screen)
     updateNavigationHistory(screen)
@@ -16,11 +16,11 @@
 
 
   function showScreen(screen) {
-    screen.classList.remove(HIDDEN_CLASS);
+    screen.classList.remove(CSS_HIDDEN_CLASS);
   }
 
   function hideScreen(screen) {
-    screen.classList.add(HIDDEN_CLASS);
+    screen.classList.add(CSS_HIDDEN_CLASS);
   }
 
   function hideAllScreens(allScreens){
@@ -34,7 +34,7 @@
   }
 
   function updateTitle(screen){
-   
+    
   }
 
 

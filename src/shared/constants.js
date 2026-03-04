@@ -1,9 +1,7 @@
 
 
 
-
-
-export const SCREEN_CONFIG = {
+export const ALL_SCREENS = {
   home:             { id: "screen-home",              title: "Ahoy.io" },
   mainMenu:         { id: "screen-main",              title: "Ahoy.io - Main Menu" },
   singleplayer:     { id: "screen-singleplayer",      title: "Ahoy.io - Single Player" },
@@ -15,3 +13,6 @@ export const SCREEN_CONFIG = {
   game:             { id: "screen-game",              title: "Ahoy.io - Game" }
 };
 
+
+// ---- class to 
+export const CSS_HIDDEN_CLASS = "hidden";

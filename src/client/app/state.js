@@ -10,6 +10,7 @@ const state = {
   multiplayer: false,
   heightmap: null,
   heightmapOverlay: null,
+  screen: null
 };
 
 export function setState(updates) {
