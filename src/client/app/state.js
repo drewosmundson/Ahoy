@@ -17,6 +17,10 @@ export function setState(updates) {
   Object.assign(state, updates);
 }
 
-export function getStateValue(state) {
-  return Object.values(state);
+export function getStateValue(key) {
+  return state[key];
+}
+
+export function getState() {
+  return { ...state };
 }

@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Update browser history
     history.pushState(state, state.title, `#${stateName}`);
-    document.title = state.title;
+    document.title = state.title;                                  
 
   }
 
