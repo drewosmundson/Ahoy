@@ -37,7 +37,14 @@ export const dom = {
   }
 }
 
-// ---- Load Screen Doms ----
-Object.keys(ALL_SCREENS).forEach((screen) => {
-  dom.screens[screen] = document.getElementById(SCREEN_CONFIG[screen].id);
-});
+
+export function initDom() {
+  // ---- Load Screen Doms ----
+  Object.keys(ALL_SCREENS).forEach((screen) => {
+    dom.screens[screen] = document.getElementById(SCREEN_CONFIG[screen].id);
+  });
+
+
+  //TODO check index.html to see if their are any DOM elements that are not in dom.js
+  // if not throw error this is a JS first approch to DOM management.
+}
