@@ -1,8 +1,4 @@
-
-
-
-
-const state = { 
+const userStateValues = { 
   socket: null,
   game: null,
   host: true,
@@ -13,14 +9,22 @@ const state = {
   screen: null
 };
 
-export function setState(updates) {
-  Object.assign(state, updates);
+let _userState = { ...userStateValues }
+
+function setState(updates) {
+  Object.assign(_userState, updates);
 }
 
-export function getStateValue(key) {
-  return state[key];
+function getStateValue(key) {
+  return _userState[key];
 }
 
-export function getState() {
-  return { ...state };
+function getState() {
+  return { ..._userState };
+}
+
+export const userState = {
+  getState, 
+  setState,
+  getStateValue
 }

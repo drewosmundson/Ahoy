@@ -1,50 +1,50 @@
-import { ALL_SCREENS } from "../../shared/constants.js"
-
+import { 
+  SCREENS, 
+  BUTTONS,
+  INPUTS,
+  LISTS,
+  CANVASES,
+} from "../../shared/constants.js"
 
 
 export const dom = {
-  // ---- Screens ----
-  // populated from constants
+  // populated from constants using loadDomItems() after initDom() is called.
+
   screens: {},
 
-  // ---- Buttons ----
-  button: {
-    mainSingleplayer:     document.getElementById("button-main-singleplayer"),
-    mainLobbyJoin:        document.getElementById("button-main-lobby-join"),
-    mainLobbyCreate:      document.getElementById("button-main-lobby-create"),
-    singleplayerStart:    document.getElementById("button-singleplayer-start"),
-    mmoStart:             document.getElementById("button-mmo-start"),
-    lobbyCreate:          document.getElementById("button-lobby-create"),
-    lobbyJoin:            document.getElementById("button-lobby-join"),
-    lobbyStart:           document.getElementById("button-lobby-start"),
-    lobbyLeave:           document.getElementById("button-lobby-leave"),
-  },
+  buttons: {},
 
-  // ---- Inputs ----
-  input: {
+  inputs: {
     playerName:           document.getElementById("input-player-name"),
     lobbyCode:            document.getElementById("input-lobby-code"),
   },
 
-  // ---- Lists ----
-  list: {
+  lists: {
     players:              document.getElementById("list-players"),
   },
 
-  // ---- Canvas ----
-  canvas: {
+  canvases: {
     game:                 document.getElementById("canvas-game")
   }
 }
 
-
 export function initDom() {
   // ---- Load Screen Doms ----
-  Object.keys(ALL_SCREENS).forEach((screen) => {
-    dom.screens[screen] = document.getElementById(SCREEN_CONFIG[screen].id);
-  });
+  loadDomItems(SCREENS);
+  loadDomItems(BUTTONS);
+  // loadDomItems(LISTS);
+  // loadDomItems(INPUTS);
+  // loadDomItems(CANVASES);
 
-
+  validateDomItems();
+}
+function validateDomItems() {
   //TODO check index.html to see if their are any DOM elements that are not in dom.js
   // if not throw error this is a JS first approch to DOM management.
+}
+
+function loadDomItems(items) {
+  Object.keys(items).forEach((item) => {
+    dom.screens[item] = document.getElementById(items[item].id);
+  });
 }

@@ -1,7 +1,6 @@
 
 
-
-export const ALL_SCREENS = {
+export const SCREENS = {
   home:             { id: "screen-home",              title: "Ahoy.io" },
   mainMenu:         { id: "screen-main",              title: "Ahoy.io - Main Menu" },
   singleplayer:     { id: "screen-singleplayer",      title: "Ahoy.io - Single Player" },
@@ -12,6 +11,19 @@ export const ALL_SCREENS = {
   lobbyParticipant: { id: "screen-lobby-participant", title: "Ahoy.io - Lobby" },
   game:             { id: "screen-game",              title: "Ahoy.io - Game" }
 };
+
+
+export const BUTTONS = {
+  mainSingleplayer:     { id: "button-main-singleplayer" },
+  mainLobbyJoin:        { id: "button-main-lobby-join" },
+  mainLobbyCreate:      { id: "button-main-lobby-create" },
+  singleplayerStart:    { id: "button-singleplayer-start" },
+  mmoStart:             { id: "button-mmo-start" },
+  lobbyCreate:          { id: "button-lobby-create" }, 
+  lobbyJoin:            { id: "button-lobby-join" },
+  lobbyStart:           { id: "button-lobby-start" },
+  lobbyLeave:           { id: "button-lobby-leave" },
+}
 
 
 // ---- class to 

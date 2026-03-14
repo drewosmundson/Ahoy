@@ -25,9 +25,6 @@
 // singleplayer.js mmo.js multiplayer.js so ownership of those features become more 
 // independant. This would be a page/feature module archetecture.
 
-import { Game } from './game/Game.js';
-import { Home } from './Lobby.js';
-
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -35,24 +32,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---- Initialization ----
   const socket = io();
 
+
   initDom();
   initNavigation();
 
-  // ---- Single player ----
 
-
-
-
-
-  // ---- Lobby ----
-
-
-
-  // ---- MMO ----
-
-
-
-
+  // ---- Features & Main Menu Options ----
+  initSingleplayer()
 });
 
 
