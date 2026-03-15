@@ -2,16 +2,16 @@
 import { CSS_HIDDEN_CLASS } from "../../shared/constants.js";
 import { dom } from "./dom.js";
 
-export function initNavigation() { 
 
-  // Allows for the forward and back buttons in the browser
+
+// Allows for the forward and back buttons in the browser
+// always puts the user back to the home screen if they leave the site and come back they can rejoin their lobby from there if they were in one
+export function initNavigation() { 
   window.addEventListener("popstate", (event) => {
     const screenId = event.state?.screen;
     const screen = screenId ? document.getElementById(screenId) : dom.screens.mainMenu;
     if (screen) navigateToScreen(screen);
   });
-
-  // This line always puts the user back to the home screen if they leave the site and come back they can rejoin their lobby from there if they were in one
   navigateToScreen(dom.screens.mainMenu);
 }
 
@@ -28,11 +28,17 @@ function hideAllScreens(allScreens){
     if (screen) { 
       screen.classList.add(CSS_HIDDEN_CLASS);
     }
+    if (screen === dom.screens.game) {
+      dom.canvases.game.style.display = 'none';
+    }
   });
 }
 
 function showScreen(screen) {
   screen.classList.remove(CSS_HIDDEN_CLASS);
+  if ( screen === dom.screens.game ) {
+    dom.canvases.game.style.display = 'block'
+  }
 }
 
 function updateNavigationHistory(screen) {

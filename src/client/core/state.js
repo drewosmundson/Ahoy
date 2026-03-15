@@ -1,4 +1,4 @@
-const stateValues = { 
+const stateDefaults = { 
 
   // User State
   socket: null,
@@ -13,7 +13,7 @@ const stateValues = {
   heightmapOverlay: null,
 };
 
-let _state = { ...stateValues };
+let _state = { ...stateDefaults };
 
 function setState(updates) {
   Object.assign(_state, updates);
@@ -26,6 +26,8 @@ function getStateValue(key) {
 function getState() {
   return { ..._state };
 }
+
+
 
 export const state = {
   getState, 
