@@ -1,29 +1,15 @@
 
 
-export const SCREENS = {
-  mainMenu:         { id: "screen-main",              title: "Ahoy.io - Main Menu" },
-  singleplayer:     { id: "screen-singleplayer",      title: "Ahoy.io - Single Player" },
-  mmo:              { id: "screen-mmo",               title: "Ahoy.io - MMO" },
-  lobbyCreate:      { id: "screen-lobby-create",      title: "Ahoy.io - Create Lobby" },
-  lobbyJoin:        { id: "screen-lobby-join",        title: "Ahoy.io - Join Lobby" },
-  lobbyHost:        { id: "screen-lobby-host",        title: "Ahoy.io - Lobby" },
-  lobbyParticipant: { id: "screen-lobby-participant", title: "Ahoy.io - Lobby" },
-  game:             { id: "screen-game",              title: "Ahoy.io - Game" }
-};
-
-
-export const BUTTONS = {
-  mainToSingleplayer:     { id: "button-main-singleplayer" },
-  mainToLobbyJoin:        { id: "button-main-lobby-join" },
-  mainToLobbyCreate:      { id: "button-main-lobby-create" },
-  singleplayerStart:      { id: "button-singleplayer-start" },
-  mmoStart:               { id: "button-mmo-start" },
-  lobbyCreate:            { id: "button-lobby-create" }, 
-  lobbyJoin:              { id: "button-lobby-join" },
-  lobbyStart:             { id: "button-lobby-start" },
-  lobbyLeave:             { id: "button-lobby-leave" },
+export const TITLES = {
+    mainMenu:              "Ahoy.io - Main Menu",
+    singleplayer:         "Ahoy.io - Single Player", 
+    mmo:                     "Ahoy.io - MMO", 
+    lobbyCreate:          "Ahoy.io - Create Lobby", 
+    lobbyJoin:              "Ahoy.io - Join Lobby", 
+    lobbyHost:             "Ahoy.io - Lobby", 
+    lobbyParticipant:   "Ahoy.io - Lobby",
+    game:                "Ahoy.io - Game",
 }
 
 
-// ---- class to 
-export const CSS_HIDDEN_CLASS = "hidden";
+export const CSS_HIDDEN_CLASS = "hidden"
