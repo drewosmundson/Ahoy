@@ -1,16 +1,21 @@
 
 
 
+import { state } from "../core/state.js";
+import { navigateToScreen } from "../core/navigation.js";
 import { dom } from "../core/dom.js";
-import { userState } from "../core/state.js"
 
 export function initSingleplayer() {
-  singlePlayerMenuButton?.addEventListener('click', () => {
-    navigateToScreen('singlePlayerMenu');
+  dom.buttons.mainToSingleplayer?.addEventListener('click', () => {
+    navigateToScreen(dom.screens.singleplayer);
   });
 
-  singlePlayerStartButton?.addEventListener('click', () => {
-    startGameForSinglePlayer();
+  dom.buttons.singleplayerStart?.addEventListener('click', () => {
+    startGame();
   });
 }
 
+function startGame() { 
+  state.setState({ multiplayer: false })
+  navigateToScreen(dom.screens.game);
+}

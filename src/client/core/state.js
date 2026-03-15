@@ -1,29 +1,33 @@
-const userStateValues = { 
+const stateValues = { 
+
+  // User State
   socket: null,
-  game: null,
   host: true,
   currentLobbyId: null,
+  screen: null,
+
+  // Game State
   multiplayer: false,
+  game: null,
   heightmap: null,
   heightmapOverlay: null,
-  screen: null
 };
 
-let _userState = { ...userStateValues }
+let _state = { ...stateValues };
 
 function setState(updates) {
-  Object.assign(_userState, updates);
+  Object.assign(_state, updates);
 }
 
 function getStateValue(key) {
-  return _userState[key];
+  return _state[key];
 }
 
 function getState() {
-  return { ..._userState };
+  return { ..._state };
 }
 
-export const userState = {
+export const state = {
   getState, 
   setState,
   getStateValue

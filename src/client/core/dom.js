@@ -1,9 +1,6 @@
 import { 
   SCREENS, 
   BUTTONS,
-  INPUTS,
-  LISTS,
-  CANVASES,
 } from "../../shared/constants.js"
 
 
@@ -30,8 +27,8 @@ export const dom = {
 
 export function initDom() {
   // ---- Load Screen Doms ----
-  loadDomItems(SCREENS);
-  loadDomItems(BUTTONS);
+  loadDomItems(SCREENS, dom.screens);
+  loadDomItems(BUTTONS, dom.buttons);
   // loadDomItems(LISTS);
   // loadDomItems(INPUTS);
   // loadDomItems(CANVASES);
@@ -43,8 +40,8 @@ function validateDomItems() {
   // if not throw error this is a JS first approch to DOM management.
 }
 
-function loadDomItems(items) {
-  Object.keys(items).forEach((item) => {
-    dom.screens[item] = document.getElementById(items[item].id);
+function loadDomItems(items, target) {
+  Object.keys(items).forEach((key) => {
+    target[key] = document.getElementById(items[key].id);
   });
 }

@@ -17,8 +17,9 @@
 // create friend room
 // join friend room
 // join mmo room
-
-
+import { initDom } from "./core/dom.js"
+import { initNavigation } from "./core/navigation.js";
+import { initSingleplayer } from "./features/singleplayer.js";
 
 // Eventually as this list becomes large or I am looking to break up this file
 // one idea I have is to create a features folder in this layer that will contain
@@ -27,8 +28,6 @@
 
 
 document.addEventListener('DOMContentLoaded', () => {
-
-
   // ---- Initialization ----
   const socket = io();
 
@@ -38,7 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   // ---- Features & Main Menu Options ----
-  initSingleplayer()
+  initSingleplayer();
+
 });
 
 

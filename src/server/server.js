@@ -6,9 +6,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 
-import { LobbyManager } from './managers/lobby.manager.js';
-import { GameManager } from './managers/game.manager.js';
-
 const PORT = process.env.PORT || 3000;
 
 const app = express();
@@ -33,14 +30,6 @@ server.listen(PORT, () => {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, '../public')));
+app.use('/client', express.static(path.join(__dirname, '../client')));
+app.use('/shared', express.static(path.join(__dirname, '../shared')));
 
-
-
-// Initialize managers
-const lobbyManager = new LobbyManager();
-lobbyManager.start();
-
-const gameManager = new GameManager();
-gameManager.start();
-
-// Initialize handlers
