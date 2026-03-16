@@ -26,7 +26,7 @@ export function navigateToScreen(screen) {
 function hideAllScreens(allScreens){
   Object.values(allScreens).forEach((screen) => {
     if (screen) { 
-      screen.classList.add(CSS_HIDDEN_CLASS);
+      screen.classList.add(CSS_HIDDEN);
     }
     if (screen === dom.screens.game) {
       dom.canvases.game.style.display = 'none';
