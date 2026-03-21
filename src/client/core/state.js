@@ -27,8 +27,6 @@ function getState() {
   return { ..._state };
 }
 
-
-
 export const state = {
   getState, 
   setState,

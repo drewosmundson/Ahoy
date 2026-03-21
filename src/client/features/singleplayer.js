@@ -4,7 +4,7 @@
 import { state } from "../core/state.js";
 import { navigateToScreen } from "../core/navigation.js";
 import { dom } from "../core/dom.js";
-import { Game } from "../game";
+import { Game } from "../game/Game.js";
 
 export function initSingleplayer() {
   dom.buttons.mainToSingleplayer?.addEventListener('click', () => {
@@ -22,4 +22,4 @@ function startGame() {
   
   const Game = new Game();
   Game.start();
-}
+}                                                                                    

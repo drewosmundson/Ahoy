@@ -32,7 +32,7 @@ export const dom = {
     players:              document.getElementById("list-players"),
   },
 
-  canvases: {
+  canvas: {
     game:                 document.getElementById("canvas-game")
   }
 }
