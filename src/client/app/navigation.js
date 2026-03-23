@@ -1,5 +1,5 @@
 
-import { CSS_HIDDEN_CLASS } from "../../shared/constants.js";
+import { CSS_HIDDEN_CLASS } from "./constants.js";
 import { dom } from "./dom.js";
 
 

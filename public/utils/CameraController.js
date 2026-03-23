@@ -65,7 +65,7 @@ export class CameraController {
     });
   }
   
-  // New method to preserve camera orientation when entering pointer lock
+  //  method to preserve camera orientation when entering pointer lock
   preserveCameraOrientation() {
     // Get the current camera position and the boat position
     const boat = this.getBoatReference(); // You'll need to store a reference to the boat

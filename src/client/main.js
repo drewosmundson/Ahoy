@@ -17,9 +17,9 @@
 // create friend room
 // join friend room
 // join mmo room
-import { initDom } from "./core/dom.js";
-import { initNavigation } from "./core/navigation.js";
-import { initSingleplayer } from "./features/singleplayer.js";
+import { initDom } from "./app/dom.js";
+import { initNavigation } from "./app/navigation.js";
+import { initSingleplayer } from "./game/singleplayer.js";
 import { initLobby } from "./features/Lobby.js";
 import { initMMO } from "./features/MMO.js";
 
