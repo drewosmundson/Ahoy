@@ -29,7 +29,7 @@ function hideAllScreens(allScreens){
       screen.classList.add(CSS_HIDDEN);
     }
     if (screen === dom.screens.game) {
-      dom.canvases.game.style.display = 'none';
+      dom.canvas.game.style.display = 'none';
     }
   });
 }
@@ -37,7 +37,7 @@ function hideAllScreens(allScreens){
 function showScreen(screen) {
   screen.classList.remove(CSS_HIDDEN_CLASS);
   if ( screen === dom.screens.game ) {
-    dom.canvases.game.style.display = 'block'
+    dom.canvas.game.style.display = 'block'
   }
 }
 
