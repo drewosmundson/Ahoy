@@ -1,7 +1,7 @@
-import { state } from "./app/state.js";
-import { navigateToScreen } from "./app/navigation.js";
-import { dom } from "./app/dom.js";
-import { Game } from "./game/Game.js";
+import { state } from "../client/app/state.js";
+import { navigateToScreen } from "../client/app/navigation.js";
+import { dom } from "../client/app/dom.js";
+import { Game } from "../client/game/Game.js";
 
 export function initMMO() {
   dom.buttons.mainToMMO?.addEventListener('click', () => {

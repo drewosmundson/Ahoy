@@ -36,14 +36,25 @@ class Game {
     return 
   }
 
-  startGame(){
 
 
 
-    this.startGameLoop();
+  // The time parameter is a DOMHighResTimeStamp
+
+  loop(time) {
+    const deltaTime = this.lastTime === 0 ? 16 : time - this.lastTime;
+    this.currentTime = time
+
+
+    this.renderer.render(this.scene, this.camera);
   }
-  startGameLoop(){
 
-
+  startGame() {
+    this.renderer.setAnimationLoop(loop);
   }
+
+  stopGame() {
+    this.renderer.setAnimationLoop(null);
+  }
+
 }

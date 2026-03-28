@@ -19,9 +19,9 @@
 // join mmo room
 import { initDom } from "./app/dom.js";
 import { initNavigation } from "./app/navigation.js";
-import { initSingleplayer } from "./singleplayer.js";
-import { initLobby } from "./Lobby.js";
-import { initMMO } from "./MMO.js";
+import { initSingleplayer } from "./Singleplayer.js";
+import { initLobby } from "./features/Host.js";
+import { initMMO } from "./features/MMO.js";
 import { initAppSockets } from "./socket.appEmitter.js"
 import { initGameSockets } from "./socket/game.emitter.js"
 
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ---- Features & Main Menu Options ----
   initSingleplayer();
-  initLobby(socket);
+  init(socket);
   initMMO(socket);
 });
  
