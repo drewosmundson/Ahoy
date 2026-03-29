@@ -348,8 +348,6 @@ update(time) {
   this.updateProjectiles(deltaTime);
   this.updateEnemyProjectiles(deltaTime); 
 
-
-  
   this.cameraController?.update(this.boat);
 }
 

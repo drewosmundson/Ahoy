@@ -36,14 +36,18 @@ class Game {
     return 
   }
 
+  handleSockets(socketFunction){
+    
 
+
+  }
 
 
   // The time parameter is a DOMHighResTimeStamp
 
-  loop(time) {
+  gameLoop(time) {
     const deltaTime = this.lastTime === 0 ? 16 : time - this.lastTime;
-    this.currentTime = time
+    this.currentTime = time;
 
 
     this.renderer.render(this.scene, this.camera);

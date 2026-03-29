@@ -16,9 +16,9 @@ export function initSingleplayer() {
   });
 }
 
-function startGame() { 
-  state.setState({ multiplayer: false })
-  navigateToScreen(dom.screens.game);
-  const Game = new Game();
-  Game.start();
-}                                                                                    
+function startGame() {
+    navigateToScreen(dom.screens.game);
+    state.setState({ multiplayer: false })
+    const Game = new Game();
+    Game.start();
+}
