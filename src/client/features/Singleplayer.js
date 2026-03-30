@@ -17,8 +17,8 @@ export function initSingleplayer() {
 }
 
 function startGame() {
-    navigateToScreen(dom.screens.game);
-    state.setState({ multiplayer: false })
-    const Game = new Game();
-    Game.start();
+  navigateToScreen(dom.screens.game);
+  state.setState({ multiplayer: false })
+  const Game = new Game();
+  Game.start();
 }
