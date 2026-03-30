@@ -3,7 +3,7 @@ import { navigateToScreen } from "../client/app/navigation.js";
 import { dom } from "../client/app/dom.js";
 import { Game } from "../client/game/Game.js";
 
-export function initMMO() {
+export function initMMOEvents() {
   dom.buttons.mainToMMO?.addEventListener('click', () => {
     navigateToScreen(dom.screens.lobbyCreate);
   });

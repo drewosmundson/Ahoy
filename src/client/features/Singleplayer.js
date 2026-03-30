@@ -6,7 +6,7 @@ import { navigateToScreen } from "./app/navigation.js";
 import { dom } from "./app/dom.js";
 import { Game } from "./game/Game.js";
 
-export function initSingleplayer() {
+export function initSingleplayerEvents() {
   dom.buttons.mainToSingleplayer?.addEventListener('click', () => {
     navigateToScreen(dom.screens.singleplayer);
   });

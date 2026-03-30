@@ -3,37 +3,43 @@
 
 
 
-export const CLIENT_EVENTS = {
+export const APP_EVENTS = {
   LOBBY: { 
-    CREATE: createLobby,  
-    JOIN:
-    LEAVE: 
+    CREATE:      'lobby:create',
+    CREATED:     'lobby:created',
 
-    startGame
-    debug
-  }, 
-  game: {
+    JOIN:        'lobby:join',
+    JOINED:      'lobby:joined',
 
+    LEAVE:       'lobby:leave',
+    UPDATE:      'lobby:update',
   },
+
+  MMO: {
+    JOIN:        'MMO:join',
+    JOINED:      'MMO:joined',
+  }, 
+
+  GAME: {
+    START:       'game:start',
+    STARTED:     'game:started',
+  }, 
+
+  UTIL: { 
+    DISCONNECT:  'disconnect',
+    ERROR:       'error'
+  }
+}
+
+export const GAME_EVENTS = {
+
+
+
 
 }
 
-export const SERVER_EVENTS = {
-  LOBBY: { 
-    CREATED: createLobby,  
-    JOIN:
-    LEAVE: 
 
-    startGame
-    debug
-  }, 
-  game: {
-
-  },
-
-}
-
-export const TITLES = {
+export const TITLE = {
   mainMenu:             "Ahoy.io - Main Menu",
   singleplayer:         "Ahoy.io - Single Player",
   mmo:                  "Ahoy.io - MMO",

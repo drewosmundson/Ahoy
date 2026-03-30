@@ -24,6 +24,7 @@ import { initLobby } from "./features/Host.js";
 import { initMMO } from "./features/MMO.js";
 import { initAppSockets } from "./socket.appEmitter.js"
 import { initGameSockets } from "./socket/game.emitter.js"
+import { createEmitter } from "../shared/emitter.js";
 
 // Eventually as this list becomes large or I am looking to break up this file    
 // one idea I have is to create a features folder in this layer that will contain
@@ -32,14 +33,14 @@ import { initGameSockets } from "./socket/game.emitter.js"
 
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
-
+  const emit = createEmitter(socket);
   initDom();
   initNavigation();
 
   // ---- Features & Main Menu Options ----
   initSingleplayer();
-  init(socket);
-  initMMO(socket);
+  initLobby(emit);
+  initMMO(emit);
 });
  
 
