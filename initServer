@@ -1,0 +1,14 @@
+
+
+
+//boot strap the server start for logging and error handling
+
+import { Server } from "src/server.js";
+
+initserver () { 
+  Server = new Server()
+  Server.start();
+} 
+
+
+initServer();
