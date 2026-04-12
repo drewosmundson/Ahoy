@@ -7,6 +7,7 @@ import { dom } from "../app/dom.js";
 import { Game } from "../game/Game.js";
 import { APP_EVENTS } from "../../shared/CONSTANTS.js";
 
+
 export function initHostEvets(emit) {
   dom.buttons.mainToLobbyCreate?.addEventListener('click', () => {
     navigateToScreen(dom.screens.lobbyCreate);
@@ -35,5 +36,3 @@ function startGame() {
 function leaveLobby() {
 
 }
-
-

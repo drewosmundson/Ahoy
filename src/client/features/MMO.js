@@ -1,11 +1,11 @@
 import { state } from "../client/app/state.js";
-import { navigateToScreen } from "../client/app/navigation.js";
+import { navigation } from "../client/app/navigation.js";
 import { dom } from "../client/app/dom.js";
 import { Game } from "../client/game/Game.js";
 
 export function initMMOEvents() {
   dom.buttons.mainToMMO?.addEventListener('click', () => {
-    navigateToScreen(dom.screens.lobbyCreate);
+    navigation.toScreen(dom.screens.lobbyCreate);
   });
 
   dom.buttons.mmoStart?.addEventListener('click', () => {
@@ -18,4 +18,4 @@ function startGame() {
   navigateToScreen(dom.screens.game);
   const Game = new Game();
   Game.start();
-}          
+}

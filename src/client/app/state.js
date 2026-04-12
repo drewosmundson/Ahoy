@@ -15,7 +15,7 @@ const stateDefaults = {
 
 let _state = { ...stateDefaults };
 
-function setState(updates) {
+function setStateValue(updates) {
   Object.assign(_state, updates);
 }
 
@@ -23,12 +23,7 @@ function getStateValue(key) {
   return _state[key];
 }
 
-function getState() {
-  return { ..._state };
-}
-
 export const state = {
-  getState, 
-  setState,
+  setStateValue,
   getStateValue
 }

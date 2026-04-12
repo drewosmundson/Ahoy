@@ -26,6 +26,12 @@ import { initAppSockets } from "./socket.appEmitter.js"
 import { initGameSockets } from "./socket/game.emitter.js"
 import { createEmitter } from "../shared/emitter.js";
 
+
+import { state } from "../client/app/state.js";
+import { navigation } from "../client/app/navigation.js";
+import { dom } from "../client/app/dom.js";
+import { Game } from "../client/game/Game.js";
+
 // Eventually as this list becomes large or I am looking to break up this file    
 // one idea I have is to create a features folder in this layer that will contain
 // singleplayer.js mmo.js multiplayer.js so ownership of those features become more 
@@ -34,8 +40,8 @@ import { createEmitter } from "../shared/emitter.js";
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
   const emit = createEmitter(socket);
-  initDom();
-  initNavigation();
+  dom.initalize();
+  navigation.initalize();
 
   // ---- Features & Main Menu Options ----
   initSingleplayer();
@@ -43,4 +49,51 @@ document.addEventListener('DOMContentLoaded', () => {
   initMMO(emit);
 });
  
+function initSingleplayerEvents() {
+  dom.buttons.mainToSingleplayer?.addEventListener('click', () => {
+    navigate.toScreen(dom.screens.singleplayer);
+  });
+
+  dom.buttons.singleplayerStart?.addEventListener('click', () => {
+    state.setState({ multiplayer: false })
+    startGame();
+  });
+}
+
+function initParticipantEvents() {
+  dom.buttons.mainToSingleplayer?.addEventListener('click', () => {
+    navigation.toScreen(dom.screens.singleplayer);
+  });
+
+  dom.buttons.singleplayerStart?.addEventListener('click', () => {
+    state.setState({ multiplayer: true })
+    startGame();
+  });
+}
+
+export function initMMOEvents() {
+  dom.buttons.mainToMMO?.addEventListener('click', () => {
+    navigation.toScreen(dom.screens.lobbyCreate);
+  });
+
+  dom.buttons.mmoStart?.addEventListener('click', () => {
+    state.setState({ multiplayer: true })
+    startGame();
+  });
+}
+
+function startGame() {
+  navigateToScreen(dom.screens.game);
+  const game = new Game();
+  game.start();
+}
+
+
+
+
+function startGame() { 
+  navigation.toScreen(dom.screens.game);
+  const Game = new Game();
+  Game.start();
+}
 

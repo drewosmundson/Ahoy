@@ -1,21 +1,23 @@
-
 import { CSS_HIDDEN_CLASS } from "./constants.js";
 import { dom } from "./dom.js";
 
-
+export const navigation = {
+  initalize,
+  toScreen
+};
 
 // Allows for the forward and back buttons in the browser
 // always puts the user back to the home screen if they leave the site and come back they can rejoin their lobby from there if they were in one
-export function initNavigation() { 
+function initalize() { 
   window.addEventListener("popstate", (event) => {
     const screenId = event.state?.screen;
     const screen = screenId ? document.getElementById(screenId) : dom.screens.mainMenu;
     if (screen) navigateToScreen(screen);
   });
-  navigateToScreen(dom.screens.mainMenu);
+  navigation.toScreen(dom.screens.mainMenu);
 }
 
-export function navigateToScreen(screen) {
+function toScreen(screen) {
   hideAllScreens(dom.screens);
   showScreen(screen);
   updateTitle(screen)
