@@ -45,11 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ---- Features & Main Menu Options ----
   initSingleplayer();
-  initLobby(emit);
+  initHost(emit);
+  initParticipant(emit);
   initMMO(emit);
 });
  
-function initSingleplayerEvents() {
+function initSingleplayer() {
   dom.buttons.mainToSingleplayer?.addEventListener('click', () => {
     navigate.toScreen(dom.screens.singleplayer);
   });
@@ -59,13 +60,23 @@ function initSingleplayerEvents() {
     startGame();
   });
 }
-
-function initParticipantEvents() {
-  dom.buttons.mainToSingleplayer?.addEventListener('click', () => {
+function initHost() {
+  dom.buttons.mainToHost?.addEventListener('click', () => {
     navigation.toScreen(dom.screens.singleplayer);
   });
 
-  dom.buttons.singleplayerStart?.addEventListener('click', () => {
+  dom.buttons.hostStart?.addEventListener('click', () => {
+    state.setState({ multiplayer: true })
+    startGame();
+  });
+}
+
+function initParticipant() {
+  dom.buttons.mainToParticipant?.addEventListener('click', () => {
+    navigation.toScreen(dom.screens.singleplayer);
+  });
+
+  dom.buttons.participantStart?.addEventListener('click', () => {
     state.setState({ multiplayer: true })
     startGame();
   });
@@ -86,14 +97,5 @@ function startGame() {
   navigateToScreen(dom.screens.game);
   const game = new Game();
   game.start();
-}
-
-
-
-
-function startGame() { 
-  navigation.toScreen(dom.screens.game);
-  const Game = new Game();
-  Game.start();
 }
 
