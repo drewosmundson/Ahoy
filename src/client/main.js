@@ -17,20 +17,13 @@
 // create friend room
 // join friend room
 // join mmo room
-import { initDom } from "./app/dom.js";
-import { initNavigation } from "./app/navigation.js";
-import { initSingleplayer } from "./Singleplayer.js";
-import { initLobby } from "./features/Host.js";
-import { initMMO } from "./features/MMO.js";
-import { initAppSockets } from "./socket.appEmitter.js"
-import { initGameSockets } from "./socket/game.emitter.js"
-import { createEmitter } from "../shared/emitter.js";
 
 
-import { state } from "../client/app/state.js";
-import { navigation } from "../client/app/navigation.js";
-import { dom } from "../client/app/dom.js";
-import { Game } from "../client/game/Game.js";
+
+import { state } from "../app/state.js";
+import { navigation } from "../app/navigation.js";
+import { dom } from "../app/dom.js";
+import { Game } from "./game/Game.js";
 
 // Eventually as this list becomes large or I am looking to break up this file    
 // one idea I have is to create a features folder in this layer that will contain
@@ -60,6 +53,7 @@ function initSingleplayer() {
     startGame();
   });
 }
+
 function initHost() {
   dom.buttons.mainToHost?.addEventListener('click', () => {
     navigation.toScreen(dom.screens.singleplayer);
@@ -82,7 +76,7 @@ function initParticipant() {
   });
 }
 
-export function initMMOEvents() {
+function initMMOEvents() {
   dom.buttons.mainToMMO?.addEventListener('click', () => {
     navigation.toScreen(dom.screens.lobbyCreate);
   });
@@ -95,7 +89,12 @@ export function initMMOEvents() {
 
 function startGame() {
   navigateToScreen(dom.screens.game);
-  const game = new Game();
+  const game = new Game({
+    canvas: dom.canvas,
+
+
+
+  });
   game.start();
 }
 

@@ -1,29 +1,14 @@
-const stateDefaults = { 
-
-  // User State
+const appState = {
   socket: null,
   host: true,
   currentLobbyId: null,
-  screen: null,
-
-  // Game State
-  multiplayer: false,
-  game: null,
-  heightmap: null,
-  heightmapOverlay: null,
+  currentScreen: 'mainMenu'
 };
 
-let _state = { ...stateDefaults };
+const gameConfig = {
+  multiplayer: false,
+  heightmap: null,
+  heightmapOverlay: null
+};
 
-function setStateValue(updates) {
-  Object.assign(_state, updates);
-}
-
-function getStateValue(key) {
-  return _state[key];
-}
-
-export const state = {
-  setStateValue,
-  getStateValue
-}
+let game = null;

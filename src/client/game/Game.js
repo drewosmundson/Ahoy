@@ -13,10 +13,8 @@ class Game {
     this.scene = new THREE.Scene();
     this.comonents = this.initComponents(this.scene);
 
-
     this.CameraController = new CameraController(this.canvas);
     this.SoundController = new SoundController(this.CameraController.camera);
-
   }
 
   initRenderer(canvas) {
