@@ -57,6 +57,7 @@ function initSingleplayer() {
 function initHost() {
   dom.buttons.mainToHost?.addEventListener('click', () => {
     navigation.toScreen(dom.screens.singleplayer);
+    emit()
   });
 
   dom.buttons.hostStart?.addEventListener('click', () => {
@@ -92,8 +93,8 @@ function startGame() {
   const game = new Game({
     canvas: dom.canvas,
     emitter: emit, 
-    multiplayer: state.multiplayer,
-    heightmap: state.heightmap
+    heightmap: state.heightmap,
+
   });
   game.start();
 }

@@ -4,7 +4,7 @@
 import { EventSchemas } from './schemas.js';
 
 export function createEmitter(socket)  {
-  return function emit(event, data) {
+  return function emit(event, data, lobby) {
     if (!(event in EventSchemas)) {
         throw new Error(`Unknown event: ${event}`);
     }
@@ -14,7 +14,6 @@ export function createEmitter(socket)  {
     if (!isValid) {
         throw new Error(`Invalid payload for ${event}`);
     }
-
-    socket.emit(event, data);
+    socket.emit(event, {...data, lobby});
     }
 }
