@@ -91,9 +91,9 @@ function startGame() {
   navigateToScreen(dom.screens.game);
   const game = new Game({
     canvas: dom.canvas,
-
-
-
+    emitter: emit, 
+    multiplayer: state.multiplayer,
+    heightmap: state.heightmap
   });
   game.start();
 }
