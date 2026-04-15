@@ -92,9 +92,8 @@ function startGame() {
   navigateToScreen(dom.screens.game);
   const game = new Game({
     canvas: dom.canvas,
-    emitter: emit, 
+    emitter: state.emit, 
     heightmap: state.heightmap,
-
   });
   game.start();
 }

@@ -82,7 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update browser history
     history.pushState(state, state.title, `#${stateName}`);
     document.title = state.title;                                  
-
   }
 
   function navigateToScreen(stateName, additionalData = {}, pushState = true) {
