@@ -18,13 +18,17 @@
 // join friend room
 // join mmo room
 
+import { state } from "./app/state.js";
+import { navigation } from "./app/navigation.js";
+import { dom } from "./app/dom.js";
+import { ui } from ".app/ui.js"
 
+import { singleplayer } from "./features/singleplayer.js"
+import { host } from "./features/host.js"
+import { participant } from "./features/participant.js";
+import { mmo } from "./features/mmo.js"
 
-import { state } from "../app/state.js";
-import { navigation } from "../app/navigation.js";
-import { dom } from "../app/dom.js";
 import { Game } from "./game/Game.js";
-
 // Eventually as this list becomes large or I am looking to break up this file    
 // one idea I have is to create a features folder in this layer that will contain
 // singleplayer.js mmo.js multiplayer.js so ownership of those features become more 
@@ -33,60 +37,16 @@ import { Game } from "./game/Game.js";
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
   const emit = createEmitter(socket);
-  dom.initalize();
-  navigation.initalize();
+  const dom = createDom();
+  const navigate = navigation.initalize();
 
   // ---- Features & Main Menu Options ----
-  initSingleplayer();
-  initHost(emit);
-  initParticipant(emit);
-  initMMO(emit);
+  singleplayer.initalize(dom, navigation, startGame);
+  host.initalize(emit);
+  participant.inialize(emit);
+  mmo.inialize(emit);
 });
- 
-function initSingleplayer() {
-  dom.buttons.mainToSingleplayer?.addEventListener('click', () => {
-    navigate.toScreen(dom.screens.singleplayer);
-  });
 
-  dom.buttons.singleplayerStart?.addEventListener('click', () => {
-    state.setState({ multiplayer: false })
-    startGame();
-  });
-}
-
-function initHost() {
-  dom.buttons.mainToHost?.addEventListener('click', () => {
-    navigation.toScreen(dom.screens.singleplayer);
-    emit()
-  });
-
-  dom.buttons.hostStart?.addEventListener('click', () => {
-    state.setState({ multiplayer: true })
-    startGame();
-  });
-}
-
-function initParticipant() {
-  dom.buttons.mainToParticipant?.addEventListener('click', () => {
-    navigation.toScreen(dom.screens.singleplayer);
-  });
-
-  dom.buttons.participantStart?.addEventListener('click', () => {
-    state.setState({ multiplayer: true })
-    startGame();
-  });
-}
-
-function initMMOEvents() {
-  dom.buttons.mainToMMO?.addEventListener('click', () => {
-    navigation.toScreen(dom.screens.lobbyCreate);
-  });
-
-  dom.buttons.mmoStart?.addEventListener('click', () => {
-    state.setState({ multiplayer: true })
-    startGame();
-  });
-}
 
 function startGame() {
   navigateToScreen(dom.screens.game);

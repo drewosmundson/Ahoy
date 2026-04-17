@@ -1,50 +1,49 @@
 
-export const dom = {
 
 
-  screens: {
-    mainMenu:             document.getElementById("screen-main"),
-    singleplayer:         document.getElementById("screen-singleplayer"),     
-    mmo:                  document.getElementById("screen-mmo"),               
-    lobbyCreate:          document.getElementById("screen-lobby-create"),    
-    lobbyJoin:            document.getElementById("screen-lobby-join"),        
-    lobbyHost:            document.getElementById("screen-lobby-host"),        
-    lobbyParticipant:     document.getElementById("screen-lobby-participant"), 
-    game:                 document.getElementById("screen-game"),              
-  }, 
 
-  buttons: {
-    mainToSingleplayer:   document.getElementById("button-main-singleplayer"),
-    mainToLobbyJoin:      document.getElementById("button-main-lobby-join"),
-    mainToLobbyCreate:    document.getElementById("button-main-lobby-create"),
-    singleplayerStart:    document.getElementById("button-singleplayer-start"),
-    mmoStart:             document.getElementById("button-mmo-start"),
-    lobbyCreate:          document.getElementById("button-lobby-create"),
-    lobbyJoin:            document.getElementById("button-lobby-join"),
-    lobbyStart:           document.getElementById("button-lobby-start"),
-    lobbyLeave:           document.getElementById("button-lobby-leave"),
-  },
+export function createDom(){ 
+    const screens = {
+      mainMenu:             mustGet("screen-main"),
+      singleplayer:         mustGet("screen-singleplayer"),     
+      mmo:                  mustGet("screen-mmo"),               
+      lobbyCreate:          mustGet("screen-lobby-create"),    
+      lobbyJoin:            mustGet("screen-lobby-join"),        
+      lobbyHost:            mustGet("screen-lobby-host"),        
+      lobbyParticipant:     mustGet("screen-lobby-participant"), 
+      game:                 mustGet("screen-game"),              
+    };
 
-  inputs: {
-    playerName:           document.getElementById("input-player-name"),
-    lobbyCode:            document.getElementById("input-lobby-code"),
-  },
+    const buttons = {
+      mainToSingleplayer:   mustGet("button-main-singleplayer"),
+      mainToLobbyJoin:      mustGet("button-main-lobby-join"),
+      mainToLobbyCreate:    mustGet("button-main-lobby-create"),
+      singleplayerStart:    mustGet("button-singleplayer-start"),
+      mmoStart:             mustGet("button-mmo-start"),
+      lobbyCreate:          mustGet("button-lobby-create"),
+      lobbyJoin:            mustGet("button-lobby-join"),
+      lobbyStart:           mustGet("button-lobby-start"),
+      lobbyLeave:           mustGet("button-lobby-leave"),
+    };
 
-  lists: {
-    players:              document.getElementById("list-players"),
-  },
+    const inputs = {
+      playerName:           mustGet("input-player-name"),
+      lobbyCode:            mustGet("input-lobby-code"),
+    };
 
-  canvas: {
-    game:                 document.getElementById("canvas-game")
+    const lists = {
+      players:              mustGet("list-players"),
+    };
+
+    const canvas = {
+      game:                 mustGet("canvas-game")
+    };
+
+    return {screens, inputs, buttons, lists, canvas};
   }
+
+function mustGet(id) {
+  const element = document.getElementById(id);
+  if (!element) throw new Error('Missing DOM element: ${id}');
+  return element;
 }
-
-export function initDom() {
-  // ---- Load Screen Doms ----
-
-  //TODO check index.html to see if their are any DOM elements that are not in dom.js
-  // if not throw error this is a JS first approch to DOM management.
-
-}
-
-
