@@ -2,18 +2,17 @@
 
 
 
-export const singleplayer = { 
-  initalize(dom, navigate, startGame) {
-    dom.buttons.mainToSingleplayer?.addEventListener('click', () => {
-      navigate.toScreen(dom.screens.singleplayer);
-    });
 
-    dom.buttons.singleplayerStart?.addEventListener('click', () => {
-      start(startGame);
-    });
-  }, 
+export function createSingleplayer({ dom, navigate, startGame }) {
+  return {
+    initialize
+  };
 
-  start(startGame){
+  function initialize() {
+    dom.buttons.singleplayerStart?.addEventListener('click', start);
+  }
+
+  function start() {
     startGame({ multiplayer: false });
   }
 }
