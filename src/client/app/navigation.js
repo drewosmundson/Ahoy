@@ -1,6 +1,33 @@
 import { CSS_HIDDEN_CLASS } from "./constants.js";
 import { dom } from "./dom.js";
 
+
+export function nav(dom) { 
+  
+  return { initalize, toScreen };
+  
+  function initalize() { 
+  window.addEventListener("popstate", (event) => {
+    const screenId = event.state?.screen;
+    const screen = screenId ? document.getElementById(screenId) : dom.screens.mainMenu;
+    if (screen) navigateToScreen(screen);
+  });
+  navigation.toScreen(dom.screens.mainMenu);
+}
+
+function toScreen(screen) {
+  hideAllScreens(dom.screens);
+  showScreen(screen);
+  updateTitle(screen)
+  updateNavigationHistory(screen);
+}
+  
+  
+  } 
+
+
+
+
 export const navigation = {
   initalize,
   toScreen
