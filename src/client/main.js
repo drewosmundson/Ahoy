@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     emit: createEmitter(socket),
     dom: createDom(),
     navigation: createNav(),
+    ui: createUi(),
     startGame,
   };
 
