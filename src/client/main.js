@@ -35,25 +35,29 @@ import { Game } from "./game/Game.js";
 // independant. This would be a page/feature module archetecture.   
 
 document.addEventListener('DOMContentLoaded', () => {
+
   const socket = io();
-  const emit = createEmitter(socket);
-  const dom = createDom();
-  const navigate = navigation.initalize();
+
+  const context = {
+    emit: createEmitter(socket),
+    dom: createDom(),
+    navigation: createNav(),
+    startGame,
+  };
 
   // ---- Features & Main Menu Options ----
-  singleplayer.initalize(dom, navigation, startGame);
-  host.initalize(emit);
-  participant.inialize(emit);
-  mmo.inialize(emit);
-});
+
+  [singleplayer, host, participant, mmo].forEach(feature => 
+    feature.initialize(context)
+  );
 
 
 function startGame() {
   navigateToScreen(dom.screens.game);
   const game = new Game({
     canvas: dom.canvas,
-    emitter: state.emit, 
-    heightmap: state.heightmap,
+    emitter: context.emit,
+    heightmap: config.heightmap,
   });
   game.start();
 }
