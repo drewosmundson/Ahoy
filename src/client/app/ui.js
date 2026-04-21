@@ -1,6 +1,4 @@
 
-import { dom } from "./dom.js";
-
 
 export function createUI(dom) { 
   return {updatePlayerList, updateLobbyCodeDisplay}
