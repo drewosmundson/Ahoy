@@ -8,50 +8,45 @@
 // wire modules together
 // start navigation
 // start socket layer
-// ( inits app )
-           
 
-// DOM and user interactions is not aware of sockets
+// dependancy singleton factories
+import { createNavigation } from "./app/navigation.js";
+import { createDom } from "./app/dom.js";
+import { createUi } from ".app/ui.js"
 
-// single player 
-// create friend room
-// join friend room
-// join mmo room
-
-import { state } from "./app/state.js";
-import { navigation } from "./app/navigation.js";
-import { dom } from "./app/dom.js";
-import { ui } from ".app/ui.js"
-
+// page/feature module archetecture. 
 import { singleplayer } from "./features/singleplayer.js"
 import { host } from "./features/host.js"
 import { participant } from "./features/participant.js";
 import { mmo } from "./features/mmo.js"
 
 import { Game } from "./game/Game.js";
-// Eventually as this list becomes large or I am looking to break up this file    
-// one idea I have is to create a features folder in this layer that will contain
-// singleplayer.js mmo.js multiplayer.js so ownership of those features become more 
-// independant. This would be a page/feature module archetecture.   
 
 document.addEventListener('DOMContentLoaded', () => {
 
   const socket = io();
+  
+  const emit = createEmitter(socket); 
+  const dom = createDom();
+  const nav = createNavigation(dom);
+  const ui = createUi(dom);
 
   const context = {
-    emit: createEmitter(socket),
-    dom: createDom(),
-    navigation: createNav(),
-    ui: createUi(),
+    emit,
+    dom,
+    navigation,
+    ui,
     startGame,
   };
-
+  
+  const gameConfig = {
+  
+  } 
+  
   // ---- Features & Main Menu Options ----
-
   [singleplayer, host, participant, mmo].forEach(feature => 
-    feature.initialize(context)
+    feature.initialize(context, gameConfig)
   );
-
 
 function startGame() {
   navigateToScreen(dom.screens.game);
