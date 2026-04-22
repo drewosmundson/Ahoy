@@ -22,20 +22,25 @@ import { mmo } from "./features/mmo.js"
 
 import { Game } from "./game/Game.js";
 
-document.addEventListener('DOMContentLoaded', () => {
 
+function startGame() {
+  navigateToScreen(dom.screens.game);
+  const game = new Game({
+    canvas: dom.canvas,
+    emitter: context.emit,
+    heightmap: config.heightmap,
+  });
+  game.start();
+
+
+document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
-  
-  const emit = createEmitter(socket); 
-  const dom = createDom();
-  const nav = createNavigation(dom);
-  const ui = createUi(dom);
 
   const context = {
-    emit,
-    dom,
-    navigation,
-    ui,
+    emit: createEmitter(socket); 
+    dom: createDom();
+    navigation: createNavigation(dom);
+    ui: createUi(dom);
     startGame,
   };
   
@@ -47,14 +52,5 @@ document.addEventListener('DOMContentLoaded', () => {
   [singleplayer, host, participant, mmo].forEach(feature => 
     feature.initialize(context, gameConfig)
   );
-
-function startGame() {
-  navigateToScreen(dom.screens.game);
-  const game = new Game({
-    canvas: dom.canvas,
-    emitter: context.emit,
-    heightmap: config.heightmap,
-  });
-  game.start();
 }
 
