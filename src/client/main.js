@@ -23,7 +23,7 @@ import { mmo } from "./features/mmo.js"
 import { Game } from "./game/Game.js";
 
 
-function startGame() {
+function startGame(dom, emitter, heightmap) {
   navigateToScreen(dom.screens.game);
   const game = new Game({
     canvas: dom.canvas,
