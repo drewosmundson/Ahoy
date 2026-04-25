@@ -20,7 +20,7 @@ import { createParticipant } from "./features/participant.js";
 import { createMMO } from "./features/mmo.js"
 
 import { eventSchemas } from "../shared/schemas.js";
-import { heightmapGenerator }  from "../shared/terrain/HeightmapGenerator"
+import { terrain }  from "../shared/terrain.js"
 
 import { Game } from "./game/Game.js";
 
@@ -39,12 +39,11 @@ document.addEventListener('DOMContentLoaded', () => {
     emitter,
     navigate,
     ui,
+    terrain,
     game,
-    heightmapGenerator
   };
   
   const singleplayer = createSingleplayer(context);
-
   const host = createHost(context);
   const participant = createParticipant(context);
   const mmo = createMMO(context);

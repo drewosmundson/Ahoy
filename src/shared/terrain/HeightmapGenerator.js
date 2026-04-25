@@ -14,7 +14,7 @@ export class HeightmapGenerator {
       octaves: 4,
       persistence: 0.5,
       lacunarity: 2,
-      falloff: true,
+      falloff: true, 
       falloffStrength: 4,
       falloffScale: 0.9,
 
