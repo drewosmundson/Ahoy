@@ -37,7 +37,6 @@ export const GAME_EVENTS = {
 
 }
 
-
 export const TITLE = {
   mainMenu:             "Ahoy.io - Main Menu",
   singleplayer:         "Ahoy.io - Single Player",

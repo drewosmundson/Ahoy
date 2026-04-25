@@ -7,7 +7,8 @@
 
 
 
-export const appEventSchemas = {
+export const eventSchemas = {
+  // ---- App Event Schemeas ----
   [EVENTS.LOBBY.CREATE]: (data) =>
     typeof data.hostNickname === 'string' &&
     typeof data.socketId === 'string',
@@ -18,12 +19,8 @@ export const appEventSchemas = {
 
   [EVENTS.GAME.START]: (data) =>
     typeof data.lobbyId === 'string',
+
+
+  
 };
 
-
-export const gameEventSchemas = {
-
-
-
-
-}

@@ -4,21 +4,25 @@
 
 
 
-export function createSingleplayer({ dom, navigate, startGame }) {
+export function createSingleplayer({ dom, navigate, game }, heightmap) {
   return {
-    initialize,
-    start
+    initEventListeners, 
+    start,
+    toMenuScreen
   };
 
-  function initialize() {
-    dom.buttons.mainToSingleplayer?.addEventListener('click', () => {
-      navigate.toScreen(dom.screens.singleplayer);
-    });
-
+  function initEventListeners() {
+    dom.buttons.mainToSingleplayer?.addEventListener('click', toMenuScreen);
     dom.buttons.singleplayerStart?.addEventListener('click', start);
   }
 
+  function toMenuScreen() {
+    navigate.toScreen(dom.screens.singleplayer)
+  }
+
   function start() {
-    startGame({ multiplayer: false });
+    const heightmap = generateHeightmap();
+    navigate.toScreen(dom.screens.game);
+    game.start(heightmap);
   }
 }

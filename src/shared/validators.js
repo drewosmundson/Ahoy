@@ -2,7 +2,7 @@
 // The shared validator functions check one item
 
 export function isValidLobbyCode(code) {
-
+  
 }
 
 

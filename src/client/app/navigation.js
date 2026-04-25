@@ -2,7 +2,7 @@ import { CSS_HIDDEN } from "./constants.js";
 
 
 export function navigation(dom) { 
-  
+
   return { initalize, toScreen };
   
   // Allows for the forward and back buttons in the browser

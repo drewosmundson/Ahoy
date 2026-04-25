@@ -1,12 +1,11 @@
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
-import { dom } from "../app/dom.js";
 import { CameraController } from '../../../public/utils/CameraController.js';
 
 
 class Game { 
-  constructor() {
+  constructor(dom) {
     this.canvas = dom.canvas.game;
     this.renderer = this.initRenderer(this.canvas);
 
