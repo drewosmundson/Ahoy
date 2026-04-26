@@ -4,7 +4,7 @@
 
 
 
-export function createSingleplayer({ dom, navigate, game, heightmap) {
+export function singleplayer({ dom, navigate, emitter, Game }) {
   return {
     initEventListeners, 
     start,
@@ -21,8 +21,16 @@ export function createSingleplayer({ dom, navigate, game, heightmap) {
   }
 
   function start() {
-    const heightmap = generateHeightmap();
+    
+
+    const gameScreen = dom.screens.game;
     navigate.toScreen(dom.screens.game);
-    game.start(heightmap);
+
+    const gamecanvas = dom.canvas.game;
+    const game = new Game({ gameCanvas, emitter });
+    const heightmap = game.generateHeightmap();
+    
+    game.loadHeightmap(heightmap);
+    game.start(multiplayer == false);
   }
 }

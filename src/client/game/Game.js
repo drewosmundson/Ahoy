@@ -2,54 +2,52 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
 import { CameraController } from '../../../public/utils/CameraController.js';
-
+import { TerrainRenderer } from 
+import { HeightmapGenerator } from 
 
 class Game { 
-  constructor(dom) {
-    this.canvas = dom.canvas.game;
-    this.renderer = this.initRenderer(this.canvas);
-
-    this.scene = new THREE.Scene();
-    this.comonents = this.initComponents(this.scene);
-
-    this.CameraController = new CameraController(this.canvas);
-    this.SoundController = new SoundController(this.CameraController.camera);
+  constructor(canvas, emitter) {
+    this.canvas = canvas;
+    this.emitter = emitter;
   }
-
-  initRenderer(canvas) {
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvas,
-      antialias: true
-    });
-    renderer.setPixelRatio(window.devicePixelRatio);
-    return renderer;
+  generateHeightmap(){
+    heightMap 
+    return heightmap;
   }
-  initComponents(scene){
-    const terrain = new Terrain(scene, this.socket, this.multiplayer, this.heightmap, this.heightmapOverlay);
-    const water = new Water(scene, this.waterLevel);
-    this.boat = new Boat(scene, this.waterLevel, this.socket, this.multiplayer, this.terrain);
-    this.skybox = new Skybox(scene);
-    this.lighting = new Lighting(scene)
-    return 
-  }
-
-  handleSockets(socketFunction){
-    
-
-
-  }
-
-
-  // The time parameter is a DOMHighResTimeStamp
 
   gameLoop(time) {
     const deltaTime = this.lastTime === 0 ? 16 : time - this.lastTime;
     this.currentTime = time;
     this.renderer.render(this.scene, this.camera);
   }
+  multiplayerGameLoop(){ 
 
-  startGame() {
-    this.renderer.setAnimationLoop(loop);
+
+  } 
+
+  singleplayerGameLoop(){
+
+  }
+
+  startGame(multiplayer, terrain) {
+    window.addEventListener('resize', this.handleWindowResize);
+    this.handleWindowResize();
+    this.initRenderer();
+    this.initCamera();
+    this.initSound();
+    this.initLighting();
+    this.terrain = new Terrain(this.scene, this.socket, this.multiplayer, this.heightmap, this.heightmapOverlay);
+    this.water = new Water(this.scene, this.waterLevel);
+    this.boat = new Boat(this.scene, this.waterLevel, this.socket, this.multiplayer, this.terrain);
+    this.skybox = new Skybox(this.scene);
+    this.input = new InputController(this);
+
+    if(multiplayer == true) {
+      this.renderer.setAnimationLoop(this.multiplayerGameLoop);
+    }
+    else {
+      this.renderer.setAnimationLoop(this.singleplayerGameLoop);
+    }
   }
 
   stopGame() {

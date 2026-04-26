@@ -2,18 +2,27 @@
 
 
 
-export const mmo = { 
-  initalize(dom, navigation, startGame){ 
-    dom.buttons.mainToMMO?.addEventListener('click', () => {
-      navigation.toScreen(dom.screens.singleplayer);
-    });
+export function mmo({ dom, navigate, createGame }) {
+  return {
+    initEventListeners, 
+    start,
+    toMenuScreen
+  };
 
-    dom.buttons.MMOStart?.addEventListener('click', () => {
-      start(startGame);
-    });
-  },
+  function initEventListeners() {
+    dom.buttons.mainToMMO?.addEventListener('click', toMenuScreen);
+    dom.buttons.mmoStart?.addEventListener('click', start);
+  }
 
-  start(startGame){
-    startGame({multiplayer: true})
+  function toMenuScreen() {
+    navigate.toScreen(dom.screens.mmo)
+  }
+
+  function start() {
+    
+    game.generateTerrain();
+    game.start();
+    navigate.toScreen(dom.screens.game);
+
   }
 }

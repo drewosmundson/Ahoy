@@ -2,20 +2,21 @@
 
 
 
-export function participant(dom, navigation, emit, startGame) {
-  function initalize(){ 
-    dom.buttons.mainToParticipant?.addEventListener('click', () => {
-      navigation.toScreen(dom.screens.singleplayer);
-    });
+export function participant({ dom, navigate, emit, game }) {
 
-    dom.buttons.participantStart?.addEventListener('click', () => {
-      start(startGame);
-    });
-  },
+  return { initEventListeners, start, toMenuScreen } 
+
+  function initEventListeners(){ 
+    dom.buttons.mainToParticipant?.addEventListener('click', () => toScreen);
+    dom.buttons.participantStart?.addEventListener('click', () => start);
+  }
+
+  function toMenuScreen() {
+    navigate.toScreen(dom.screens.participant);
+  }
 
   function start(){
-    startGame({multiplayer: true})
+  
   }
- return { initalize, start } 
 }
 

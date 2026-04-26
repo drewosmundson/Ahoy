@@ -8,54 +8,42 @@
 // start socket layer
 
 // dependancy singleton factories
-import { createNavigation } from "./app/navigation.js";
+import { createNavigation, navigation } from "./app/navigation.js";
 import { createDom } from "./app/dom.js";
-import { createUi } from ".app/ui.js"
+import { createUi } from "./app/ui.js"
 import { createEmitter } from "./app/emitter.js"
 
 // page/feature module archetecture. 
-import { createSingleplayer } from "./features/singleplayer.js"
-import { createHost } from "./features/host.js"
-import { createParticipant } from "./features/participant.js";
-import { createMMO } from "./features/mmo.js"
+import { singleplayer } from "./features/singleplayer.js"
+import { host } from "./features/host.js"
+import { participant } from "./features/participant.js";
+import { mmo } from "./features/mmo.js"
 
 import { eventSchemas } from "../shared/schemas.js";
-import { terrain }  from "../shared/terrain.js"
 
 import { Game } from "./game/Game.js";
 
 document.addEventListener('DOMContentLoaded', () => {
+
   const socket = io();
 
-  const emitter = createEmitter(socket, eventSchemas);
   const dom = createDom();
-  const navigate = createNavigation(dom);
-  const ui = createUi(dom);
-  const game = createGame(dom);
-  const heightmap = createHeightmapGenerator();
-  
+
+
   const context = {
     dom,
-    emitter,
-    navigate,
-    ui,
-    terrain,
-    game,
+    emitter: createEmitter(socket, eventSchemas),
+    navigate: createNavigation(dom),
+    ui: createUi(dom),
+    Game
   };
-  
-  const singleplayer = createSingleplayer(context);
-  const host = createHost(context);
-  const participant = createParticipant(context);
-  const mmo = createMMO(context);
-  
-  [singleplayer, host, participant, mmo].forEach(feature =>
-    feature.initEventListeners()
-  );
-
+  // As this becomes large it would be good practice to inialize only the nessesary event listeners
+  // For now this is fine as there are only about 3 event listeners for each feature
+  [singleplayer, host, createParticipant, createMMO]
+    .map(create => create(context))
+    .forEach(feature => { 
+      feature.initEventListeners();
+      // feature.otherFunction(); 
+    });
 });
 
-function createGame(dom) {
-  const canvas = dom.canvas.game;
-  const game = new Game({ canvas });
-  return game;
-}
