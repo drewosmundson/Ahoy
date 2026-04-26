@@ -4,7 +4,7 @@
 
 
 
-export function createSingleplayer({ dom, navigate, game }, heightmap) {
+export function createSingleplayer({ dom, navigate, game, heightmap) {
   return {
     initEventListeners, 
     start,
