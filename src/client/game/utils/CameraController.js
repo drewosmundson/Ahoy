@@ -1,14 +1,39 @@
 
-function createCamera(canvas, perspectiveCamera){
 
-    
-    const camera = new Camera(canvas);
-    
-    return camera
+export class Camera(){ 
+  constructior() {
+  this.camera = new perspectiveCamera(75, aspect, 0.1, 1000);
+  this.clonedPosition = null;
+  this.clonedTarget = null;
+  
   }
+  
+  positionSet({x, y, z}) {
+    this.canera.positionSet(
+    
+  }
+  
+  lookAt({x, y, z}) {
+    this.camera.lookAt(x, y, z);
+  } 
+  
+  cloneTarget(){
+    
+  } 
+    
+  clonePosition(){
+    
+  } 
+  
+// event listeners 
+class cameraInput() {
+  
+  } 
+  
+// handles thses inputs 
+class inputController (camera, cameraInput) { 
 
-
-
+} 
 
 
 // CameraController.js - Handles all camera-related functionality
@@ -39,8 +64,7 @@ export class Camera {
     this.initControls();
     this.initMouseLook();
     this.initScrollZoom();
-    camera.position.set(0, 30, 50);
-    camera.lookAt(0, 0, 0);
+
 
   }
   
