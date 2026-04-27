@@ -1,59 +1,60 @@
+import { SimplexNoise } from "./SimplexNoise";
 
-
-export function heightmap(HEIGHTMAP_CONFIG) {
+export function heightmapGenerator(config) {
   return {
-    generateTerrainHeightmap, 
-    //generateWaterHeightmap,
-  }
+    generateTerrainHeightmap,
+    generateWaterHeightmap,
+  };
 
-  function generateTerrainHeightMap() {
-
+  function generateTerrainHeightmap() {
     const noise = new NoiseGenerator();
 
-    const base = HEIGHTMAP_CONFIG.noise.base;
-    const overlays = HEIGHTMAP_CONFIG.noise.overlays;
-    const heightMulitplyer = HEIGHTMAP_CONFIG.heightMulitplyer;
-    const heightLevel = HEIGHTMAP_CONFIG.heightLevel;
+    const base = config.base;
+    const overlays = config.overlays;
+    const multiplier = config.multiplier;
+    const addition = config.addition;
 
-    const heightmap = noise.generateNoise(base);
+    let heightMap = noise.generateHeightmap(base);
 
-    overlays.forEach(overlay => { 
-      const overlayNoise = noise.generateNoise(overlay);
-      heightmap = addOverlay(heightMap, overlayNoise);
+    overlays.forEach(overlay => {
+      const overlayNoise = noise.generateHeightmap(overlay);
+      heightMap = multiplyOverlay(heightMap, overlayNoise);
     });
 
-    finalizeHeight(heightMap)
-    return heightMap;
+    return finalizeHeight(heightMap, multiplier, addition);
   }
 
-  function addOverlay(base, overlay) {
-    const size = base.length;
-    const result = Array(size).fill().map(() => Array(size).fill(0));
-
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        result[y][x] = base[y][x] * overlay[y][x];
-      }
-    }
-    return result;
-  }
-
-  function finalizeHeight(base, heightMultiplyer, heightLevel) {
-    const size = base.length;
-    const result = Array(size).fill().map(() => Array(size).fill(0));
-
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        result[y][x] = base[y][x] * heightMultiplyer + heightLevel;
-      }
-    }
-    return result;
+  function generateWaterHeightmap() {
+    throw new Error("generateWaterHeightmap is not yet implemented");
   }
 }
 
+function multiplyOverlay(base, overlay) {
+  const size = base.length;
+  const result = Array(size).fill().map(() => Array(size).fill(0));
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      result[y][x] = base[y][x] * overlay[y][x];
+    }
+  }
+  return result;
+}
+
+function finalizeHeight(base, multiplier, addition) {
+  const size = base.length;
+  const result = Array(size).fill().map(() => Array(size).fill(0));
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      result[y][x] = base[y][x] * multiplier + addition;
+    }
+  }
+  return result;
+}
 
 
-export class NoiseGenerator {
+class NoiseGenerator {
   constructor() {
     this.simplex = new SimplexNoise();
   }

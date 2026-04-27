@@ -1,10 +1,6 @@
 
 
-
-
-
-
-export function singleplayer({ dom, navigate, emitter, Game }) {
+export function singleplayer({ dom, navigate, emitter, Game, CONSTANTS }) {
   return {
     initEventListeners, 
     start,
@@ -21,16 +17,14 @@ export function singleplayer({ dom, navigate, emitter, Game }) {
   }
 
   function start() {
-    
-
-    const gameScreen = dom.screens.game;
     navigate.toScreen(dom.screens.game);
-
     const gamecanvas = dom.canvas.game;
-    const game = new Game({ gameCanvas, emitter });
-    const heightmap = game.generateHeightmap();
-    
-    game.loadHeightmap(heightmap);
+    const game = new Game({ gameCanvas, emitter, CONSTANTS });
+
+    game.loadHeightmap(game.createHeightmap());
+
+    game.initalize()
+
     game.start(multiplayer == false);
   }
 }

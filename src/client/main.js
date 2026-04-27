@@ -20,8 +20,10 @@ import { participant } from "./features/participant.js";
 import { mmo } from "./features/mmo.js"
 
 import { eventSchemas } from "../shared/schemas.js";
+import { CONSTANTS } from "../shared/CONSTANTS.js"
 
 import { Game } from "./game/Game.js";
+
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -29,17 +31,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const dom = createDom();
 
-
   const context = {
     dom,
     emitter: createEmitter(socket, eventSchemas),
     navigate: createNavigation(dom),
     ui: createUi(dom),
-    Game
+    Game,
+    CONSTANTS
   };
   // As this becomes large it would be good practice to inialize only the nessesary event listeners
   // For now this is fine as there are only about 3 event listeners for each feature
-  [singleplayer, host, createParticipant, createMMO]
+  [singleplayer, host, participant, mmo]
     .map(create => create(context))
     .forEach(feature => { 
       feature.initEventListeners();

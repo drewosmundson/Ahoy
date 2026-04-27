@@ -7,7 +7,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.m
 
 
 export class Terrain {
-  constructor(scene, heightmap, heightmapOverlay) {
+  constructor(scene, THREE, heightmap, heightmapOverlay) {
     this.scene = scene;
     this.mapSize = 512; // 512
     this.lowPoly = true;
