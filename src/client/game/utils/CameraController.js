@@ -1,11 +1,22 @@
 
+function createCamera(canvas, perspectiveCamera){
+
+    
+    const camera = new Camera(canvas);
+    
+    return camera
+  }
+
+
+
 
 
 // CameraController.js - Handles all camera-related functionality
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.176.0/examples/jsm/controls/OrbitControls.js';
-export class CameraController {
-  constructor(camera, canvas) {
-    this.camera = camera;
+export class Camera {
+  constructor(canvas, perspectiveCamera) {
+    const aspect = canvas.clientWidth / canvas.clientHeight;
+    this.camera = new perspectiveCamera(75, aspect, 0.1, 1000);
     this.canvas = canvas;
     this.cameraMode = 'follow'; // topView
     this.height = 5;
@@ -28,6 +39,9 @@ export class CameraController {
     this.initControls();
     this.initMouseLook();
     this.initScrollZoom();
+    camera.position.set(0, 30, 50);
+    camera.lookAt(0, 0, 0);
+
   }
   
   initControls() {
