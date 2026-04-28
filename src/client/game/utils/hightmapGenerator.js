@@ -1,9 +1,8 @@
 import { SimplexNoise } from "./SimplexNoise";
 
-export function heightmapGenerator(config) {
+export function createHeightmapGenerator(config) {
   return {
     generateTerrainHeightmap,
-    generateWaterHeightmap,
   };
 
   function generateTerrainHeightmap() {
@@ -23,10 +22,7 @@ export function heightmapGenerator(config) {
 
     return finalizeHeight(heightMap, multiplier, addition);
   }
-
-  function generateWaterHeightmap() {
-    throw new Error("generateWaterHeightmap is not yet implemented");
-  }
+  // function water(){}
 }
 
 function multiplyOverlay(base, overlay) {

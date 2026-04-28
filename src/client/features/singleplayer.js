@@ -19,8 +19,9 @@ export function singleplayer({ dom, navigate, emitter, Game, CONSTANTS }) {
   function start() {
     navigate.toScreen(dom.screens.game);
     const gamecanvas = dom.canvas.game;
-    const game = new Game({ gameCanvas, emitter, CONSTANTS });
+    const game = new Game({ gameCanvas, emitter });
 
+    
     game.loadHeightmap(game.createHeightmap());
 
     game.initalize()

@@ -24,7 +24,7 @@ export class Camera(){
   clonePosition(){
     
   } 
-  
+}
 // event listeners 
 class cameraInput() {
   

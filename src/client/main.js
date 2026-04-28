@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
     navigate: createNavigation(dom),
     ui: createUi(dom),
     Game,
-    CONSTANTS
   };
   // As this becomes large it would be good practice to inialize only the nessesary event listeners
   // For now this is fine as there are only about 3 event listeners for each feature
