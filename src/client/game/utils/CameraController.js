@@ -1,4 +1,10 @@
+// KeyboardInput        keyboard device
+// MouseInput           mouse clicks
+// PointerLockInput    pointer lock + relative movement
 
+// BoatController       KeyboardInput + MouseInput   boat
+// CameraInputController  PointerLockInput + KeyboardInput  camera
+// GameController       KeyboardInput  game toggles
 
 export class Camera(){ 
   constructior() {

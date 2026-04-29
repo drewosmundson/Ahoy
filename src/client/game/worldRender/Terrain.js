@@ -8,8 +8,9 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.m
 
 export class Terrain {
 
-  constructor(heightmap){}
+  constructor(heightmap){
 
+  }
 
   constructor(scene, THREE, heightmap, heightmapOverlay) {
     this.scene = scene;

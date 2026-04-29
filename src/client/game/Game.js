@@ -3,14 +3,13 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.m
 
 import { CameraController } from '../../../public/utils/CameraController.js';
 import { TerrainRenderer } from "./worldRender/Terrain.js";
-import { createHeightmapGenerator, heightmapGenerator } from "./utils/hightmapGenerator.js";
+import { generateTerrain } from "./utils/hightmapGenerator.js";
 
 import { createRenderer  } from './utils/renderer.js';
-
 import { GAME_CONSTANTS } from "./utils/GAME_CONSTANTS.js";
 
 
-  startGame(multiplayer, terrain) {
+ function startGame(multiplayer, terrain) {
     window.addEventListener('resize', this.handleWindowResize);
     if(multiplayer == true) {
       this.renderer.setAnimationLoop(this.multiplayerGameLoop);
@@ -21,24 +20,23 @@ import { GAME_CONSTANTS } from "./utils/GAME_CONSTANTS.js";
   }
     const scene = new THREE.Scene();
 
-    this.renderer = createRenderer(canvas, THREE);
-    this.camera = createCamera(canvas)
+
 
 export class Game {
-  constructor(emitter){
+  constructor(emitter, canvas){
     this.emitter;
-    this.heightmapGenerator = new HeightmapGenerator()
-    this.heightmap = heightmapGenerator.createHeightmap()
-    this.terrain = new Terrain();
+    this.scene = new THREE.Scene();
+    this.renderer = createRenderer(canvas, THREE);
+    this.camera = createCamera(canvas);
+    this.cameraController
+    
   }
 
-  createHeightmap() {
-    return this.heightmap.newHeightmap()
+  initialize(heightmap){
+    this.heightmap = heightmap ?? generateTerrain(config);
+    this.terrain = new Terrain(heightmap);
   }
 
-  loadHeightmap(heightmap) {
-    this.terrain.updateTerrain(heightmap)
-  }
 
   constructor(canvas, socket, multiplayer, heightmap, heightmapOverlay) {
     this.canvas = canvas;

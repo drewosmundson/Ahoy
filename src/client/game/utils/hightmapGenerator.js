@@ -1,55 +1,28 @@
 import { SimplexNoise } from "./SimplexNoise";
 
-export function createHeightmapGenerator(config) {
-  return {
-    generateTerrainHeightmap,
-  };
 
-  function generateTerrainHeightmap() {
-    const noise = new NoiseGenerator();
 
-    const base = config.base;
-    const overlays = config.overlays;
-    const multiplier = config.multiplier;
-    const addition = config.addition;
+export function generateTerrain(config) {
+  const noise = new NoiseGenerator();
 
-    let heightMap = noise.generateHeightmap(base);
+  const base = config.base;
+  const overlays = config.overlays;
+  const multiplier = config.multiplier;
+  const addition = config.addition;
 
-    overlays.forEach(overlay => {
-      const overlayNoise = noise.generateHeightmap(overlay);
-      heightMap = multiplyOverlay(heightMap, overlayNoise);
-    });
+  let heightMap = noise.generateHeightmap(base);
 
-    return finalizeHeight(heightMap, multiplier, addition);
-  }
-  // function water(){}
-}
+  overlays.forEach(overlay => {
+    const overlayNoise = noise.generateHeightmap(overlay);
+    heightMap = noise.multiplyOverlay(heightMap, overlayNoise);
+  });
 
-function multiplyOverlay(base, overlay) {
-  const size = base.length;
-  const result = Array(size).fill().map(() => Array(size).fill(0));
-
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      result[y][x] = base[y][x] * overlay[y][x];
-    }
-  }
-  return result;
-}
-
-function finalizeHeight(base, multiplier, addition) {
-  const size = base.length;
-  const result = Array(size).fill().map(() => Array(size).fill(0));
-
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      result[y][x] = base[y][x] * multiplier + addition;
-    }
-  }
-  return result;
+  return noise.finalizeHeight(heightMap, multiplier, addition);
 }
 
 
+// generates the kind of noisemap you would like and returns the map
+// heightmap, mountain barrier, 
 class NoiseGenerator {
   constructor() {
     this.simplex = new SimplexNoise();
@@ -353,6 +326,31 @@ class NoiseGenerator {
       }
     }
 
+    return result;
+  }
+
+
+  multiplyOverlay(base, overlay) {
+    const size = base.length;
+    const result = Array(size).fill().map(() => Array(size).fill(0));
+
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        result[y][x] = base[y][x] * overlay[y][x];
+      }
+    }
+    return result;
+  }
+
+  finalizeHeight(base, multiplier, addition) {
+    const size = base.length;
+    const result = Array(size).fill().map(() => Array(size).fill(0));
+
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        result[y][x] = base[y][x] * multiplier + addition;
+      }
+    }
     return result;
   }
 }
