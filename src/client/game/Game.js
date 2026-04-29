@@ -27,12 +27,13 @@ import { GAME_CONSTANTS } from "./utils/GAME_CONSTANTS.js";
 export class Game {
   constructor(emitter){
     this.emitter;
-    this.heightmapGenerator = createHeightmapGenerator(GAME_CONSTANTS);
+    this.heightmapGenerator = new HeightmapGenerator()
+    this.heightmap = heightmapGenerator.createHeightmap()
     this.terrain = new Terrain();
   }
 
   createHeightmap() {
-    return this.heightmapGenerator.generateTerrainHeightmap()
+    return this.heightmap.newHeightmap()
   }
 
   loadHeightmap(heightmap) {
