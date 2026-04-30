@@ -5,11 +5,11 @@ import { CameraController } from '../../../public/utils/CameraController.js';
 import { TerrainRenderer } from "./worldRender/Terrain.js";
 import { generateTerrain } from "./utils/hightmapGenerator.js";
 
-import { createRenderer  } from './utils/renderer.js';
+import { createRenderer  } from './utils/Renderer.js';
 import { GAME_CONSTANTS } from "./utils/GAME_CONSTANTS.js";
 
 
- function startGame(multiplayer, terrain) {
+ function startGame(multiplayer) {
     window.addEventListener('resize', this.handleWindowResize);
     if(multiplayer == true) {
       this.renderer.setAnimationLoop(this.multiplayerGameLoop);
@@ -18,23 +18,23 @@ import { GAME_CONSTANTS } from "./utils/GAME_CONSTANTS.js";
       this.renderer.setAnimationLoop(this.singleplayerGameLoop);
     }
   }
-    const scene = new THREE.Scene();
-
-
 
 export class Game {
-  constructor(emitter, canvas){
+  constructor(emitter ){
     this.emitter;
-    this.scene = new THREE.Scene();
-    this.renderer = createRenderer(canvas, THREE);
-    this.camera = createCamera(canvas);
-    this.cameraController
-    
   }
 
   initialize(heightmap){
+    this.scene = new THREE.Scene();
+
+    this.renderer = createRenderer(canvas, THREE);
+    this.camera = createCamera(canvas);
+
+    this.input = 
+
     this.heightmap = heightmap ?? generateTerrain(config);
     this.terrain = new Terrain(heightmap);
+
   }
 
 

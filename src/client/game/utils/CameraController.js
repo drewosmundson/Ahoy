@@ -15,7 +15,7 @@ export class Camera(){
   }
   
   positionSet({x, y, z}) {
-    this.canera.positionSet(
+    this.canera.positionSet();
     
   }
   
