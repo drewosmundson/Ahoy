@@ -1,10 +1,4 @@
-// KeyboardInput        keyboard device
-// MouseInput           mouse clicks
-// PointerLockInput    pointer lock + relative movement
 
-// BoatController       KeyboardInput + MouseInput   boat
-// CameraInputController  PointerLockInput + KeyboardInput  camera
-// GameController       KeyboardInput  game toggles
 
 export class Camera(){ 
   constructior() {
@@ -35,11 +29,7 @@ export class Camera(){
 class cameraInput() {
   
   } 
-  
-// handles thses inputs 
-class inputController (camera, cameraInput) { 
 
-} 
 
 
 // CameraController.js - Handles all camera-related functionality
@@ -74,43 +64,7 @@ export class Camera {
 
   }
   
-  initControls() {
-    this.controls = new OrbitControls(this.camera, this.canvas);
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.05;
-    this.controls.rotateSpeed = 0.5;
-    this.controls.zoomSpeed = 0.5;
-    this.controls.update();
-  }
   
-  initMouseLook() {
-    this.canvas.addEventListener('click', () => {
-      this.requestPointerLock();
-    });
-    
-    document.addEventListener('pointerlockchange', () => {
-      this.isPointerLocked = document.pointerLockElement === this.canvas;
-      if (this.isPointerLocked) {
-        // Calculate current camera orientation when entering pointer lock
-        this.preserveCameraOrientation();
-        console.log('Pointer locked - mouse look enabled');
-      } else {
-        console.log('Pointer unlocked - mouse look disabled');
-      }
-    });
-    
-    document.addEventListener('mousemove', (event) => {
-      if (this.isPointerLocked) {
-        this.handleMouseMove(event);
-      }
-    });
-    
-    document.addEventListener('keydown', (event) => {
-      if (event.code === 'Escape' && this.isPointerLocked) {
-        document.exitPointerLock();
-      }
-    });
-  }
   
   //  method to preserve camera orientation when entering pointer lock
   preserveCameraOrientation() {
