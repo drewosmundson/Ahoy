@@ -1,4 +1,13 @@
 
+  initLighting() {
+    const directionalLight = new THREE.DirectionalLight(0xFFF5EE, 1);
+    directionalLight.position.set(50, 50, 50);
+    this.scene.add(directionalLight);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+    this.scene.add(ambientLight);
+  }
+
+
 
 class Lighting {
   constructor(scene) { 
@@ -17,7 +26,7 @@ class Lighting {
   }
   updateDirectionalLight(){
 
-
+  
 
   }
   updateAmbiantLight() {
