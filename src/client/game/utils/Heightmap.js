@@ -1,27 +1,27 @@
 
 
-export function generateTerrain(config) {
-  const noise = new NoiseGenerator();
+export function createHeightmap(config) {
+  const noise = new Noise();
 
   const base = config.base;
   const overlays = config.overlays;
   const multiplier = config.multiplier;
   const addition = config.addition;
 
-  let heightMap = noise.generateHeightmap(base);
+  let heightmap = noise.generateHeightmap(base);
 
   overlays.forEach(overlay => {
     const overlayNoise = noise.generateHeightmap(overlay);
-    heightMap = noise.multiplyOverlay(heightMap, overlayNoise);
+    heightmap = noise.multiplyOverlay(heightmap, overlayNoise);
   });
 
-  return noise.finalizeHeight(heightMap, multiplier, addition);
+  return noise.finalizeHeight(heightmap, multiplier, addition);
 }
 
 
 // generates the kind of noisemap you would like and returns the map
 // heightmap, mountain barrier, 
-class NoiseGenerator {
+class Noise {
   constructor() {
     this.simplex = new SimplexNoise();
   }

@@ -1,42 +1,38 @@
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
-import { CameraController } from '../../../public/utils/CameraController.js';
-import { TerrainRenderer } from "./worldRender/Terrain.js";
+import { createRenderer  } from './utils/Renderer.js';
+import { createCamera, CameraController } from "./utils/Camera.js';"
+
+import { createHeightmap, TerrainRenderer } from "./worldRender/Terrain.js";
 import { generateTerrain } from "./utils/hightmapGenerator.js";
 
-import { createRenderer  } from './utils/Renderer.js';
+import { createSoundManager } from "./utils/SoundManager.js"
+
 import { GAME_CONSTANTS } from "./utils/GAME_CONSTANTS.js";
 
 
- function startGame(multiplayer) {
-    window.addEventListener('resize', this.handleWindowResize);
-    if(multiplayer == true) {
-      this.renderer.setAnimationLoop(this.multiplayerGameLoop);
-    }
-    else {
-      this.renderer.setAnimationLoop(this.singleplayerGameLoop);
-    }
-  }
 
 export class Game {
-  constructor(emitter ){
+  constructor(emitter){
     this.emitter;
   }
 
-  initialize(heightmap){
+  initialize(canvas, heightmap){
     this.scene = new THREE.Scene();
+    this.canvas = canvas;
 
-    this.renderer = createRenderer(canvas, THREE);
-    this.camera = createCamera(canvas);
+    this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
 
-    this.input = 
+    this.camera = createCamera(canvas, THREE.PerspectiveCamera);
+    this.cameraController = new CameraController(canvas, this.camera);
 
-    this.heightmap = heightmap ?? generateTerrain(config);
+    this.heightmap = heightmap ?? createHeightmap(config);
     this.terrain = new Terrain(heightmap);
 
-  }
+    this.soundManager = createSoundManager();
 
+  }
 
   constructor(canvas, socket, multiplayer, heightmap, heightmapOverlay) {
     this.canvas = canvas;
@@ -90,12 +86,16 @@ export class Game {
     this.cameraController = new CameraController(this.camera, this.canvas);
   }
 
-  initSound() {
-    this.soundManager = new SoundManager(this.camera);
-    this.soundManager.loadSoundEffect('mainTheme', 'resources/sounds/Lost_Sheep_Compressed.mp3');
-    this.soundManager.loadSoundEffect('ambient', 'resources/sounds/waves.mp3');
-    this.playBackgroundMusic();
-  }
+  startGame(multiplayer) {
+      window.addEventListener('resize', this.handleWindowResize);
+      if(multiplayer == true) {
+        this.renderer.setAnimationLoop(this.multiplayerGameLoop);
+      }
+      else {
+        this.renderer.setAnimationLoop(this.singleplayerGameLoop);
+      }
+    }
+
 
   initLighting() {
     const directionalLight = new THREE.DirectionalLight(0xFFF5EE, 1);
@@ -331,15 +331,6 @@ export class Game {
 
   lookLeft() {
     this.cameraController.lookLeft();
-  }
-
-  playBackgroundMusic() {
-    this.soundManager?.playSound('mainTheme', 0.05);
-    this.soundManager?.playSound('ambient', 0.07);
-  }
-
-  playSoundEffect(name, volumeScale = 1.0) {
-    this.soundManager?.playSound(name, volumeScale);
   }
 
   handleWindowResize = () => {

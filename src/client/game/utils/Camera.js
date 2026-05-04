@@ -1,7 +1,16 @@
 
+   
+export function createCamera(canvas, PerspectiveCamera) {
+  const aspect = canvas.clientWidth / canvas.clientHeight;
+  camera = new PerspectiveCamera(75, aspect, 0.1, 1000);
+  camera.position.set(0, 30, 50);
+  camera.lookAt(0, 0, 0);
+  return camera
+}
 
-export class Camera(){ 
-  constructior() {
+
+export class CameraController { 
+  constructior(camera) {
   this.camera = new perspectiveCamera(75, aspect, 0.1, 1000);
   this.clonedPosition = null;
   this.clonedTarget = null;
