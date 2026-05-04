@@ -17,23 +17,24 @@ export class Game {
     this.emitter;
   }
 
-  initialize(canvas, heightmap){
+  setup(canvas, heightmap){
     this.scene = new THREE.Scene();
     this.canvas = canvas;
 
     this.heightmap = heightmap ?? createHeightmap(config);
 
     this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
+    this.camera = createCamera(canvas, THREE.perspectiveCamera);
     
     this.soundManager = createSoundManager();
+    this.inputManager = createInputManager(); 
     
-    this.camera = new Camera(canvas, THREE.perspectiveCamera);
-    this.lighting = new Lighting(scene);
-    this.terrain = new Terrain(heightmap);
-    this.water = new Water(this.scene, this.waterLevel);
-    this.boat = new Boat(this.scene, this.waterLevel, this.socket, this.multiplayer, this.terrain);
-    this.skybox = new Skybox(this.scene);
-    this.input = new InputController(); 
+    this.lighting = createLighting(scene);
+    this.terrain = createTerrain(heightmap);
+    this.water = createWater(this.scene, this.waterLevel);
+    this.skybox = cresteSkybox(this.scene);
+    
+    this.boat = createBoat(this.scene, this.waterLevel, this.socket, this.multiplayer, this.terrain);
     
     window.addEventListener('resize', this.handleWindowResize);
     this.handleWindowResize();
