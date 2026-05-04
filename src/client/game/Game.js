@@ -12,7 +12,6 @@ import { createSoundManager } from "./utils/SoundManager.js"
 import { GAME_CONSTANTS } from "./utils/GAME_CONSTANTS.js";
 
 
-
 export class Game {
   constructor(emitter){
     this.emitter;
@@ -22,16 +21,22 @@ export class Game {
     this.scene = new THREE.Scene();
     this.canvas = canvas;
 
-    this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
-
-    this.camera = createCamera(canvas, THREE.PerspectiveCamera);
-    this.cameraController = new CameraController(canvas, this.camera);
-
     this.heightmap = heightmap ?? createHeightmap(config);
-    this.terrain = new Terrain(heightmap);
 
+    this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
+    
     this.soundManager = createSoundManager();
-
+    
+    this.camera = new Camera(canvas, THREE.perspectiveCamera);
+    this.lighting = new Lighting(scene);
+    this.terrain = new Terrain(heightmap);
+    this.water = new Water(this.scene, this.waterLevel);
+    this.boat = new Boat(this.scene, this.waterLevel, this.socket, this.multiplayer, this.terrain);
+    this.skybox = new Skybox(this.scene);
+    this.input = new InputController(); 
+    
+    window.addEventListener('resize', this.handleWindowResize);
+    this.handleWindowResize();
   }
 
   constructor(canvas, socket, multiplayer, heightmap, heightmapOverlay) {
@@ -65,27 +70,11 @@ export class Game {
     }
 
 
-    window.addEventListener('resize', this.handleWindowResize);
-    this.handleWindowResize();
   }
+  
+  this 
 
-  initRenderer() {
-    this.renderer = new THREE.WebGLRenderer({
-      canvas: this.canvas,
-      antialias: true
-    });
-    this.renderer.setPixelRatio(window.devicePixelRatio);
-  }
-
-  initCamera() {
-    const aspect = this.canvas.clientWidth / this.canvas.clientHeight;
-    this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-    this.camera.position.set(0, 30, 50);
-    this.camera.lookAt(0, 0, 0);
-
-    this.cameraController = new CameraController(this.camera, this.canvas);
-  }
-
+  
   startGame(multiplayer) {
       window.addEventListener('resize', this.handleWindowResize);
       if(multiplayer == true) {
@@ -96,22 +85,6 @@ export class Game {
       }
     }
 
-
-  initLighting() {
-    const directionalLight = new THREE.DirectionalLight(0xFFF5EE, 1);
-    directionalLight.position.set(50, 50, 50);
-    this.scene.add(directionalLight);
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
-    this.scene.add(ambientLight);
-  }
-
-  initComponents() {
-    this.terrain = new Terrain(this.scene, this.socket, this.multiplayer, this.heightmap, this.heightmapOverlay);
-    this.water = new Water(this.scene, this.waterLevel);
-    this.boat = new Boat(this.scene, this.waterLevel, this.socket, this.multiplayer, this.terrain);
-    this.skybox = new Skybox(this.scene);
-    this.input = new InputController(this);
-  }
 
   initMultiplayerEvents() {
     if (!this.socket) return;
