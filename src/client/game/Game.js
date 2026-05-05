@@ -14,9 +14,8 @@ import { GAME_CONSTANTS } from "./utils/GAME_CONSTANTS.js";
 
 export class Game {
   constructor(emitter){
-    this.emitter;
+    this.emitter = emitter 
   }
-
   setup(canvas, heightmap){
     this.canvas = canvas;
     this.heightmap = heightmap ?? createHeightmap(config);
@@ -39,63 +38,49 @@ export class Game {
     this.handleWindowResize();
   }
 
-  constructor(canvas, socket, multiplayer, heightmap, heightmapOverlay) {
-
+  state = { 
     this.waterLevel = 10;
-    this.difficulty = 1;
-    
-    this.multiplayer = multiplayer;
-    
     this.lastTime = 0;
     this.enemyBoats = {};
     this.projectiles = []; // Player's own projectiles
     this.enemyProjectiles = [];
-
     this.isAlive = true;
- 
-    if (this.multiplayer && this.socket) {
-      this.initMultiplayerEvents();
-    }
-    if(!this.multiplayer) {
-      this.initEnemyAI();
-    }
+    } 
+
+  
+  startGame() {
+      window.addEventListener('resize', this.handleWindowResize);
+      this.renderer.setAnimationLoop(this.gameLoop);
   }
   
-  startGame(multiplayer) {
-      window.addEventListener('resize', this.handleWindowResize);
-      if(multiplayer == true) {
-        this.renderer.setAnimationLoop(this.multiplayerGameLoop);
-      }
-      else {
-        this.renderer.setAnimationLoop(this.singleplayerGameLoop);
-      }
+  mainGameLoop() { 
+    
+    
+    
+    
     }
 
 
-  initMultiplayerEvents() {
-    if (!this.socket) return;
 
-    this.socket.off('boatDestroyed');
-    this.socket.on('boatDestroyed', (data) => {
+
+
+
+
+
+  multiplayerEntityUpdates(data)
+      const data = {
+        
+        boatDestoyed: boatIdList
+        projectileFired: projectileList
+        botPosition: boatPositionList}
+  
       this.boatDestroyed(data);
-    })
-
-    // Handle enemy projectiles
-    this.socket.off('enemyProjectileFired');
-    this.socket.on('enemyProjectileFired', (data) => {
       this.enemyFiredProjectile(data);
-    });
-    // Clean up existing listeners
-    // change to enemy boat update location
-    this.socket.off('playerUpdate');
-    this.socket.on('playerUpdate', (data) => {
+  
       this.updateEnemyBoatPosition(data);
-    });
-  }
-  initEnemyAI() {
 
-    return;
-  }
+
+ }
 
 
   updateEnemyBoatInterpolation() {
@@ -329,15 +314,13 @@ update(time) {
   this.cameraController?.update(this.boat);
 }
 
-  animate = (time) => {
-    this.update(time);
-    this.renderer.render(this.scene, this.camera);
-  }
-
   start() {
-    this.renderer.setAnimationLoop(this.animate);
+    this.renderer.setAnimationLoop((time) => {
+      this.update(time);
+      this.renderer.render(this.scene, this.camera);
+    });
   }
-
+  
   stop() {
     this.renderer.setAnimationLoop(null);
   }
