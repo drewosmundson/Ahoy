@@ -18,10 +18,10 @@ export class Game {
   }
 
   setup(canvas, heightmap){
-    this.scene = new THREE.Scene();
     this.canvas = canvas;
-
     this.heightmap = heightmap ?? createHeightmap(config);
+    
+    this.scene = new THREE.Scene();
 
     this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
     this.camera = createCamera(canvas, THREE.perspectiveCamera);
@@ -33,35 +33,25 @@ export class Game {
     this.terrain = createTerrain(heightmap);
     this.water = createWater(this.scene, this.waterLevel);
     this.skybox = cresteSkybox(this.scene);
-    
-    this.boat = createBoat(this.scene, this.waterLevel, this.socket, this.multiplayer, this.terrain);
+    this.boat = createBoat(this.scene, this.waterLevel, this.multiplayer, this.heightmap);
     
     window.addEventListener('resize', this.handleWindowResize);
     this.handleWindowResize();
   }
 
   constructor(canvas, socket, multiplayer, heightmap, heightmapOverlay) {
-    this.canvas = canvas;
-    this.scene = new THREE.Scene();
+
     this.waterLevel = 10;
     this.difficulty = 1;
-    this.socket = socket;
+    
     this.multiplayer = multiplayer;
-    this.heightmap = heightmap;
-    this.heightmapOverlay = heightmapOverlay;
-
+    
     this.lastTime = 0;
     this.enemyBoats = {};
     this.projectiles = []; // Player's own projectiles
     this.enemyProjectiles = [];
 
     this.isAlive = true;
-
-    this.initRenderer();
-    this.initCamera();
-    this.initSound();
-    this.initLighting();
-    this.initComponents();
  
     if (this.multiplayer && this.socket) {
       this.initMultiplayerEvents();
@@ -69,12 +59,7 @@ export class Game {
     if(!this.multiplayer) {
       this.initEnemyAI();
     }
-
-
   }
-  
-  this 
-
   
   startGame(multiplayer) {
       window.addEventListener('resize', this.handleWindowResize);
