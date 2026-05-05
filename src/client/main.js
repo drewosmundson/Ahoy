@@ -26,17 +26,15 @@ import { Game } from "./game/Game.js";
 
 
 document.addEventListener('DOMContentLoaded', () => {
-
   const socket = io();
-
   const dom = createDom();
 
   const context = {
     dom,
+    Game,
     emitter: createEmitter(socket, eventSchemas),
     navigate: createNavigation(dom),
     ui: createUi(dom),
-    Game,
   };
   // As this becomes large it would be good practice to inialize only the nessesary event listeners
   // For now this is fine as there are only about 3 event listeners for each feature

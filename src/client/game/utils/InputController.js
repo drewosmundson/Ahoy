@@ -15,11 +15,13 @@ initControls() {
     this.controls.rotateSpeed = 0.5;
     this.controls.zoomSpeed = 0.5;
     this.controls.update();
+
   }
   
   initMouseLook() {
     this.canvas.addEventListener('click', () => {
       this.requestPointerLock();
+      
     });
     
     document.addEventListener('pointerlockchange', () => {

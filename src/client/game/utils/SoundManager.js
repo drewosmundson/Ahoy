@@ -17,9 +17,9 @@ export function createSoundManager(camera) {
 
 
 class SoundManager {
-  constructor(camera) {
+  constructor(camera, Audiolistener) {
     // Create audio listener and attach to camera
-    this.listener = new THREE.AudioListener();
+    this.listener = new AudioListener();
     camera.add(this.listener);
     
     // Sound collections
