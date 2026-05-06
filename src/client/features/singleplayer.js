@@ -2,9 +2,9 @@
 
 export function singleplayer({ dom, navigate, emitter, Game, CONSTANTS }) {
   return {
-    initEventListeners, 
+    initEventListeners,
+    toMenuScreen,
     start,
-    toMenuScreen
   };
 
   function initEventListeners() {
@@ -17,10 +17,10 @@ export function singleplayer({ dom, navigate, emitter, Game, CONSTANTS }) {
   }
 
   function start() {
-    navigate.toScreen(dom.screens.game);
     const canvas = dom.canvas.game;
-    const game = new Game({ canvas, emitter });
-    game.setup();
+    const game = new Game(emitter.nullEmit);
+    game.setup(canvas);
+    navigate.toScreen(dom.screens.game);
     game.start();
   }
 }
