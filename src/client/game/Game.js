@@ -13,10 +13,10 @@ import { GAME_CONSTANTS } from "./utils/GAME_CONSTANTS.js";
 
 
 export class Game {
-  constructor(emitter){
-    this.emitter = emitter 
+  constructor(emit){
+    this.emit = emit;
   }
-  setup(canvas, heightmap){
+  setup({canvas, heightmap}){
     this.canvas = canvas;
     this.heightmap = heightmap ?? createHeightmap(config);
     
@@ -35,8 +35,26 @@ export class Game {
     this.boat = createBoat(this.scene, this.waterLevel, this.multiplayer, this.heightmap);
     
     window.addEventListener('resize', this.handleWindowResize);
-    this.handleWindowResize();
   }
+
+  
+  update() { 
+    
+
+  }
+
+  start() {
+    this.handleWindowResize();
+    this.renderer.setAnimationLoop((time) => {
+      this.update(time);
+      this.renderer.render(this.scene, this.camera);
+    });
+  }
+  
+  stop() {
+    this.renderer.setAnimationLoop(null);
+  }
+
 
   state = { 
     this.waterLevel = 10;
@@ -46,26 +64,6 @@ export class Game {
     this.enemyProjectiles = [];
     this.isAlive = true;
     } 
-
-  
-  startGame() {
-      window.addEventListener('resize', this.handleWindowResize);
-      this.renderer.setAnimationLoop(this.gameLoop);
-  }
-  
-  mainGameLoop() { 
-    
-    
-    
-    
-    }
-
-
-
-
-
-
-
 
   multiplayerEntityUpdates(data)
       const data = {
@@ -314,16 +312,7 @@ update(time) {
   this.cameraController?.update(this.boat);
 }
 
-  start() {
-    this.renderer.setAnimationLoop((time) => {
-      this.update(time);
-      this.renderer.render(this.scene, this.camera);
-    });
-  }
-  
-  stop() {
-    this.renderer.setAnimationLoop(null);
-  }
+
 
   cleanup() {
     this.boat?.cleanup();
