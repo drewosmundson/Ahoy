@@ -2,7 +2,8 @@
 
 export function createEmitter(socket, eventSchemas)  {
   return {
-    emit
+    emit,
+    nullemit
   }
   
   function emit(event, data, lobby) {
@@ -17,4 +18,9 @@ export function createEmitter(socket, eventSchemas)  {
     }
     socket.emit(event, {...data, lobby});
   }
+  // Intentionally does nothing. 
+  // The purpose of this function is to be passed into a singleplayer games
+  // That way no logic needs to change and no additional data has to be attempted 
+  // to be passed to the server. 
+  function nullEmit() {}
 }
