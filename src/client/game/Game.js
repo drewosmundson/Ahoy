@@ -25,20 +25,30 @@ export class Game {
     this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
     this.camera = createCamera(canvas, THREE.perspectiveCamera);
     
-    this.soundManager = createSoundManager();
-    this.inputManager = createInputManager(); 
-    
+
     this.lighting = createLighting(scene);
     this.terrain = createTerrain(heightmap);
     this.water = createWater(this.scene, this.waterLevel);
     this.skybox = cresteSkybox(this.scene);
     this.boat = createBoat(this.scene, this.waterLevel, this.multiplayer, this.heightmap);
-    
+
+
+    this.inputManager = createInputManager(); 
+    this.networkManager = createNetworkManager();
+
+    this.soundController = initSoundController();
+    this.cameraController = initCameraController(this.camera, this.canvas);
+    this.boatController = initBoatController(this.boat);
+
+
     window.addEventListener('resize', this.handleWindowResize);
   }
 
   
   update() { 
+
+    this.inputManager.update();
+
     
 
   }
@@ -54,31 +64,6 @@ export class Game {
   stop() {
     this.renderer.setAnimationLoop(null);
   }
-
-
-  state = { 
-    this.waterLevel = 10;
-    this.lastTime = 0;
-    this.enemyBoats = {};
-    this.projectiles = []; // Player's own projectiles
-    this.enemyProjectiles = [];
-    this.isAlive = true;
-    } 
-
-  multiplayerEntityUpdates(data)
-      const data = {
-        
-        boatDestoyed: boatIdList
-        projectileFired: projectileList
-        botPosition: boatPositionList}
-  
-      this.boatDestroyed(data);
-      this.enemyFiredProjectile(data);
-  
-      this.updateEnemyBoatPosition(data);
-
-
- }
 
 
   updateEnemyBoatInterpolation() {

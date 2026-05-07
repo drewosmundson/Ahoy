@@ -61,7 +61,8 @@ const COLORS = {
 }
 
 const WATER = {
-  WATER_LEVEL: 10,
+  WATER_HEIGHT: 10,
+  // WATER_COLOR:
 }
 
 const ANIMATION = {
