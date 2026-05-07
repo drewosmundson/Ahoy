@@ -21,35 +21,33 @@ export class Game {
     this.heightmap = heightmap ?? createHeightmap(config);
     
     this.scene = new THREE.Scene();
-
+ 
     this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
     this.camera = createCamera(canvas, THREE.perspectiveCamera);
     
-
     this.lighting = createLighting(scene);
     this.terrain = createTerrain(heightmap);
     this.water = createWater(this.scene, this.waterLevel);
     this.skybox = cresteSkybox(this.scene);
-    this.boat = createBoat(this.scene, this.waterLevel, this.multiplayer, this.heightmap);
+    this.boat = createBoat(this.scene, this.waterLevel, this.heightmap);
 
+    this.inputManager = createInputManager(); // client -> server
+    this.networkManager = createNetworkManager(); // server -> client
 
-    this.inputManager = createInputManager(); 
-    this.networkManager = createNetworkManager();
+    this.soundController = addSoundController();
+    this.cameraController = addCameraController(this.camera, this.canvas);
+    this.boatController = addBoatController(this.boat);
 
-    this.soundController = initSoundController();
-    this.cameraController = initCameraController(this.camera, this.canvas);
-    this.boatController = initBoatController(this.boat);
-
-
+    this.deltaTime = 0;
+    this.lastTime = 0;
     window.addEventListener('resize', this.handleWindowResize);
   }
 
   
-  update() { 
-
+  update(time) { 
+    this.deltaTime = 
     this.inputManager.update();
 
-    
 
   }
 
