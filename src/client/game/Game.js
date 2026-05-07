@@ -47,7 +47,31 @@ export class Game {
   update(time) { 
     this.deltaTime = 
     this.inputManager.update();
+FRAME START
+1. Gather Local Inputs
+   - keyboard
+   - mouse
+   - AI decisions
 
+2. Simulate Locally Controlled Entities
+   - player boat
+   - local projectiles
+   - local sounds
+
+3. Send Local Inputs To Server
+
+4. Receive Server Snapshots
+   - buffered by NetworkManager 
+
+5. Apply Snapshot Interpolation
+   - remote boats
+   - remote projectiles
+
+6. Reconcile Local Prediction
+   - compare predicted state to authoritative state
+   - smooth error correction
+
+7. Render Scene
 
   }
 
