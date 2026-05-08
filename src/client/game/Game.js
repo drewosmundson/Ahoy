@@ -32,21 +32,23 @@ export class Game {
     this.boat = createBoat(this.scene, this.waterLevel, this.heightmap);
 
     this.inputManager = createInputManager(); // client -> server
+    this.aiManager = createAiManager(); // client -> server
     this.networkManager = createNetworkManager(); // server -> client
 
     this.soundController = addSoundController();
     this.cameraController = addCameraController(this.camera, this.canvas);
     this.boatController = addBoatController(this.boat);
+    
 
     this.deltaTime = 0;
     this.lastTime = 0;
     window.addEventListener('resize', this.handleWindowResize);
   }
 
-  
   update(time) { 
     this.deltaTime = 
     this.inputManager.update();
+    /**
 FRAME START
 1. Gather Local Inputs
    - keyboard
@@ -71,8 +73,8 @@ FRAME START
    - compare predicted state to authoritative state
    - smooth error correction
 
-7. Render Scene
-
+7. Render Scene 
+**/
   }
 
   start() {
