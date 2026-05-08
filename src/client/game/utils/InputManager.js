@@ -1,13 +1,68 @@
 
-class keyboardInput 
+export function createInputManager(canvas, emitter, OrbitControls, INPUT_CONFIG) {
+  const inputManager = new InputManager(OrbitControls);
+}
 
 
+class InputManager {
+  constructor(OrbitControls){
 
-class mouseButtonInput{
     
-    } 
 
-class mousePointerInput
+
+  }
+
+
+  keyboardInput(){
+    window.addEventListener('keydown', (event) => {
+      this.handleKeyDown(event);
+    });
+
+    window.addEventListener('keyup', (event) => {
+      this.handleKeyUp(event);
+    });
+  }
+
+  mouseButtonInput() {
+    window.addEventListener('mousedown', (event) => {
+      this.handleMouseDown(event);
+    });
+    
+    // Prevent context menu on right click
+    window.addEventListener('contextmenu', (event) => {
+      event.preventDefault();
+    });
+  }
+
+  mousePointerInput(){
+
+
+
+  }
+
+  touchControls(){
+    console.log("Touch controls not yet implemented");
+  }
+
+
+
+  update(){
+
+
+
+  }
+
+
+
+
+}
+
+
+
+
+
+
+class mousePointerInput 
 initControls() {
     this.controls = new OrbitControls(this.camera, this.canvas);
     this.controls.enableDamping = true;
@@ -47,10 +102,6 @@ initControls() {
       }
     });
   }
-
-
-
-
 
 
 export class InputController {

@@ -10,71 +10,87 @@ import { generateTerrain } from "./utils/hightmapGenerator.js";
 import { createSoundManager } from "./utils/SoundManager.js"
 
 import { GAME_CONSTANTS } from "./utils/GAME_CONSTANTS.js";
+import { createInputManager } from './utils/InputManager.js';
 
 
 export class Game {
-  constructor(emit){
+  constructor(emit) {
     this.emit = emit;
   }
-  setup({canvas, heightmap}){
+  setup({canvas, heightmap}) {
     this.canvas = canvas;
     this.heightmap = heightmap ?? createHeightmap(config);
     
     this.scene = new THREE.Scene();
- 
-    this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
-    this.camera = createCamera(canvas, THREE.perspectiveCamera);
-    
-    this.lighting = createLighting(scene);
-    this.terrain = createTerrain(heightmap);
-    this.water = createWater(this.scene, this.waterLevel);
-    this.skybox = cresteSkybox(this.scene);
-    this.boat = createBoat(this.scene, this.waterLevel, this.heightmap);
 
-    this.inputManager = createInputManager(); // client -> server
-    this.aiManager = createAiManager(); // client -> server
+    this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
+
+  
+    this.lighting = createLighting(this.scene);
+    this.terrain = createTerrain(heightmap);
+    this.water = createWater(this.scene);
+    this.skybox = createSkybox(this.scene);
+
     this.networkManager = createNetworkManager(); // server -> client
+
+    this.boat = createBoat(this.scene, this.waterLevel, this.heightmap);
 
     this.soundController = addSoundController();
     this.cameraController = addCameraController(this.camera, this.canvas);
     this.boatController = addBoatController(this.boat);
     
+    this.boats = new Map();
 
     this.deltaTime = 0;
     this.lastTime = 0;
     window.addEventListener('resize', this.handleWindowResize);
   }
 
+  createPlayer(){
+    const camera = createCamera(canvas, THREE.perspectiveCamera);
+    
+  }
+
+
+
+
+
+
+    /**
+      FRAME START
+      0. Calculate Delta Time
+        - time since last frame in ms
+
+      1. Gather Local Inputs
+        - keyboard
+        - mouse
+        - AI decisions
+
+      2. Simulate Locally Controlled Entities
+        - player boat
+        - local projectiles
+        - local sounds
+
+      3. Send Local Inputs To Server
+
+      4. Receive Server Snapshots
+        - buffered by NetworkManager 
+
+      5. Apply Snapshot Interpolation
+        - remote boats
+        - remote projectiles
+        - extrapolate remote positions forward using their last known velocity while waiting for the next snapshot.
+
+      6. Reconcile Local Prediction
+        - compare predicted state to authoritative state
+        - smooth error correction
+
+      7. Render Scene 
+      **/
   update(time) { 
     this.deltaTime = 
     this.inputManager.update();
-    /**
-FRAME START
-1. Gather Local Inputs
-   - keyboard
-   - mouse
-   - AI decisions
 
-2. Simulate Locally Controlled Entities
-   - player boat
-   - local projectiles
-   - local sounds
-
-3. Send Local Inputs To Server
-
-4. Receive Server Snapshots
-   - buffered by NetworkManager 
-
-5. Apply Snapshot Interpolation
-   - remote boats
-   - remote projectiles
-
-6. Reconcile Local Prediction
-   - compare predicted state to authoritative state
-   - smooth error correction
-
-7. Render Scene 
-**/
   }
 
   start() {
