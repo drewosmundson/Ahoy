@@ -20,42 +20,58 @@ export class Game {
   setup({canvas, heightmap}) {
     this.canvas = canvas;
     this.heightmap = heightmap ?? createHeightmap(config);
-    
     this.scene = new THREE.Scene();
-
     this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
 
-  
-    this.lighting = createLighting(this.scene);
-    this.terrain = createTerrain(heightmap);
-    this.water = createWater(this.scene);
-    this.skybox = createSkybox(this.scene);
+    this.worldComponents = createWorldComponents(this.scene, this.heightmap);
+   
+    this.controllers = new Map();
+    this.projectiles = new Map();
 
-    this.networkManager = createNetworkManager(); // server -> client
-
-    this.boat = createBoat(this.scene, this.waterLevel, this.heightmap);
-
-    this.soundController = addSoundController();
-    this.cameraController = addCameraController(this.camera, this.canvas);
-    this.boatController = addBoatController(this.boat);
+    this.player = createPlayer(); 
     
-    this.boats = new Map();
-
+    this.boat = createBoat(this.scene, this.waterLevel, this.heightmap);
+    this.camera = createCamera()
+    this.inputManager = createInputManager
+    this.boatController = addBoatController(this.boat);
+    this.cameraController = addCameraController(this.camera, this.canvas);
+    this.sound = createSound
+    this.addboat(player.boat)
+    
+    this.playerInput = createPlayerInput()
+    this.AiInput = createAiManager()
+    this.remoteInput = createNetworkManager()
+    
+    this.player = createPlayer(playerInput);
+    
     this.deltaTime = 0;
     this.lastTime = 0;
+    
     window.addEventListener('resize', this.handleWindowResize);
   }
-
-  createPlayer(){
-    const camera = createCamera(canvas, THREE.perspectiveCamera);
+  createWorldComponents(scene, heightMap){
+    return {
+      lighting: createLighting(scene),
+      terrain: createTerrain(scene, heightmap),
+      water: createWater(scene),
+      skybox: createSkybox(scene),
+    }
+  createPlayer() { 
+    const sound = createSoundManagr() 
+    const setting = createSettingsManager()
+    const boat = createBoat()
+    const input = inputManager()
+    const boatController = createBoatContrer() 
+    const cameraController = createCameraControl()
+    return { boatController, cameraController } 
+  
+  
+  addBoat(){
     
-  }
-
-
-
-
-
-
+   
+    return boatController,
+    }
+  
     /**
       FRAME START
       0. Calculate Delta Time
@@ -88,8 +104,7 @@ export class Game {
       7. Render Scene 
       **/
   update(time) { 
-    this.deltaTime = 
-    this.inputManager.update();
+    
 
   }
 
