@@ -60,37 +60,35 @@ export class Game {
     return boatController,
     }
   
-    /**
-      FRAME START
-      0. Calculate Delta Time
-        - time since last frame in ms
+    FRAME START
+/*
+1. NetworkManager receives snapshots asynchronously
+   - buffers snapshots
+   - stores authoritative states
 
-      1. Gather Local Inputs
-        - keyboard
-        - mouse
-        - AI decisions
+2. Controllers update locally controlled entities
+   - PlayerController pulls from PlayerInputSource
+   - AIController pulls from AIInputSource
+   - NetworkController/RemoteController pulls from snapshot buffer
 
-      2. Simulate Locally Controlled Entities
-        - player boat
-        - local projectiles
-        - local sounds
+3. Locally controlled entities simulate immediately
+   - local boat movement
+   - local projectiles
+   - local sounds
 
-      3. Send Local Inputs To Server
+4. Send local player inputs to server
 
-      4. Receive Server Snapshots
-        - buffered by NetworkManager 
+5. Remote entities interpolate/extrapolate
+   - interpolate between snapshots
+   - extrapolate briefly if next snapshot missing
 
-      5. Apply Snapshot Interpolation
-        - remote boats
-        - remote projectiles
-        - extrapolate remote positions forward using their last known velocity while waiting for the next snapshot.
+6. Reconcile locally predicted entities
+   - compare predicted state vs authoritative snapshot
+   - apply soft correction
 
-      6. Reconcile Local Prediction
-        - compare predicted state to authoritative state
-        - smooth error correction
+7. Render scene
 
-      7. Render Scene 
-      **/
+*/
   update(time) { 
     
 
