@@ -65,6 +65,8 @@ export class Game {
 1. NetworkManager receives snapshots asynchronously
    - buffers snapshots
    - stores authoritative states
+   AI Brain updates every few hundred frames adds to intent state
+   user input is taken ready to be pulled adds to intent state
 
 2. Controllers update locally controlled entities
    - PlayerController pulls from PlayerInputSource
