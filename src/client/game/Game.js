@@ -20,32 +20,22 @@ export class Game {
   setup({canvas, heightmap}) {
     this.canvas = canvas;
     this.heightmap = heightmap ?? createHeightmap(config);
-    this.scene = new THREE.Scene();
     this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
+    this.scene = new THREE.Scene();
+    
+    this.deltaTime = 0;
+    this.lastTime = 0;
 
     this.worldComponents = createWorldComponents(this.scene, this.heightmap);
    
     this.controllers = new Map();
     this.projectiles = new Map();
-
-    this.player = createPlayer(); 
     
-    this.boat = createBoat(this.scene, this.waterLevel, this.heightmap);
-    this.camera = createCamera()
-    this.inputManager = createInputManager
-    this.boatController = addBoatController(this.boat);
-    this.cameraController = addCameraController(this.camera, this.canvas);
-    this.sound = createSound
-    this.addboat(player.boat)
-    
-    this.playerInput = createPlayerInput()
-    this.AiInput = createAiManager()
-    this.remoteInput = createNetworkManager()
+    this.playerInput = createPlayerInputManager()
+    this.AiInput = createAiInputManager()
+    this.remoteInput = createRemoteInputManager()
     
     this.player = createPlayer(playerInput);
-    
-    this.deltaTime = 0;
-    this.lastTime = 0;
     
     window.addEventListener('resize', this.handleWindowResize);
   }
@@ -66,9 +56,7 @@ export class Game {
     return { boatController, cameraController } 
   
   
-  addBoat(){
-    
-   
+  addBoat{ 
     return boatController,
     }
   
