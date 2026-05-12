@@ -7,7 +7,6 @@ export function createInputManager(canvas, emitter, OrbitControls, INPUT_CONFIG)
 class InputManager {
   constructor(OrbitControls){
 
-
   }
 
   keyboardInput(){
@@ -50,9 +49,6 @@ class InputManager {
   }
 
 }
-
-
-
 class mousePointerInput 
 initControls() {
     this.controls = new OrbitControls(this.camera, this.canvas);

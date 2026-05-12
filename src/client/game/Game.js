@@ -12,7 +12,6 @@ import { createSoundManager } from "./utils/SoundManager.js"
 import { GAME_CONSTANTS } from "./utils/GAME_CONSTANTS.js";
 import { createInputManager } from './utils/InputManager.js';
 
-
 export class Game {
   constructor(emit) {
     this.emit = emit;
@@ -22,15 +21,11 @@ export class Game {
     this.heightmap = heightmap ?? createHeightmap(config);
     this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
     this.scene = new THREE.Scene();
-    
-    this.deltaTime = 0;
-    this.lastTime = 0;
 
     this.worldComponents = createWorldComponents(this.scene, this.heightmap);
    
     this.controllers = new Map();
-    this.projectiles = new Map();
-    
+
     this.playerInput = createPlayerInputManager()
     this.AiInput = createAiInputManager()
     this.remoteInput = createRemoteInputManager()
@@ -48,13 +43,11 @@ export class Game {
     }
   }
   createPlayer() { 
-    const sound = createSoundManagr() 
-    const setting = createSettingsManager()
-    const boat = createBoat()
-    const input = inputManager()
-    const boatController = createBoatContrer() 
-    const cameraController = createCameraControl()
-    return { boatController, cameraController } 
+    return {
+      boat: createBoat(),
+
+
+    }
   }
   
   addBoat(){ 
