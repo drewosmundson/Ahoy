@@ -46,6 +46,7 @@ export class Game {
       water: createWater(scene),
       skybox: createSkybox(scene),
     }
+  }
   createPlayer() { 
     const sound = createSoundManagr() 
     const setting = createSettingsManager()
@@ -54,13 +55,13 @@ export class Game {
     const boatController = createBoatContrer() 
     const cameraController = createCameraControl()
     return { boatController, cameraController } 
+  }
   
-  
-  addBoat{ 
-    return boatController,
+  addBoat(){ 
+    return boatController
     }
   
-    FRAME START
+    // FRAME START
 /*
 1. NetworkManager receives snapshots asynchronously
    - buffers snapshots
@@ -95,7 +96,7 @@ export class Game {
     
 
   }
-
+  
   start() {
     this.handleWindowResize();
     this.renderer.setAnimationLoop((time) => {
@@ -107,7 +108,7 @@ export class Game {
   stop() {
     this.renderer.setAnimationLoop(null);
   }
-
+}
 
   updateEnemyBoatInterpolation() {
     const currentTime = Date.now();

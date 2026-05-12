@@ -7,11 +7,8 @@ export function createInputManager(canvas, emitter, OrbitControls, INPUT_CONFIG)
 class InputManager {
   constructor(OrbitControls){
 
-    
-
 
   }
-
 
   keyboardInput(){
     window.addEventListener('keydown', (event) => {
@@ -52,13 +49,7 @@ class InputManager {
 
   }
 
-
-
-
 }
-
-
-
 
 
 
