@@ -1,10 +1,10 @@
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
-import { createRenderer  } from './utils/Renderer.js';
+import { createRenderer  } from './world/Renderer.js';
 import { createCamera, CameraController } from "./utils/Camera.js';"
 
-import { createHeightmap, TerrainRenderer } from "./worldRender/Terrain.js";
+import { createHeightmap, TerrainRenderer } from "./world/Terrain.js";
 import { generateTerrain } from "./utils/hightmapGenerator.js";
 
 import { createSoundManager } from "./utils/SoundManager.js"
