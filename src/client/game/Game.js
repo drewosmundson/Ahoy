@@ -14,6 +14,196 @@ import { createSoundManager } from "./utils/SoundManager.js"
 import { GAME_CONSTANTS } from "./utils/GAME_CONSTANTS.js";
 import { createInputManager } from './utils/InputManager.js';
 
+// game lazely gets raw inputs frkm these 4 classes
+
+// i shoudm combine these 8 classes for 4 total 
+
+//ai brain
+class AiManage()
+
+// keydown event handlers 
+class clientButtonInput{
+} 
+// mouse orbit event handlers 
+class clientCameraInput {
+  
+  } 
+// server message receiver 
+class networkManager {
+     boatsToSpawn() 
+} 
+
+
+
+class InputSource {
+  getState() {}
+}
+class PlayerInputSource extends InputSource {
+  constructor(inputManager) {
+    super();
+    this.inputManager = inputManager;
+  }
+
+  getState() {
+    return {
+      throttle: this.inputManager.isKeyDown("w") ? 1 : 0,
+      left: this.inputManager.isKeyDown("a"),
+      right: this.inputManager.isKeyDown("d"),
+      fire: this.inputManager.isMouseDown(0)
+    };
+  }
+}
+class AIInputSource extends InputSource {
+  getState() {
+    return {
+      throttle: 1,
+      left: Math.random() > 0.5,
+      right: false,
+      fire: false
+    };
+  }
+}
+
+class NetworkInputSource extends InputSource {
+  getState() {
+    return this.latestServerInput;
+  }
+}
+
+
+
+
+class CameraPerspectiveManager{}
+
+class camera{}
+
+class CameraController {
+  constructor(camera) {
+    this.camera = camera;
+  }
+
+  update(dt) {}
+}
+
+class OrbitCameraController
+  extends CameraController {
+
+  constructor(camera, target, domElement) {
+    super(camera);
+
+    this.controls =
+      new OrbitControls(
+        camera,
+        domElement
+        target,
+      );
+  }
+
+  update(dt) {
+    this.controls.update();
+  }
+}
+
+class RTSCameraController extends CameraController{}
+
+class FollowCameraController
+  extends CameraController {
+
+  constructor(camera, target) {
+    super(camera);
+
+    this.target = target;
+  }
+
+  update(dt) {
+
+    const desiredPosition =
+      this.target.position
+        .clone()
+        .add(new THREE.Vector3(0, 10, -20));
+
+    this.camera.position.lerp(
+      desiredPosition,
+      0.1
+    );
+
+    this.camera.lookAt(
+      this.target.position
+    );
+  }
+}
+
+
+
+
+
+class BoatController {
+  constructor(boat, inputSource) {
+    this.boat = boat;
+    this.inputSource = inputSource;
+  }
+
+  setInputSource(inputSource) {
+    this.inputSource = inputSource;
+  }
+
+  update(dt) {
+    const input =
+      this.inputSource.getState();
+
+    this.boat.move(input, dt);
+  }
+}
+
+export class LocalBoatController
+  extends BoatController {
+
+  update(dt) {
+
+    const input =
+      this.inputSource.getState();
+
+    this.boat.simulateMovement(
+      input,
+      dt
+    );
+
+    if (input.fireLeft) {
+      this.boat.fireLeft();
+    }
+
+    if (input.fireRight) {
+      this.boat.fireRight();
+    }
+  }
+}
+
+export class RemoteBoatController
+  extends BoatController {
+
+  update(dt) {
+
+    const state =
+      this.inputSource.getState();
+
+    if (!state) {
+      return;
+    }
+
+    this.boat.position.lerp(
+      state.position,
+      0.1
+    );
+
+    this.boat.rotation.y =
+      lerpAngle(
+        this.boat.rotation.y,
+        state.rotation,
+        0.1
+      );
+  }
+}
+
 export class Game {
   constructor(canvas) {
     this.canvas = canvas
@@ -42,6 +232,29 @@ export class Game {
       water: createWater(scene),
       skybox: createSkybox(scene),
     }
+  }
+
+/// switches the users camera from orbit controlls 
+// to follow to rts cam spectator 
+  setCameraController(camera Controller){
+    this.cameraController = cameraComtroller
+    }
+    
+  createBoat(inputSource) {
+    const boat = new Boat(this.scene);
+  
+    const controller =
+      new BoatController(
+        boat,
+        inputSource
+      );
+  
+    this.controllers.push(controller);
+  
+    return {
+      boat,
+      controller
+    };
   }
 
   update(time) { 
