@@ -3,10 +3,16 @@
 
 
 class BoatController {
-
   constructor(boat, input){
 
   }
+
+  moveBoat(){
+
+
+
+  }
+
 }
 
 
@@ -15,8 +21,8 @@ class Boat {
     this.scene = scene;
     this.THREE = THREE;
     this.model = createBoatModel(this.scene);
-    this.position = this.model.position;
-    this.rotation = this.model.rotation;
+    this.position = this.position;
+    this.rotation = this.rotation;
   }
 
   
@@ -75,10 +81,10 @@ class Boat {
   }
 
 
-  get position() {
-    return
+  getPosition() {
+    return this.position.clone();
   }
-  set position() {
+  setPosition() {
     
   }
 
