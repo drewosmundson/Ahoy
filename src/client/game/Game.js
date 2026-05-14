@@ -18,32 +18,63 @@ import { createInputManager } from './utils/InputManager.js';
 
 // i shoudm combine these 8 classes for 4 total 
 
-//ai brain
-class AiManage()
+// mouse orbit event handlers 
+class ClientMousePointerInput {} 
 
 // keydown event handlers 
-class clientButtonInput{
-} 
-// mouse orbit event handlers 
-class clientCameraInput {
-  
-  } 
-// server message receiver 
-class networkManager {
-     boatsToSpawn() 
-} 
+class ClientButtonInput {
+  constructor() {
+    window.addEventListener('keydown', (event) => {
+      this.handleKeyDown(event);
+    });
+    window.addEventListener('mousedown', (event) => {
+      this.handleKeyDown(event);
+    });
+    this.keyBindings = {
+      KeyW: 'moveForward',
+      ArrowUp: 'moveForward',
 
+      KeyS: 'moveBackward',
+      ArrowDown: 'moveBackward',
 
+      KeyA: 'moveLeft',
+      ArrowLeft: 'moveLeft',
 
-class InputSource {
-  getState() {}
-}
-class PlayerInputSource extends InputSource {
-  constructor(inputManager) {
-    super();
-    this.inputManager = inputManager;
+      KeyD: 'moveRight',
+      ArrowRight: 'moveRight',
+
+      KeyC: 'toggleCamera',
+      KeyP: 'toggleTerrain',
+      KeyF: 'toggleFog',
+    };
+    this.actions = {
+      moveForward: false,
+      moveBackward: false,
+      moveLeft: false,
+      moveRight: false,
+    }
+    this.toggles = {
+      toggleCamera: false
+      toggleTerrain: false;
+    }
   }
 
+  handleKeyDown(event) {
+    const action = this.bindings[event.code];
+    if (!action) {
+      this.toggleEvent(event)
+    }
+    this.actions[this.bindings[event.code]] = true;
+  }
+  toggleEvent(event) {
+    const toggle = this.bindings[event.code]
+    if(!toggle) return;
+    if(this.toggles[toggle] == true) {
+      this.toggles[toggle] == false;
+    } else {
+      this.toggles[toggle] = true;
+    }
+  }
   getState() {
     return {
       throttle: this.inputManager.isKeyDown("w") ? 1 : 0,
@@ -52,8 +83,10 @@ class PlayerInputSource extends InputSource {
       fire: this.inputManager.isMouseDown(0)
     };
   }
-}
-class AIInputSource extends InputSource {
+} 
+
+//ai brain
+class AiInputGenerator {
   getState() {
     return {
       throttle: 1,
@@ -61,62 +94,52 @@ class AIInputSource extends InputSource {
       right: false,
       fire: false
     };
-  }
+  } 
 }
+// server message receiver 
+class NetworkInput {
 
-class NetworkInputSource extends InputSource {
+  newEntityUpdates() {
+
+  }
   getState() {
     return this.latestServerInput;
   }
-}
-
-
+} 
 
 
 class CameraPerspectiveManager{}
 
-class camera{}
+
 
 class CameraController {
   constructor(camera) {
     this.camera = camera;
   }
-
   update(dt) {}
 }
 
-class OrbitCameraController
-  extends CameraController {
-
+class OrbitCameraController extends CameraController {
   constructor(camera, target, domElement) {
     super(camera);
-
-    this.controls =
-      new OrbitControls(
-        camera,
-        domElement
-        target,
-      );
+    this.controls = new OrbitControls(camera, domElement, target,);
   }
-
   update(dt) {
     this.controls.update();
   }
 }
 
-class RTSCameraController extends CameraController{}
+class RTSCameraController extends CameraController{
+  update(){}
+}
 
-class FollowCameraController
-  extends CameraController {
-
+class FollowCameraController extends CameraController {
   constructor(camera, target) {
     super(camera);
-
     this.target = target;
   }
 
   update(dt) {
-
     const desiredPosition =
       this.target.position
         .clone()
@@ -132,6 +155,10 @@ class FollowCameraController
     );
   }
 }
+
+class camera{}
+
+
 
 
 
