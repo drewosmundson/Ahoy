@@ -27,9 +27,14 @@ class ClientButtonInput {
     window.addEventListener('keydown', (event) => {
       this.handleKeyDown(event);
     });
+    window.addEventListener('keyup', (event) => {
+      this.handleKeyUp(event);
+    });
     window.addEventListener('mousedown', (event) => {
       this.handleKeyDown(event);
     });
+
+
     this.keyBindings = {
       KeyW: 'moveForward',
       ArrowUp: 'moveForward',
@@ -47,34 +52,48 @@ class ClientButtonInput {
       KeyP: 'toggleTerrain',
       KeyF: 'toggleFog',
     };
-    this.actions = {
+    this.mouseActions = {
+      fireProjectileLeft: false,
+      fireProjectileRight: false,
+    }
+
+    this.keyboardActions = {
       moveForward: false,
       moveBackward: false,
       moveLeft: false,
       moveRight: false,
     }
     this.toggles = {
-      toggleCamera: false
-      toggleTerrain: false;
+      toggleCamera: false,
+      toggleTerrain: false,
+      toggleFog: false,
     }
   }
 
   handleKeyDown(event) {
-    const action = this.bindings[event.code];
-    if (!action) {
-      this.toggleEvent(event)
+    const buttonPressed = this.keyBindings[event.code];
+
+    if (!buttonPressed) return;
+
+    if (buttonPressed in this.actions) {
+      this.actions[buttonPressed] = true;
     }
-    this.actions[this.bindings[event.code]] = true;
-  }
-  toggleEvent(event) {
-    const toggle = this.bindings[event.code]
-    if(!toggle) return;
-    if(this.toggles[toggle] == true) {
-      this.toggles[toggle] == false;
-    } else {
-      this.toggles[toggle] = true;
+
+    if (buttonPressed in this.toggles) {
+      this.toggles[buttonPressed] = !this.toggles[button];
     }
   }
+
+  handleKeyUp(event) {
+    const buttonReleased = this.keyBindings[event.code];
+
+    if (!buttonReleased) return;
+
+    if (buttonReleased in this.actions) {
+      this.actions[buttonReleased] = false;
+    }
+  }
+
   getState() {
     return {
       throttle: this.inputManager.isKeyDown("w") ? 1 : 0,
