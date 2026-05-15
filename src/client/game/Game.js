@@ -14,93 +14,105 @@ import { createSoundManager } from "./utils/SoundManager.js"
 import { GAME_CONSTANTS } from "./utils/GAME_CONSTANTS.js";
 import { createInputManager } from './utils/InputManager.js';
 
-// game lazely gets raw inputs frkm these 4 classes
-
-// i shoudm combine these 8 classes for 4 total 
-
-// mouse orbit event handlers 
-class ClientMousePointerInput {} 
+// game lazely gets raw inputs from these 3 classes
 
 // keydown event handlers 
 class ClientButtonInput {
   constructor() {
-    window.addEventListener('keydown', (event) => {
-      this.handleKeyDown(event);
+    document.addEventListener('keydown', (event) => {
+      this.handleKeyDown(event.code);
     });
-    window.addEventListener('keyup', (event) => {
-      this.handleKeyUp(event);
+    document.addEventListener('keyup', (event) => {
+      this.handleKeyUp(event.code);
     });
-    window.addEventListener('mousedown', (event) => {
-      this.handleKeyDown(event);
+    document.addEventListener('mousedown', (event) => {
+      this.handleMouseDown(event.button);
+    });
+    document.addEventListener('mouseup', (event) => {
+      this.handleMouseUp(event.button);
+    })
+    document.addEventListener('mousemove', (event) => {
+      this.handleMouseMove(event);
     });
 
 
     this.keyBindings = {
-      KeyW: 'moveForward',
-      ArrowUp: 'moveForward',
+      0:          'fireProjectileLeft',
+      2:          'fireProjectileRight',
 
-      KeyS: 'moveBackward',
-      ArrowDown: 'moveBackward',
+      KeyW:       'moveForward',
+      ArrowUp:    'moveForward',
 
-      KeyA: 'moveLeft',
-      ArrowLeft: 'moveLeft',
+      KeyS:       'moveBackward',
+      ArrowDown:  'moveBackward',
 
-      KeyD: 'moveRight',
+      KeyA:       'moveLeft',
+      ArrowLeft:  'moveLeft',
+
+      KeyD:       'moveRight',
       ArrowRight: 'moveRight',
+
+      KeyM:       'showMap',
 
       KeyC: 'toggleCamera',
       KeyP: 'toggleTerrain',
       KeyF: 'toggleFog',
+
+      Escape: 'exitPointerLock',
     };
-    this.mouseActions = {
-      fireProjectileLeft: false,
+
+    this.actions = {
+      moveForward:  false,
+      moveBackward: false,
+      moveLeft:     false,
+      moveRight:    false,
+      fireProjectileLeft:  false,
       fireProjectileRight: false,
     }
 
-    this.keyboardActions = {
-      moveForward: false,
-      moveBackward: false,
-      moveLeft: false,
-      moveRight: false,
-    }
     this.toggles = {
-      toggleCamera: false,
+      pointerLocked: false,
+      toggleCamera:  false,
       toggleTerrain: false,
-      toggleFog: false,
+      toggleFog:     false,
+    }
+
+    this.mouseMovement = {
+      deltaPitch: 0,
+      deltaYaw:   0,
     }
   }
 
-  handleKeyDown(event) {
-    const buttonPressed = this.keyBindings[event.code];
-
+  handleKeyDown(eventType) {
+    const buttonPressed = this.keyBindings[eventType];
     if (!buttonPressed) return;
-
     if (buttonPressed in this.actions) {
       this.actions[buttonPressed] = true;
     }
-
     if (buttonPressed in this.toggles) {
       this.toggles[buttonPressed] = !this.toggles[button];
     }
   }
 
-  handleKeyUp(event) {
-    const buttonReleased = this.keyBindings[event.code];
-
+  handleKeyUp(eventType) {
+    const buttonReleased = this.keyBindings[eventType];
     if (!buttonReleased) return;
-
     if (buttonReleased in this.actions) {
       this.actions[buttonReleased] = false;
     }
   }
 
+  handleMouseMove(event) {
+    if (!this.toggles.isPointerLocked) return;
+
+  }
+
+
   getState() {
-    return {
-      throttle: this.inputManager.isKeyDown("w") ? 1 : 0,
-      left: this.inputManager.isKeyDown("a"),
-      right: this.inputManager.isKeyDown("d"),
-      fire: this.inputManager.isMouseDown(0)
-    };
+    const keyboardActions = this.keyboardActions;
+    
+    return 
+
   }
 } 
 
