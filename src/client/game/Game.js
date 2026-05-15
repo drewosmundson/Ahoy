@@ -16,6 +16,9 @@ import { createInputManager } from './utils/InputManager.js';
 
 // game lazely gets raw inputs from these 3 classes
 
+
+
+
 // keydown event handlers 
 class ClientButtonInput {
   constructor() {
@@ -26,10 +29,10 @@ class ClientButtonInput {
       this.handleKeyUp(event.code);
     });
     document.addEventListener('mousedown', (event) => {
-      this.handleMouseDown(event.button);
+      this.handleKeyDown(event.button);
     });
     document.addEventListener('mouseup', (event) => {
-      this.handleMouseUp(event.button);
+      this.handleKeyUp(event.button);
     })
     document.addEventListener('mousemove', (event) => {
       this.handleMouseMove(event);
@@ -77,7 +80,9 @@ class ClientButtonInput {
       toggleFog:     false,
     }
 
-    this.mouseMovement = {
+    this.mouseMovment = {
+      lastYaw: 0,
+      lastPitch: 0,
       deltaPitch: 0,
       deltaYaw:   0,
     }
@@ -104,17 +109,30 @@ class ClientButtonInput {
 
   handleMouseMove(event) {
     if (!this.toggles.isPointerLocked) return;
-
+    this.deltaPitch = event.movementX - this.mouseMovment.lastPitch;
+    this.deltaYaw = event.movementY - this.mouseMovment.lastYaw;
+    this.lastPitch = event.movementX;
+    this.lastYaw = event.movementY;
   }
 
-
-  getState() {
-    const keyboardActions = this.keyboardActions;
-    
-    return 
-
+  getState(category, key) {
+    if (!this[category]) return;
+    return this[category][key];
   }
-} 
+}
+
+
+class UserInputManager()
+
+
+
+
+
+
+
+
+
+
 
 //ai brain
 class AiInputGenerator {
