@@ -17,6 +17,59 @@ import { createInputManager } from './utils/InputManager.js';
 // game lazely gets raw inputs from these 3 classes
 
 
+// does not know anythjng about boats
+//  or inputs just tells the camera controller where it ahoukd be 
+// and what type of camera based on input and game events 
+class CameraPerspectiveManager{} 
+
+
+
+// a
+class CameraController {
+  constructor(camera) {
+    this.camera = camera;
+  }
+  update(dt) {}
+}
+
+class OrbitCameraController extends CameraController {
+  constructor(camera, target, domElement) {
+    super(camera);
+    this.controls = new OrbitControls(camera, domElement, target,);
+  }
+  update(dt) {
+    this.controls.update();
+  }
+}
+
+class RTSCameraController extends CameraController{
+  update(){}
+}
+
+class FollowCameraController extends CameraController {
+  constructor(camera, target) {
+    super(camera);
+    this.target = target;
+  }
+
+  update(dt) {
+    const desiredPosition =
+      this.target.position
+        .clone()
+        .add(new THREE.Vector3(0, 10, -20));
+
+    this.camera.position.lerp(
+      desiredPosition,
+      0.1
+    );
+
+    this.camera.lookAt(
+      this.target.position
+    );
+  }
+}
+
+class camera{}
 
 
 // keydown event handlers 
@@ -121,19 +174,6 @@ class ClientButtonInput {
   }
 }
 
-
-class UserInputManager()
-
-
-
-
-
-
-
-
-
-
-
 //ai brain
 class AiInputGenerator {
   getState() {
@@ -145,6 +185,16 @@ class AiInputGenerator {
     };
   } 
 }
+// manages which boats are controlled by the user or the ai on client side 
+// the user can transfer boat pov and control
+class UserInputManager { 
+  
+  
+  
+  } 
+
+
+
 // server message receiver 
 class NetworkInput {
 
@@ -155,63 +205,9 @@ class NetworkInput {
     return this.latestServerInput;
   }
 } 
-
-
-class CameraPerspectiveManager{}
-
-
-
-class CameraController {
-  constructor(camera) {
-    this.camera = camera;
-  }
-  update(dt) {}
-}
-
-class OrbitCameraController extends CameraController {
-  constructor(camera, target, domElement) {
-    super(camera);
-    this.controls = new OrbitControls(camera, domElement, target,);
-  }
-  update(dt) {
-    this.controls.update();
-  }
-}
-
-class RTSCameraController extends CameraController{
-  update(){}
-}
-
-class FollowCameraController extends CameraController {
-  constructor(camera, target) {
-    super(camera);
-    this.target = target;
-  }
-
-  update(dt) {
-    const desiredPosition =
-      this.target.position
-        .clone()
-        .add(new THREE.Vector3(0, 10, -20));
-
-    this.camera.position.lerp(
-      desiredPosition,
-      0.1
-    );
-
-    this.camera.lookAt(
-      this.target.position
-    );
-  }
-}
-
-class camera{}
-
-
-
-
-
-
+// i dont think i will nedd this class as networkInput is authoratative 
+// this is more for one time events like spawning new bosts arriving from the remote user 
+class networkManager{}
 
 class BoatController {
   constructor(boat, inputSource) {
