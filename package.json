@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/drewosmundson/ahoy#readme",
   "dependencies": {
-    "express": "^5.1.0",
+    "express": "^5.2.1",
     "noisejs": "^2.1.0",
     "npm": "^11.3.0",
     "socket": "^0.14.154",
