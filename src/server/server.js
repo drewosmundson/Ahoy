@@ -5,7 +5,6 @@ import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-
 const PORT = process.env.PORT || 3000;
 
 const app = express();
@@ -29,7 +28,7 @@ server.listen(PORT, () => {
 // Serve static files
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '../../public')));
 app.use('/client', express.static(path.join(__dirname, '../client')));
 app.use('/shared', express.static(path.join(__dirname, '../shared')));
 

@@ -50,5 +50,3 @@ export const TITLE = {
   game:                 "Ahoy.io - Game",
 }
 
-
-export const CSS_HIDDEN_CLASS = "hidden"

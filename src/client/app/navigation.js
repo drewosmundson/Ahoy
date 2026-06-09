@@ -1,4 +1,4 @@
-import { CSS_HIDDEN } from "./constants.js";
+
 
 
 export function navigation(dom) { 
@@ -26,7 +26,7 @@ export function navigation(dom) {
 function hideAllScreens(dom){
   Object.values(dom.screens).forEach((screen) => {
     if (screen) { 
-      screen.classList.add(CSS_HIDDEN);
+      screen.classList.add("hidden");
     }
     if (screen === dom.screens.game) {
       dom.canvas.game.style.display = 'none';
@@ -35,7 +35,7 @@ function hideAllScreens(dom){
 }
 
 function showScreen(screen) {
-  screen.classList.remove(CSS_HIDDEN);
+  screen.classList.remove("hidden");
   if ( screen === dom.screens.game ) {
     dom.canvas.game.style.display = 'block'
   }
