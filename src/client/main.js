@@ -29,8 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const eventSchemas = createEventSchemas();
   const emitter =  createEmitter(socket, eventSchemas);
   
-  //const game = new Game();
-  
   const context = {
     dom,
     navigate,
@@ -41,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // As this becomes large it would be good practice to inialize only the nessesary event listeners
   // For now this is fine as there are only about 3 event listeners for each feature
   [singleplayer, host, participant, mmo]
-    .map(create => create(context))
+    .map(feature => feature(context))
     .forEach(feature => { 
       feature.initEventListeners();
       // feature.otherFunction(); 
