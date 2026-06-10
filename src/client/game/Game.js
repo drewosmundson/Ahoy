@@ -4,7 +4,6 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.m
 import { createHeightmap } from "./utils/Heightmap.js"
 
 import { createRenderer  } from './world/Renderer.js';
-import { createCamera, CameraController } from "./utils/Camera.js';"
 
 import { TerrainRenderer } from "./world/Terrain.js";
 import { generateTerrain } from "./utils/hightmapGenerator.js";
@@ -24,7 +23,7 @@ class CameraPerspectiveManager{}
 
 
 
-// a
+
 class CameraController {
   constructor(camera) {
     this.camera = camera;
@@ -278,12 +277,13 @@ export class RemoteBoatController
 
 export class Game {
   constructor(canvas) {
-    this.canvas = canvas
     this.heightmap = createHeightmap();
   }
 
-  setup(networkHandler) {
+  setup(canvas, networkHandler) {
+    
     const scene = new THREE.Scene();
+    this.canvas = canvas
     this.renderer = createRenderer(this.canvas, THREE.WebGLRenderer);
 
     this.worldComponents = createWorldComponents(scene, this.heightmap);
@@ -357,26 +357,37 @@ export class Game {
    AI Brain updates every few hundred frames adds to intent state
    user input is taken ready to be pulled adds to intent state
 
-2. Controllers update locally controlled entities
+
+
+
+   OBJECts should be the ones wiht controllers 
+2. Managers assign controllers to certain objects one of each 3 typwes of manager 
+   - PlayerController pulls from PlayerInputSource 
+   - AIController pulls from AIInputSource 
+   - NetworkController/RemoteController pulls from snapshot buffer
+
+
+
+3. Controllers update locally controlled entities
    - PlayerController pulls from PlayerInputSource
    - AIController pulls from AIInputSource
    - NetworkController/RemoteController pulls from snapshot buffer
 
-3. Locally controlled entities simulate immediately
+4. Locally controlled entities simulate immediately
    - local boat movement
    - local projectiles
    - local sounds
 
-4. Send local player inputs to server
+6. Send local player inputs to server
 
-5. Remote entities interpolate/extrapolate
+7. Remote entities interpolate/extrapolate
    - interpolate between snapshots
    - extrapolate briefly if next snapshot missing
 
-6. Reconcile locally predicted entities
+8. Reconcile locally predicted entities
    - compare predicted state vs authoritative snapshot
    - apply soft correction
 
-7. Render scene
+9. Render scene
 
 */
