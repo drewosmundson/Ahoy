@@ -16,6 +16,16 @@ import { createInputManager } from './utils/InputManager.js';
 // game lazely gets raw inputs from these 3 classes
 
 
+// dependancy injection
+
+// input-> managers -> controllers -> units 
+
+
+
+
+
+
+
 // does not know anythjng about boats
 //  or inputs just tells the camera controller where it ahoukd be 
 // and what type of camera based on input and game events 
