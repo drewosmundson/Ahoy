@@ -1,4 +1,4 @@
-
+q
 
 class boat {
 
@@ -28,11 +28,14 @@ class boatController {
 
 networkController() {}
 
-
+class NetworkInputManager {
+    constructor(inputSource)
+    
+    }
 
 // receives buffer snapshots from inputSource
-class InputManager {
-    constructor(inputSource) {
+class ClientInputManager {
+    constructor(inputSourceCallback) {
         this.inputSource = inputSource;
         this.snapshotBuffer = [];
     }
@@ -161,7 +164,7 @@ class clientInput {
         // this.mouseMovment.mousewheel = 0;
     }
 
-    getSnapshotBuffer() {
+    getSnapshot() {
         const snapshot = {
             timestamp: performance.now(),
             actions: { ...this.actions },
@@ -174,6 +177,16 @@ class clientInput {
         this.resetOnetimeActions();
         return snapshot
     }
+    emitLocally(snapshot) 
+    
+    emitToNetwork(snapshot) {
+        
+        } 
+    update() { 
+        const snapshot = getSnapshot()
+        emitLocally(snapshot)
+        emitToNetwork(snapshot)
+    } 
 }
 
 export class Game {
