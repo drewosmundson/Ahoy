@@ -26,9 +26,11 @@ class boatController {
     }
 }
 
+networkController() {}
 
 
-// receives buffer snapshots from 
+
+// receives buffer snapshots from inputSource
 class InputManager {
     constructor(inputSource) {
         this.inputSource = inputSource;
@@ -44,7 +46,12 @@ class InputManager {
         this.snapshotBuffer = [];
         return snapshot;
     }
+    
+    sendData() {
 
+
+
+    }
     update() {
         this.snapshotBuffer.push(this.inputSource.getSnapshotBuffer());
         // for memory safty it is very unlikley this will ever trigger for client inputs.
@@ -55,8 +62,8 @@ class InputManager {
     }
 }
 
-
-class clientButton {
+// async operations
+class clientInput {
     constructor() {
         document.addEventListener('keydown', (event) => {
             this.handleKeyDown(event.code);
