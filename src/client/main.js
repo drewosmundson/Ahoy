@@ -18,6 +18,7 @@ import { mmo } from "./features/mmo.js"
 
 import { eventSchemas } from "../shared/schemas.js";
 
+import { gameDependancies } from "./game/dependancies.js"
 import { Game } from "./game/Game.js";
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -28,13 +29,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
     const eventSchemas = createEventSchemas();
     const emitter =  createEmitter(socket, eventSchemas);
-    
+
+    const game = new Game(gameDependancies)
+
     const context = {
         dom,
         navigate,
         ui,
         emitter,
-        Game,
+        game,
     };
     // As this becomes large it would be good practice to inialize only the nessesary event listeners
     // For now this is fine as there are only about 3 event listeners for each feature

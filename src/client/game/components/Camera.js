@@ -273,3 +273,93 @@ export class Camera {
     }
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class CameraPerspectiveManager{} 
+
+
+
+
+class CameraController {
+  constructor(camera) {
+    this.camera = camera;
+  }
+  update(dt) {}
+}
+
+class OrbitCameraController extends CameraController {
+  constructor(camera, target, domElement) {
+    super(camera);
+    this.controls = new OrbitControls(camera, domElement, target,);
+  }
+  update(dt) {
+    this.controls.update();
+  }
+}
+
+class RTSCameraController extends CameraController{
+  update(){}
+}
+
+class FollowCameraController extends CameraController {
+  constructor(camera, target) {
+    super(camera);
+    this.target = target;
+  }
+
+  update(dt) {
+    const desiredPosition =
+      this.target.position
+        .clone()
+        .add(new THREE.Vector3(0, 10, -20));
+
+    this.camera.position.lerp(
+      desiredPosition,
+      0.1
+    );
+
+    this.camera.lookAt(
+      this.target.position
+    );
+  }
+}
+
+class camera{}
