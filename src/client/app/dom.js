@@ -16,7 +16,7 @@ export function createDom(){
 
     const buttons = {
         mainToSingleplayer:   mustGet("button-main-singleplayer"),
-        mainToLobbyJoin:      mustGet("button-main-lobby-join"),
+
         mainToLobbyCreate:    mustGet("button-main-lobby-create"),
         mainToMMO:            mustGet("button-main-mmo"),
 
@@ -57,7 +57,7 @@ function mustGet(id) {
   const el = document.getElementById(id);
   if (!el){
     console.log(id)
-    throw new Error(`Missing element: #${id}`);
+    throw new Error(`Missing element: ${id}`);
   } 
   return el;
 }

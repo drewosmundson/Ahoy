@@ -12,78 +12,79 @@ form-<purpose>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ahoy.io</title>
-  <link rel="stylesheet" href="index.css" />
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.176.0/examples/jsm/"
-      }
-    }
-  </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Ahoy.io</title>
+    <link rel="stylesheet" href="index.css" />
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.176.0/examples/jsm/"
+            }
+        }
+    </script>
 </head>
 <body>
-  <h1>Ahoy.io</h1>
 
-  <!-- Main Menu -->
-  <div id="screen-main" class="section">
-    <button id="button-main-singleplayer">Single Player</button>
-    <button id="button-main-multiplayer-join">Join Lobby</button> 
-    <button id="button-main-multiplayer-create">Create Lobby</button>
-  </div>
+    <!-- Main Menu -->
+    <div id="screen-main" class="section">
+        <h1>Ahoy.io</h1>
+        <button id="button-main-singleplayer">Single Player</button>
+        <button id="button-main-lobby-join">Join</button>
+        <button id="button-main-lobby-create">Create Lobby</button>
+        <button id="button-main-mmo">Join MMO</button>
+    </div>
 
-  <!-- Singleplayer Menu -->
-  <div id="screen-singleplayer" class="section hidden">
-    <button id="button-singleplayer-start">Start Game</button>
-  </div>
+    <!-- Singleplayer Menu -->
+    <div id="screen-singleplayer" class="section hidden">
+        <button id="button-singleplayer-start">Start Game</button>
+    </div>
 
-  <!-- MMO Menu -->
-  <div id="screen-mmo" class="section hidden">
-    <button id="button-mmo-start">Start Game</button>
-  </div>
+    <!-- MMO Menu -->
+    <div id="screen-mmo" class="section hidden">
+        <button id="button-mmo-start">Start Game</button>
+    </div>
 
-  <!-- Host's Create Lobby Menu -->
-  <div id="screen-lobby-create" class="section hidden">
-    <label for="input-host-name">Your Name:</label>
-    <input type="text" class="input-player-name"/>
-    <button id="button-lobby-create">Create Lobby</button>
-  </div>
+    <!-- Host's Create Lobby Menu -->
+    <div id="screen-lobby-create" class="section hidden">
+        <label for="input-host-name">Your Name:</label>
+        <input type="text" id="input-host-name" class="input-player-name"/>
+        <button id="button-lobby-create">Create Lobby</button>
+    </div>
 
-  <!-- Participant's Join lobby Menu -->
-  <div id="screen-lobby-join" class="section hidden">
-    <label for="input-lobby-code">Lobby Code:</label>
-    <input type="text" id="input-lobby-code" name="lobbyCode" required />
-    <button id="button-lobby-join">Join Lobby</button>
-  </div>
+    <!-- Participant's Join lobby Menu -->
+    <div id="screen-lobby-join" class="section hidden">
+        <label for="input-lobby-code">Lobby Code:</label>
+        <input type="text" id="input-lobby-code" name="lobbyCode" required />
+        <button id="button-lobby-join">Join Lobby</button>
+    </div>
 
-  <!-- Host's Lobby -->
-  <div id="screen-lobby-host" class="section hidden">
-    <p>Lobby Code: <span id="lobbyCodeDisplay"></span></p>
-    <h3>Players:</h3>
-    <ul class="list-players"></ul>
-    <button id="button-lobby-start">Start Game</button>
-    <button class="button-lobby-leave">Leave Lobby</button>
-  </div>
-  <!-- Participant's Lobby -->
-  <div id="screen-lobby-participant" class="section hidden">
-    <p>Lobby Code: <span id="lobby-code"></span></p>
-    <h3>Players:</h3>
-    <ul class="list-players"></ul>
-    <button class="button-lobby-leave">Leave Lobby</button>
-    <h2>Waiting for host to start the game...</h2>
-  </div>
+    <!-- Host's Lobby -->
+    <div id="screen-lobby-host" class="section hidden">
+        <p>Lobby Code: <span id="display-host-lobby-code"></span></p>
+        <h3>Players:</h3>
+        <ul id="list-host-players" class="list-players"></ul>
+        <button id="button-lobby-start">Start Game</button>
+        <button id="button-host-leave">Leave Lobby</button>
+    </div>
 
+    <!-- Participant's Lobby -->
+    <div id="screen-lobby-participant" class="section hidden">
+        <p>Lobby Code: <span id="display-participant-lobby-code"></span></p>
+        <h3>Players:</h3>
+        <ul id="list-participant-players" class="list-players"></ul>
+        <button id="button-participant-leave">Leave Lobby</button>
+        <h2>Waiting for host to start the game...</h2>
+    </div>
 
-  <!-- Game Container -->
-  <div id="screen-game" class="hidden">
-    <canvas id="canvas-game"></canvas>
-  </div>
+    <!-- Game Container -->
+    <div id="screen-game" class="hidden">
+        <canvas id="canvas-game"></canvas>
+    </div>
 
-  <script type="module" src="../client/main.js"></script>
-  <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="../client/main.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
 
 </body>
 </html>
