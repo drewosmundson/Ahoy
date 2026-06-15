@@ -5,7 +5,7 @@
 // start socket layer
 
 // dependancy singleton factories
-import { createNavigation, navigation } from "./app/navigation.js";
+import { createNavigation } from "./app/navigation.js";
 import { createDom } from "./app/dom.js";
 import { createUi } from "./app/ui.js"
 import { createEmitter } from "./app/emitter.js"
@@ -17,8 +17,6 @@ import { participant } from "./features/participant.js";
 import { mmo } from "./features/mmo.js"
 
 import { eventSchemas } from "../shared/schemas.js";
-
-import { gameDependancies } from "./game/dependancies.js"
 import { Game } from "./game/Game.js";
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -27,17 +25,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const ui = createUi(dom);
     
     const socket = io();
-    const eventSchemas = createEventSchemas();
+
     const emitter =  createEmitter(socket, eventSchemas);
 
-    const game = new Game(gameDependancies)
 
     const context = {
         dom,
         navigate,
         ui,
         emitter,
-        game,
+        Game,
     };
     // As this becomes large it would be good practice to inialize only the nessesary event listeners
     // For now this is fine as there are only about 3 event listeners for each feature

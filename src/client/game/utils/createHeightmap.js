@@ -1,12 +1,12 @@
 
 
-export function createHeightmap(config) {
+export function createHeightmap(config = {}) {
   const noise = new Noise();
 
-  const base = config.base;
-  const overlays = config.overlays;
-  const multiplier = config.multiplier;
-  const addition = config.addition;
+  const base = config.base ?? 256;
+  const overlays = config.overlays ?? [];
+  const multiplier = config.multiplier ?? 1;
+  const addition = config.addition ?? 0;
 
   let heightmap = noise.generateHeightmap(base);
 
@@ -349,6 +349,8 @@ class Noise {
         result[y][x] = base[y][x] * multiplier + addition;
       }
     }
+
+    console.log(result);
     return result;
   }
 }

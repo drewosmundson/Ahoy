@@ -1,47 +1,27 @@
-q
 
-class boat {
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
-    constructor() {
-
-    }
-}
-
-// consumes intent produced by controllers
-class boatMovementSystem {
-
-    constructor(){
+import { createHeightmap } from "./utils/createHeightmap.js"
+import { createRenderer } from "./utils/createRenderer.js"
+import { createWorld } from "./world/createWorld.js"
 
 
-    }
-
-}
-
-// produces intent based on snapshots
-class boatController {
-    constructor(){
-
-
-
-    }
-}
-
-networkController() {}
-
-class NetworkInputManager {
-    constructor(inputSource)
-    
-    }
 
 // receives buffer snapshots from inputSource
-class ClientInputManager {
-    constructor(inputSourceCallback) {
-        this.inputSource = inputSource;
+// dual use for accepting local changes as well as network updates
+// it is this way so that all controllers accept the same API structure
+class InputManager {
+    constructor(EventHandler) {
+        this.eventHandler = EventHandler
         this.snapshotBuffer = [];
+
+        this.eventHandler.on('snapshot', (snapshot) => {
+            this.snapshotBuffer.push(snapshot);
+        });
     }
 
-    changeInputSource(inputSource) {
-        this.inputSource = inputSource;
+    changeInputSource(NewEventHandler) {
+        this.eventHandler = NewEventHandler;
     }
 
     pollInputs() {
@@ -49,63 +29,71 @@ class ClientInputManager {
         this.snapshotBuffer = [];
         return snapshot;
     }
-    
-    sendData() {
+}
 
-
-
+class LocalEventHandler {
+    constructor() {
+        this.listeners = new Map();
     }
-    update() {
-        this.snapshotBuffer.push(this.inputSource.getSnapshotBuffer());
-        // for memory safty it is very unlikley this will ever trigger for client inputs.
-        // it may flip if used for network inputs and connection is suddenly lost or very slow
-        if (this.snapshotBuffer.length > 100) {
-            this.snapshotBuffer.shift();
+    on(event, callback) {
+        if(!this.listeners.has(event)) {
+            this.listeners.set(event, []);
+        }
+        this.listeners.get(event).push(callback);
+    }
+    emit(event, data){
+        const callbacks = this.listeners.get(event);
+
+        if(!callbacks) return;
+
+        for (const callback of callbacks) {
+            callback(data);
         }
     }
 }
 
-// async operations
-class clientInput {
-    constructor() {
+
+class ClientInput {
+    constructor(localEmitter, networkEmitter) {
+        this.localEmitter = localEmitter;
+        this.networkEmitter = networkEmitter;
+
         document.addEventListener('keydown', (event) => {
-            this.handleKeyDown(event.code);
+            this.handleKeyDown(event);
+            this.update();
         });
         document.addEventListener('keyup', (event) => {
-            this.handleKeyUp(event.code);
+            this.handleKeyUp(event);
+            this.update();
         });
         document.addEventListener('mousedown', (event) => {
-            this.handleKeyDown(event.button);
+            this.handleKeyDown(event);
+            this.update();
         });
         document.addEventListener('mouseup', (event) => {
-            this.handleKeyUp(event.button);
+            this.handleKeyUp(event);
+            this.update();
         })
         document.addEventListener('mousemove', (event) => {
             this.handleMouseMove(event);
+            this.update();
         });
 
         this.keyBindings = {
             0:          'fireProjectileLeft',
             2:          'fireProjectileRight',
-
             KeyW:       'moveForward',
             ArrowUp:    'moveForward',
-
             KeyS:       'moveBackward',
             ArrowDown:  'moveBackward',
-
             KeyA:       'moveLeft',
             ArrowLeft:  'moveLeft',
-
             KeyD:       'moveRight',
             ArrowRight: 'moveRight',
-
             KeyM:       'showMap',
-
             KeyC: 'toggleCamera',
             KeyP: 'toggleTerrain',
             KeyF: 'toggleFog',
-
             Escape: 'exitPointerLock',
         };
 
@@ -117,7 +105,6 @@ class clientInput {
             fireProjectileLeft:  false,
             fireProjectileRight: false,
         }
-
 
         this.toggles = {
             pointerLocked: false,
@@ -132,36 +119,40 @@ class clientInput {
         }
     }
 
-    handleKeyDown(eventType) {
-        const buttonPressed = this.keyBindings[eventType];
+    handleKeyDown(event) {
+        const eventCode = event.code;
+        const eventButton = event.button
+        const buttonPressed = this.keyBindings[eventCode] ?? this.keyBindings[eventButton];
         if (!buttonPressed) return;
-        if (buttonPressed in this.actions) {
+        if (!event.repeat && this.actions[buttonPressed] !== undefined) {
             this.actions[buttonPressed] = true;
         }
-        if (buttonPressed in this.toggles) {
+        if (!event.repeat && this.toggles[buttonPressed] !== undefined) {
             this.toggles[buttonPressed] = !this.toggles[buttonPressed];
         }
     }
 
-    handleKeyUp(eventType) {
-        const buttonReleased = this.keyBindings[eventType];
+    handleKeyUp(event) {
+        const eventCode = event.code;
+        const eventButton = event.button;
+        const buttonReleased = this.keyBindings[eventCode] ?? this.keyBindings[eventButton];
         if (!buttonReleased) return;
-        if (buttonReleased in this.actions) {
+        if ( this.actions[buttonReleased] !== undefined) {
             this.actions[buttonReleased] = false;
         }
     }
 
     handleMouseMove(event) {
         if (!this.toggles.pointerLocked) return;
-        this.mouseMovment.deltaPitch += event.movementX;
-        this.mouseMovment.deltaYaw   += event.movementY;
+        this.mouseMovement.deltaPitch += event.movementY;
+        this.mouseMovement.deltaYaw   += event.movementX;
     }
 
-    resetOnetimeActions() {
-        // Actions that need to be reset to their default go here
-        this.mouseMovment.deltaPitch = 0;
-        this.mouseMovment.deltaYaw = 0;
-        // this.mouseMovment.mousewheel = 0;
+    // Actions that need to be reset to their default go here
+    resetOneTimeActions() {
+        this.mouseMovement.deltaPitch = 0;
+        this.mouseMovement.deltaYaw = 0;
+        // this.mouseMovement.mousewheel = 0;
     }
 
     getSnapshot() {
@@ -170,50 +161,60 @@ class clientInput {
             actions: { ...this.actions },
             toggles: { ...this.toggles },
             mouse: {
-                deltaPitch: this.mouseMovment.deltaPitch,
-                deltaYaw: this.mouseMovment.deltaYaw,
+                deltaPitch: this.mouseMovement.deltaPitch,
+                deltaYaw: this.mouseMovement.deltaYaw,
             }
         }
-        this.resetOnetimeActions();
+        this.resetOneTimeActions();
         return snapshot
     }
-    emitLocally(snapshot) 
-    
-    emitToNetwork(snapshot) {
-        
-        } 
+
     update() { 
-        const snapshot = getSnapshot()
-        emitLocally(snapshot)
-        emitToNetwork(snapshot)
+        const snapshot = this.getSnapshot()
+        this.localEmitter.emit("snapshot", snapshot);
+        //this.networkEmitter.emit("snapshot", snapshot);
     } 
 }
 
 export class Game {
-
-    constructor(dependacies) {
-        this.loadDependancies(dependacies)
+    constructor(networkEventHandler) {
+        this.networkEventHandler = networkEventHandler;
+        this.heightmap = createHeightmap();
     }
-
-    loadDependancies(dependacies) {
-        this.THREE = dependacies.THREE
-        this.utils = dependacies.utils
-        this.world = dependacies.world
+    setHeightmap(newHeightmap) {
+        this.heightmap = newHeightmap;
     }
+    getHeightmap() {
+        const heightmap = this.heightmap;
+        return heightmap
+    }
+    setup(canvas) {
+        const scene = new THREE.Scene();
+        this.world = createWorld(scene, this.heightmap);
+        this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
 
-    setup(canvas, heightmap, networkHandler) {
-        const scene = new this.THREE.Scene();
-        this.heightmap = heightmap ?? this.utils.createHeightmap();
-        this.worldComponents = this.world.createWorldComponents(scene, heightmap);
-        this.renderer = this.utils.createRenderer(canvas, this.THREE.WebGLRenderer);
+        this.localEventHandler = new LocalEventHandler();
 
-        this.playerInput = new ClientInput(networkHandler)
-        this.AiInput = createAiInputManager(networkHandler)
-        this.remoteInput = createRemoteInputManager(networkHandler)
+        this.clientInput = new ClientInput(this.localEventHandler, this.networkEventHandler);
+        this.inputManager = new InputManager(this.localEventHandler); 
+
+        this.tempUpdateForTesting();
 
         window.addEventListener('resize', this.handleWindowResize);
     }
 
+
+    tempUpdateForTesting() {
+        const loop = () => {
+            const snapshots = this.inputManager.pollInputs();
+
+            if (snapshots.length > 0) {
+                console.log('[InputManager] snapshots this frame:', snapshots);
+            }
+            requestAnimationFrame(loop);
+        };
+        requestAnimationFrame(loop);
+    }
 
     start() {
         this.handleWindowResize();
@@ -224,12 +225,28 @@ export class Game {
     }
     update(time) {
 
-
-
     }
   
     stop() {
         this.renderer.setAnimationLoop(null);
+    }
+
+    handleWindowResize = () => {
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        let width = windowWidth;
+        let height = (width * 9) / 16;
+
+        if (height > windowHeight) {
+        height = windowHeight;
+        width = (height * 16) / 9;
+        }
+
+        this.canvas.style.width = `${width}px`;
+        this.canvas.style.height = `${height}px`;
+        this.renderer.setSize(width, height, false);
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
     }
 }
 

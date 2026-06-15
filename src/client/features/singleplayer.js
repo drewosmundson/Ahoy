@@ -18,7 +18,7 @@ export function singleplayer({ dom, navigate, emitter, Game, CONSTANTS }) {
 
   function start() {
     const canvas = dom.canvas.game;
-    const game = new Game(emitter.nullEmit);
+    const game = new Game(emitter.nullEmitter);
     game.setup(canvas);
     navigate.toScreen(dom.screens.game);
     game.start();
