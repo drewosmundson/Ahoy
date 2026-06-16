@@ -1,10 +1,14 @@
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
-import { createHeightmap } from "./utils/createHeightmap.js"
-import { createRenderer } from "./utils/createRenderer.js"
-import { createWorld } from "./world/createWorld.js"
+import { createHeightmap } from "./utils/heightmap.js"
+import { createRenderer } from "./utils/renderer.js"
+import { createWorld } from "./world/world.js"
 import { createCamera } from './components/Camera.js';
+
+
+class boatController(input, boat)
+
 
 
 
