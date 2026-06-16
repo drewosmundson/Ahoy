@@ -1,3 +1,29 @@
+
+
+
+export function createTerrain(scene, heightmap, material) {
+    const terrain = new Terrain(material)
+    scene.add(terrain.generateMesh())
+    scene.add(terrain.generateMesh(heightmap))
+    return terrain
+  }
+
+
+class Terrain {
+  constructor(material) 
+  
+  
+  
+  }
+}
+
+
+
+
+
+
+
+
 // recveives terrain data from the server and displays this terrain to the user with 3js
 
 // Terrain.js - Handles terrain generation and rendering
