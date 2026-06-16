@@ -1,20 +1,32 @@
 
 
 
-export function createTerrain(scene, heightmap, material) {
-    const terrain = new Terrain(material)
-    scene.add(terrain.generateMesh())
-    scene.add(terrain.generateMesh(heightmap))
+export function createTerrain(scene, heightmap, material, plane) {
+    const size = heightmap.length
+    const terrain = new Terrain(material, size)
+    scene.add(terrain.generateMesh(size))
+    scene.add(terrain.generateMesh(size, heightmap))
     return terrain
   }
 
 
 class Terrain {
-  constructor(material) 
-  
-  
-  
+  constructor(Material, Plane) 
+    this.plane = Plane; 
+    this.material = Material;
+    isLowPoly = true; 
   }
+  
+  generateMesh(size, heightmap = null) 
+    if ( heightmap == null ) { 
+      
+    } 
+    
+    const segmentCount = this.lowPoly ? Math.floor(size / 4) : size - 1 ;
+    const geometry = new Plane(size, size, segmentCount, segmentCount);
+    geometry.rotateX(-Math.PI / 2);
+    const material = new StandardMaterial()
+     
 }
 
 
