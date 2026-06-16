@@ -18,24 +18,6 @@ export function createHeightmap(config = {}) {
   return noise.finalizeHeight(heightmap, multiplier, addition);
 }
 
-export function getHeightAt(heightmap, size,x, z) {
-    const normalizedX = (x + size / 2) / size;
-    const normalizedZ = (z + size / 2) / size;
-
-    const heightmapX = Math.floor(normalizedX * (size - 1));
-    const heightmapZ = Math.floor(normalizedZ * (size - 1));
-
-    if (
-      heightmapX >= 0 && heightmapX < this.mapSize &&
-      heightmapZ >= 0 && heightmapZ < this.mapSize
-    ) {
-      const height = this.heightmap[heightmapZ][heightmapX];
-      return height
-    }
-
-    return 0;
-  }
-
 
 
 // generates the kind of noisemap you would like and returns the map
