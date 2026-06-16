@@ -11,20 +11,12 @@ export function createWorld(scene, heightmap) {
         water: createWater(scene),
         skybox: createSkybox(scene),
     }
-
     return worldComponents;
-
 }
 
 
-
-
-
 class World {
-
-    constructor(worldComponents) {
-
+    constructor() {
 
     }
-
 }

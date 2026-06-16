@@ -7,7 +7,7 @@ import { createWorld } from "./world/world.js"
 import { createCamera } from './components/Camera.js';
 
 
-class boatController(input, boat)
+class boatController(input, boat){}
 
 
 
