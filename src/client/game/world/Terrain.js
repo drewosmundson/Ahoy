@@ -1,9 +1,9 @@
 
 
 
-export function createTerrain(scene, heightmap, material, plane) {
+export function createTerrain(scene, heightmap, material, plane, customShape) {
     const size = heightmap.length
-    const terrain = new Terrain(material, size)
+    const terrain = new Terrain(material, plane, customShape, size)
     scene.add(terrain.generateMesh(size))
     scene.add(terrain.generateMesh(size, heightmap))
     return terrain
@@ -11,26 +11,59 @@ export function createTerrain(scene, heightmap, material, plane) {
 
 
 class Terrain {
-  constructor(Material, Plane) 
+  constructor(size, Material, Plane, CustomShape) {
+    this.size = size; 
     this.plane = Plane; 
     this.material = Material;
     isLowPoly = true; 
   }
   
   generateMesh(size, heightmap = null) 
-    if ( heightmap == null ) { 
-      
-    } 
-    
     const segmentCount = this.lowPoly ? Math.floor(size / 4) : size - 1 ;
+    
     const geometry = new Plane(size, size, segmentCount, segmentCount);
     geometry.rotateX(-Math.PI / 2);
-    const material = new StandardMaterial()
-     
+    
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x3d8c40,
+      flatShading: this.lowPoly,
+      wireframe: false,
+    });
+    
+    if ( heightmap == null ) { 
+      return new customShape(geometry, material)
+    }
+    
+    const vertices = geometry.attributes.position.array;
+    
+    for (let i = 0, j = 0; i < vertices.length; i += 3, j++) {
+      const x = this.lowPoly
+        ? Math.floor((j % (segmentCount + 1)) * (size / segmentCount))
+        : Math.floor(j % size);
+      const y = this.lowPoly
+        ? Math.floor(Math.floor(j / (segmentCount + 1)) * (size / segmentCount))
+        : Math.floor(j / size);
+      
+      if (x < size && y < size) {
+        vertices[i + 1] = this.heightmap[y][x]
+      }
+    }
+    geometry.computeVertexNormals();
+    
+    return new THREE.Mesh(geometry, material);
 }
 
 
+  toggleTerrainMode() {
+    this.lowPoly = !this.lowPoly;
+    this.scene.remove(this.mesh);
+    this.mesh = this.createTerrainMesh();
+    this.scene.add(this.mesh);
+    return this.lowPoly ? 'Low Poly' : 'Regular';
+  }
+}
 
+}
 
 
 
