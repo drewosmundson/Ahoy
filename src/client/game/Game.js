@@ -4,6 +4,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.m
 import { createHeightmap } from "./utils/createHeightmap.js"
 import { createRenderer } from "./utils/createRenderer.js"
 import { createWorld } from "./world/createWorld.js"
+import { createCamera } from './components/Camera.js';
 
 
 
@@ -31,6 +32,20 @@ class InputManager {
     }
 }
 
+class NetworkEventHandler {
+    constructor(network) {
+
+    }
+    on(event, callback) {
+
+
+    }
+    emit(event, data) {
+
+
+    }
+}
+
 class LocalEventHandler {
     constructor() {
         this.listeners = new Map();
@@ -54,9 +69,9 @@ class LocalEventHandler {
 
 
 class ClientInput {
-    constructor(localEmitter, networkEmitter) {
-        this.localEmitter = localEmitter;
-        this.networkEmitter = networkEmitter;
+    constructor(localEventHandler, networkEventHandler) {
+        this.localEventHandler = localEventHandler;
+        this.networkEventHandler = networkEventHandler;
 
         document.addEventListener('keydown', (event) => {
             this.handleKeyDown(event);
@@ -171,50 +186,33 @@ class ClientInput {
 
     update() { 
         const snapshot = this.getSnapshot()
-        this.localEmitter.emit("snapshot", snapshot);
-        //this.networkEmitter.emit("snapshot", snapshot);
+        this.localEventHandler.emit("snapshot", snapshot);
+        //this.networkEventHandler.emit("snapshot", snapshot);
     } 
 }
 
 export class Game {
-    constructor(networkEventHandler) {
-        this.networkEventHandler = networkEventHandler;
+    constructor(network) {
+        this.networkEventHandler = new NetworkEventHandler(network);
+        this.localEventHandler = new LocalEventHandler();
         this.heightmap = createHeightmap();
     }
-    setHeightmap(newHeightmap) {
-        this.heightmap = newHeightmap;
-    }
-    getHeightmap() {
-        const heightmap = this.heightmap;
-        return heightmap
-    }
-    setup(canvas) {
-        const scene = new THREE.Scene();
-        this.world = createWorld(scene, this.heightmap);
-        this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
 
-        this.localEventHandler = new LocalEventHandler();
+    setup(canvas) {
+        this.scene = new THREE.Scene();
+        this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
+        this.camera = createCamera(canvas, THREE.PerspectiveCamera);
+        this.canvas = canvas
 
         this.clientInput = new ClientInput(this.localEventHandler, this.networkEventHandler);
-        this.inputManager = new InputManager(this.localEventHandler); 
+        this.clientInputManager = new InputManager(this.localEventHandler); 
+        this.networkInputManager = new InputManager(this.networkEventHandler)
 
-        this.tempUpdateForTesting();
+        this.world = createWorld(this.scene, this.heightmap);
 
         window.addEventListener('resize', this.handleWindowResize);
     }
 
-
-    tempUpdateForTesting() {
-        const loop = () => {
-            const snapshots = this.inputManager.pollInputs();
-
-            if (snapshots.length > 0) {
-                console.log('[InputManager] snapshots this frame:', snapshots);
-            }
-            requestAnimationFrame(loop);
-        };
-        requestAnimationFrame(loop);
-    }
 
     start() {
         this.handleWindowResize();
@@ -224,9 +222,11 @@ export class Game {
         });
     }
     update(time) {
-
+        const snapshots = this.clientInputManager.pollInputs();
+        if (snapshots.length > 0) {
+            console.log('[InputManager] snapshots this frame:', snapshots);
+        }
     }
-  
     stop() {
         this.renderer.setAnimationLoop(null);
     }

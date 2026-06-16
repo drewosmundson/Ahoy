@@ -30,7 +30,6 @@ export function createDom(){
         participantLeave:     mustGet("button-participant-leave"),
     };
 
-
     const inputs = {
         hostName:   mustGet("input-host-name"),
         lobbyCode:  mustGet("input-lobby-code"),

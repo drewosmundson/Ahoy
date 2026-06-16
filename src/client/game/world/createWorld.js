@@ -5,10 +5,26 @@ import { createWater } from "./Water.js"
 
 
 export function createWorld(scene, heightmap) {
-    return {
+    const worldComponents = {
         lighting: createLighting(scene),
         terrain: createTerrain(scene, heightmap),
         water: createWater(scene),
         skybox: createSkybox(scene),
     }
+
+    return worldComponents;
+
+}
+
+
+
+
+
+class World {
+
+    constructor(worldComponents) {
+
+
+    }
+
 }
