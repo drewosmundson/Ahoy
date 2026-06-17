@@ -7,7 +7,7 @@ import { createWorld } from "./world/world.js"
 import { createCamera } from './components/Camera.js';
 
 
-class boatController(input, boat){}
+class boatController(inputManager, boat){}
 
 
 
@@ -50,6 +50,8 @@ class NetworkEventHandler {
     }
 }
 
+//i think local and remove event handler can be merged into one class
+
 class LocalEventHandler {
     constructor() {
         this.listeners = new Map();
@@ -70,6 +72,41 @@ class LocalEventHandler {
         }
     }
 }
+
+class aiBrain {
+    this.mode = 
+    }
+    
+    
+
+class AiInput { 
+    t
+    
+    constructor(aiBrain, localEventHandler, networkEventHandler)
+    
+    
+    
+    } 
+    
+    update{
+        
+    }
+    
+    getSnapshot() {
+        const snapshot = {
+            timestamp: performance.now(),
+            actions: { ...this.actions },
+            toggles: { ...this.toggles },
+            mouse: {
+                deltaPitch: this.mouseMovement.deltaPitch,
+                deltaYaw: this.mouseMovement.deltaYaw,
+            }
+        }
+        this.resetOneTimeActions();
+        return snapshot
+    }
+    
+    
 
 
 class ClientInput {
