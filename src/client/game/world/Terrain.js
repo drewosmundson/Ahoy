@@ -1,163 +1,96 @@
-
-
-
 export function createTerrain(scene, heightmap, GraphicsLib) {
-    const size = heightmap.length
-    const terrain = new Terrain(size, GraphicsLib)
-    scene.add(terrain.generateMesh(size))
-    scene.add(terrain.generateMesh(size, heightmap))
-  }
 
+    const terrain = new Terrain(heightmap.length, GraphicsLib );
 
+    terrain.updateHeightmap(heightmap);
 
-class Terrain {
-    constructor(size, GraphicsLib) {
-        this.size = size; 
-        this.GraphicsLib = GraphicsLib
-        this.isLowPoly = true; 
-        this.wireframe = false;
-    }
-  
-    generateMesh(size, heightmap = null) {
-        const segmentCount = this.lowPoly ? Math.floor(size / 4) : size - 1 ;
-        
-        const geometry = new this.GraphicsLib.Plane(size, size, segmentCount, segmentCount);
-        geometry.rotateX(-Math.PI / 2);
-        
-        const material = new this.GraphicsLib.MeshStandardMaterial({
-            color: 0x3d8c40,
-            flatShading: this.lowPoly,
-            wireframe: false,
-        });
-        
-        if (heightmap == null) { 
-            return new this.GraphicsLib.Mesh(geometry, material)
+    scene.add(terrain.getMesh());
+
+    return {
+        update(newHeightmap) {
+            terrain.updateHeightmap(newHeightmap);
+        },
+
+        getMesh() {
+            return terrain.getMesh();
+        },
+
+        destroy() {
+            scene.remove(terrain.getMesh());
+            terrain.dispose();
         }
-        
-        const vertices = geometry.attributes.position.array;
-        
+    };
+}
+
+
+
+export class Terrain {
+    constructor(size, GraphicsLib) {
+        this.size = size;
+        this.GraphicsLib = GraphicsLib;
+
+        this.isLowPoly = true;
+        this.wireframe = false;
+
+        const segmentCount = this.isLowPoly
+            ? Math.floor(size / 4)
+            : size - 1;
+
+        this.geometry = new GraphicsLib.PlaneGeometry(
+            size,
+            size,
+            segmentCount,
+            segmentCount
+        );
+
+        this.geometry.rotateX(-Math.PI / 2);
+
+        this.material = new GraphicsLib.MeshStandardMaterial({
+            color: 0x3d8c40,
+            flatShading: this.isLowPoly,
+            wireframe: this.wireframe,
+        });
+
+        this.mesh = new GraphicsLib.Mesh(
+            this.geometry,
+            this.material
+        );
+    }
+
+    updateHeightmap(heightmap) {
+        const vertices =
+            this.geometry.attributes.position.array;
+
+        const size = this.size;
+
+        const segmentCount = this.isLowPoly
+            ? Math.floor(size / 4)
+            : size - 1;
+
         for (let i = 0, j = 0; i < vertices.length; i += 3, j++) {
-            const x = this.lowPoly
+            const x = this.isLowPoly
                 ? Math.floor((j % (segmentCount + 1)) * (size / segmentCount))
                 : Math.floor(j % size);
-            const y = this.lowPoly
-                ? Math.floor(Math.floor(j / (segmentCount + 1)) * (size / segmentCount))
+
+            const y = this.isLowPoly
+                ? Math.floor(Math.floor(j / (segmentCount + 1)) *(size / segmentCount))
                 : Math.floor(j / size);
-            
+
             if (x < size && y < size) {
-                vertices[i + 1] = this.heightmap[y][x]
+                vertices[i + 1] = heightmap[y][x];
             }
         }
-        geometry.computeVertexNormals();
-        
-        return new this.GraphicsLib.Mesh(geometry, material)
-    }
-}
 
-
-
-
-// recveives terrain data from the server and displays this terrain to the user with 3js
-
-// Terrain.js - Handles terrain generation and rendering
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
-
-// NoiseGenerator.js - Utility for generating noise-based heightmaps with mountain barrier
-export function createTerrain(){
-    return;
-}
-
-
-
-class Terrain {
-  constructor(scene, THREE, heightmap, heightmapOverlay) {
-    this.scene = scene;
-    this.mapSize = 512; // 512
-    this.lowPoly = true;
-    this.terrainSize = 512;
-    this.heightMultiply = 90;
- 
-    this.mesh = this.createTerrainMesh();
-    this.scene.add(this.mesh);
-    this.underMesh = this.createUnderMesh();
-    this.scene.add(this.underMesh);
-  }
-
-
-  createUnderMesh() {
-    const size = this.mapSize ;
-    const segmentCount = this.lowPoly ? Math.floor(size / 4) : size - 1;
-    const geometry = new THREE.PlaneGeometry(this.terrainSize, this.terrainSize, segmentCount, segmentCount);
-    geometry.rotateX(-Math.PI / 2);
-
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x3d8c40,
-    });
-
-    return new THREE.Mesh(geometry, material);
-  }
-
-  createTerrainMesh() {
-    const size = this.mapSize;
-    const segmentCount = this.lowPoly ? Math.floor(size / 4) : size - 1;
-    const geometry = new THREE.PlaneGeometry(this.terrainSize, this.terrainSize, segmentCount, segmentCount);
-    geometry.rotateX(-Math.PI / 2);
-
-    const vertices = geometry.attributes.position.array;
-
-    for (let i = 0, j = 0; i < vertices.length; i += 3, j++) {
-      const x = this.lowPoly
-        ? Math.floor((j % (segmentCount + 1)) * (size / segmentCount))
-        : Math.floor(j % size);
-      const y = this.lowPoly
-        ? Math.floor(Math.floor(j / (segmentCount + 1)) * (size / segmentCount))
-        : Math.floor(j / size);
-      
-
-      if (x < size && y < size) {
-        const baseHeight = this.heightmap[y][x];
-        const overlay = this.heightmapOverlay[y][x];
-        const finalHeight = baseHeight * overlay  * this.heightMultiply + 0.2;
-        vertices[i + 1] = finalHeight ;
-      }
+        this.geometry.attributes.position.needsUpdate = true;
+        this.geometry.computeVertexNormals();
     }
 
-    geometry.computeVertexNormals();
-
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x3d8c40,
-      flatShading: this.lowPoly,
-      wireframe: false,
-
-    });
-
-    return new THREE.Mesh(geometry, material);
-  }
-
-  toggleTerrainMode() {
-    this.lowPoly = !this.lowPoly;
-    this.scene.remove(this.mesh);
-    this.mesh = this.createTerrainMesh();
-    this.scene.add(this.mesh);
-    return this.lowPoly ? 'Low Poly' : 'Regular';
-  }
-
-  getHeightAt(x, z) {
-    const normalizedX = (x + this.terrainSize / 2) / this.terrainSize;
-    const normalizedZ = (z + this.terrainSize / 2) / this.terrainSize;
-
-    const heightmapX = Math.floor(normalizedX * (this.mapSize - 1));
-    const heightmapZ = Math.floor(normalizedZ * (this.mapSize - 1));
-
-    if (
-      heightmapX >= 0 && heightmapX < this.mapSize &&
-      heightmapZ >= 0 && heightmapZ < this.mapSize
-    ) {
-      const height = this.heightmap[heightmapZ][heightmapX];
-      const overlay = this.heightmapOverlay[heightmapZ][heightmapX];
-      return height * overlay * this.heightMultiply;
+    getMesh() {
+        return this.mesh;
     }
 
-    return 0;
-  }
+    dispose() {
+        this.geometry.dispose();
+        this.material.dispose();
+    }
 }
