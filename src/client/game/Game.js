@@ -7,7 +7,7 @@ import { createWorld } from "./world/world.js"
 import { createCamera } from './components/Camera.js';
 
 
-class boatController(inputManager, boat){}
+class boatController(inputManagerInstance, boatInstance){}
 
 
 
@@ -73,23 +73,76 @@ class LocalEventHandler {
     }
 }
 
-class aiBrain {
-    this.mode = 
-    }
-    
-    
+
+
 
 class AiInput { 
-    t
-    
     constructor(aiBrain, localEventHandler, networkEventHandler)
-    
     
     
     } 
     
-    update{
+    constructor() 
+    this.mode = this.randomMovents
+    this.lastAction = null
+    this.actionPercent = { 
+        moveForward = 0
+        moveBackward = 0 
+        moveLeft = 0 
+        moveRight = 0 
+        fireProjectileLeft  = 0 
+        fireProjectileRight = 0 
+    }
+    
+    randomMovements(heightmap, boats) { 
+        this.actionPercent.moveForward += 100
+        console.log.
+    }
+    
+    calculateNextAction() { 
+        const acrions = {
+            moveForward: false
+            moveBackward: false
+            moveLeft: false
+            moveRight: false
+            fireProjectileLeft: false
+            fireProjectileRight: false 
+        }
+        const willEmit = false
+        for(const [key, value] of Object.entries(this.possibleActions)) {
+            if ( value > 100 )
+            this.possibleActions[key] = 0; 
+            actions[key] = true;
+            willEmit = true
+        } 
+        if (!willEmit) {
+            return 
+        }
         
+        return actions
+    } 
+    
+    
+    updateBrain(heightmap, boats) {
+        this.mode(heightmap, boats)
+        return this.calculateNextAction()
+    } 
+    
+    
+    this.actions = {
+        moveForward:  false,
+        moveBackward: false,
+        moveLeft:     false,
+        moveRight:    false,
+        fireProjectileLeft:  false,
+        fireProjectileRight: false,
+    }
+
+    this.toggles = {
+        pointerLocked: false,
+        toggleCamera:  false,
+        toggleTerrain: false,
+        toggleFog:     false,
     }
     
     getSnapshot() {
@@ -106,8 +159,14 @@ class AiInput {
         return snapshot
     }
     
+   update() { 
+        this.actions = aiBrain.update()
+        const snapshot = this.getSnapshot()
+        this.localEventHandler.emit("snapshot", snapshot);
+        //this.networkEventHandler.emit("snapshot", snapshot);
+    } 
     
-
+}
 
 class ClientInput {
     constructor(localEventHandler, networkEventHandler) {
