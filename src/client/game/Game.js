@@ -74,29 +74,22 @@ class LocalEventHandler {
 }
 
 
-
-
 class AiInput { 
-    constructor(aiBrain, localEventHandler, networkEventHandler)
-    
-    
+    constructor(localEventHandler, networkEventHandler)
+        this.mode = this.randomMovents
+        this.lastActions = null 
+        this.actionPercent = { 
+            moveForward = 0
+            moveBackward = 0 
+            moveLeft = 0 
+            moveRight = 0 
+            fireProjectileLeft  = 0 
+            fireProjectileRight = 0 
+        }
     } 
-    
-    constructor() 
-    this.mode = this.randomMovents
-    this.lastAction = null
-    this.actionPercent = { 
-        moveForward = 0
-        moveBackward = 0 
-        moveLeft = 0 
-        moveRight = 0 
-        fireProjectileLeft  = 0 
-        fireProjectileRight = 0 
-    }
-    
+
     randomMovements(heightmap, boats) { 
         this.actionPercent.moveForward += 100
-        console.log.
     }
     
     calculateNextAction() { 
