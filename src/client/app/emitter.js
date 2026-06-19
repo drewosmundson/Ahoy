@@ -24,3 +24,35 @@ export function createEmitter(socket, eventSchemas)  {
   // to be passed to the server. 
     function nullEmit() {}
 }
+
+export function createEmitter(socket, eventSchemas) {
+    return function emit(event, data, lobby) {
+        if (!(event in eventSchemas)) {
+            throw new Error(`Unknown event: ${event}`);
+        }
+
+        if (!eventSchemas[event](data)) {
+            throw new Error(`Invalid payload`);
+        }
+
+        socket.emit(event, {
+            ...data,
+            lobby
+        });
+    };
+}
+
+export function createReceiver(socket, eventSchemas) {
+    return function subscribe(handler) {
+        for (const event in eventSchemas) {
+            socket.on(event, data => {
+                if (!eventSchemas[event](data)) {
+                    return;
+                }
+
+                handler(event, data);
+            });
+        }
+    };
+}
+
