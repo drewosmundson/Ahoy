@@ -9,10 +9,14 @@ import { createCamera } from './components/Camera.js';
 
 class boatController(inputManagerInstance, boatInstance){}
 
+class aiManualController(inputManagerInstnce, aiInputInstance) {
+    
+    
+    
+    } 
 
 
-
-// receives buffer snapshots from inputSource
+// receives buffer snapshots from inputSource ansny via eventHandler
 // dual use for accepting local changes as well as network updates
 // it is this way so that all controllers accept the same API structure
 class InputManager {
@@ -36,18 +40,6 @@ class InputManager {
     }
 }
 
-class NetworkEventHandler {
-    constructor(network) {
-
-    }
-    on(event, callback) {
-
-
-    }
-    emit(event, data) {
-
-
-    }
 }
 
 //i think local and remove event handler can be merged into one class
@@ -73,11 +65,92 @@ class LocalEventHandler {
     }
 }
 
+class EventHandler {
+    constructor(emitter = null) {
+        this.listeners = new Map();
+        this.emitter = emitter;
+    }
+
+    on(event, callback) {
+        if (!this.listeners.has(event)) {
+            this.listeners.set(event, []);
+        }
+
+        this.listeners.get(event).push(callback);
+    }
+
+    trigger(event, data) {
+        const callbacks = this.listeners.get(event);
+
+        if (!callbacks) return;
+
+        for (const callback of callbacks) {
+            callback(data);
+        }
+    }
+
+    emit(event, data, options = {}) {
+        this.trigger(event, data);
+
+        if (options.network && this.emitter) {
+            this.emitter(event, data, options.lobby);
+        }
+    }
+
+    attach(subscribe) {
+        subscribe((event, data) => {
+            this.trigger(event, data);
+        });
+    }
+}
+
+class EventHandler {
+    constructor(emit = () => {}) {
+        this.listeners = new Map();
+        this.emitRemote = emit;
+    }
+
+    on(event, callback) {
+        if (!this.listeners.has(event)) {
+            this.listeners.set(event, []);
+        }
+
+        this.listeners.get(event).push(callback);
+    }
+
+    dispatch(event, data) {
+        const callbacks = this.listeners.get(event);
+
+        if (!callbacks) return;
+
+        for (const callback of callbacks) {
+            callback(data);
+        }
+    }
+
+    emit(event, data, options = {}) {
+        // local update
+        this.trigger(event, data);
+
+        // optional network send
+        if (options.network) {
+            this.emitRemote(event, data, options.lobby);
+        }
+    }
+
+    attach(subscribe) {
+        subscribe((event, data) => {
+            this.trigger(event, data);
+        });
+    }
+}
+
+
+
 
 class AiInput { 
     constructor(localEventHandler, networkEventHandler)
-        this.mode = this.randomMovents
-        this.lastActions = null 
+        this.updateBrain = this.randomMovements
         this.actionPercent = { 
             moveForward = 0
             moveBackward = 0 
@@ -91,16 +164,9 @@ class AiInput {
     randomMovements(heightmap, boats) { 
         this.actionPercent.moveForward += 100
     }
+
     
     calculateNextAction() { 
-        const acrions = {
-            moveForward: false
-            moveBackward: false
-            moveLeft: false
-            moveRight: false
-            fireProjectileLeft: false
-            fireProjectileRight: false 
-        }
         const willEmit = false
         for(const [key, value] of Object.entries(this.possibleActions)) {
             if ( value > 100 )
@@ -109,18 +175,10 @@ class AiInput {
             willEmit = true
         } 
         if (!willEmit) {
-            return 
+            return false
         }
-        
-        return actions
+        return true
     } 
-    
-    
-    updateBrain(heightmap, boats) {
-        this.mode(heightmap, boats)
-        return this.calculateNextAction()
-    } 
-    
     
     this.actions = {
         moveForward:  false,
@@ -153,7 +211,8 @@ class AiInput {
     }
     
    update() { 
-        this.actions = aiBrain.update()
+        this.updateBrain()
+        this.actions = calculateNextActions
         const snapshot = this.getSnapshot()
         this.localEventHandler.emit("snapshot", snapshot);
         //this.networkEventHandler.emit("snapshot", snapshot);
