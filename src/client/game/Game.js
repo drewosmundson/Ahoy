@@ -66,58 +66,36 @@ class LocalEventHandler {
 }
 
 class EventHandler {
-    constructor(emitter = null) {
+    constructor(network = () => {}) {
         this.listeners = new Map();
-        this.emitter = emitter;
+        this.network  = network;
     }
-
+    
     on(event, callback) {
         if (!this.listeners.has(event)) {
             this.listeners.set(event, []);
         }
-
         this.listeners.get(event).push(callback);
+        return {
+            unsubscribe: () => {
+                this.off(event, callback);
+            }
+        };
     }
-
-    trigger(event, data) {
+    off(event, callback) {
         const callbacks = this.listeners.get(event);
-
         if (!callbacks) return;
-
-        for (const callback of callbacks) {
-            callback(data);
+        
+        const index = callbacks.indexOf(callback);
+        
+        if (index !== -1) {
+            callbacks.splice(index, 1);
+        }
+        
+        if (callbacks.length === 0) {
+            this.listeners.delete(event);
         }
     }
-
-    emit(event, data, options = {}) {
-        this.trigger(event, data);
-
-        if (options.network && this.emitter) {
-            this.emitter(event, data, options.lobby);
-        }
-    }
-
-    attach(subscribe) {
-        subscribe((event, data) => {
-            this.trigger(event, data);
-        });
-    }
-}
-
-class EventHandler {
-    constructor(emit = () => {}) {
-        this.listeners = new Map();
-        this.emitRemote = emit;
-    }
-
-    on(event, callback) {
-        if (!this.listeners.has(event)) {
-            this.listeners.set(event, []);
-        }
-
-        this.listeners.get(event).push(callback);
-    }
-
     dispatch(event, data) {
         const callbacks = this.listeners.get(event);
 
@@ -128,19 +106,13 @@ class EventHandler {
         }
     }
 
-    emit(event, data, options = {}) {
-        // local update
-        this.trigger(event, data);
-
-        // optional network send
-        if (options.network) {
-            this.emitRemote(event, data, options.lobby);
-        }
+    emit(event, data) {
+        this.network.emit(event, data)
     }
 
     attach(subscribe) {
         subscribe((event, data) => {
-            this.trigger(event, data);
+            this.dispatch(event, data);
         });
     }
 }
