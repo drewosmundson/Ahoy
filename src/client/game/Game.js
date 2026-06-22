@@ -40,37 +40,15 @@ class InputManager {
     }
 }
 
-}
-
-//i think local and remove event handler can be merged into one class
+class networkEventHandler {
+    
+    } 
 
 class LocalEventHandler {
-    constructor() {
-        this.listeners = new Map();
-    }
-    on(event, callback) {
-        if(!this.listeners.has(event)) {
-            this.listeners.set(event, []);
-        }
-        this.listeners.get(event).push(callback);
-    }
-    emit(event, data){
-        const callbacks = this.listeners.get(event);
-
-        if(!callbacks) return;
-
-        for (const callback of callbacks) {
-            callback(data);
-        }
-    }
-}
-
-class EventHandler {
     constructor(network = () => {}) {
         this.listeners = new Map();
         this.network  = network;
     }
-    
     on(event, callback) {
         if (!this.listeners.has(event)) {
             this.listeners.set(event, []);
@@ -79,7 +57,8 @@ class EventHandler {
         return {
             unsubscribe: () => {
                 this.off(event, callback);
-            }
+            }, 
+            // pause: () =>{},
         };
     }
     off(event, callback) {
@@ -96,7 +75,8 @@ class EventHandler {
             this.listeners.delete(event);
         }
     }
-    dispatch(event, data) {
+
+    emit(event, data) {
         const callbacks = this.listeners.get(event);
 
         if (!callbacks) return;
@@ -104,10 +84,6 @@ class EventHandler {
         for (const callback of callbacks) {
             callback(data);
         }
-    }
-
-    emit(event, data) {
-        this.network.emit(event, data)
     }
 
     attach(subscribe) {
