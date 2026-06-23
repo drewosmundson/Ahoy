@@ -18,7 +18,6 @@ class BoatController {
     constructor (inputManagerInstance, boatInstance) {
 
     }
-
 }
 
 
@@ -26,8 +25,8 @@ class BoatController {
 // dual use for accepting local changes as well as network updates
 // it is this way so that all controllers accept the same API structure
 class InputManager {
-    constructor(EventHandler) {
-        this.eventHandler = EventHandler
+    constructor(eventHandler) {
+        this.eventHandler = eventHandler
         this.snapshotBuffer = [];
 
         this.eventHandler.on('snapshot', (snapshot) => {
@@ -91,7 +90,7 @@ class EventHandler {
             callback(data);
         }
     }
-
+    
     attach(subscribe) {
         subscribe((event, data) => {
             this.dispatch(event, data);
@@ -101,9 +100,8 @@ class EventHandler {
 
 
 class ClientInput {
-    constructor(localEventHandler, networkEventHandler) {
-        this.localEventHandler = localEventHandler;
-        this.networkEventHandler = networkEventHandler;
+    constructor(eventHandler) {
+        this.eventHandler = localEventHandler;
 
         document.addEventListener('keydown', (event) => {
             this.handleKeyDown(event);
@@ -218,16 +216,15 @@ class ClientInput {
 
     update() { 
         const snapshot = this.getSnapshot()
-        this.localEventHandler.emit("snapshot", snapshot);
-        this.networkEventHandler.emit("snapshot", snapshot);
+        this.eventHandler.emit("snapshot", snapshot);
     } 
 }
 
 
 export class Game {
     constructor(network) {
-        this.networkEventHandler = new EventHandler(network);
-        this.localEventHandler = new EventHandler();
+        this.eventHandler = new EventHandler(network);
+
         this.heightmap = createHeightmap();
     }
 
@@ -237,8 +234,10 @@ export class Game {
         this.camera = createCamera(canvas, THREE.PerspectiveCamera);
         this.canvas = canvas
 
-        this.clientInput = new ClientInput();
-        this.
+        this.eventHandler = new EventHandler()
+        this.clientInput = new ClientInput(this.eventHandler);
+        this.InputManager = new InputManager(this.eventHandler);
+
 
         this.world = createWorld(this.scene, this.heightmap);
 
