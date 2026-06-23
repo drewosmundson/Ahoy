@@ -46,10 +46,10 @@ class InputManager {
 }
 
 
+// publish / subscribe system 
 class EventHandler {
-    constructor(network = null) {
+    constructor() {
         this.listeners = new Map();
-        this.network  = network;
     }
     on(event, callback) {
         if (!this.listeners.has(event)) {
@@ -81,7 +81,7 @@ class EventHandler {
         }
     }
 
-    emit(event, data) {
+    publish(event, data) {
         const callbacks = this.listeners.get(event);
 
         if (!callbacks) return;
@@ -93,7 +93,7 @@ class EventHandler {
     
     attach(subscribe) {
         subscribe((event, data) => {
-            this.dispatch(event, data);
+            this.publish(event, data);
         });
     }
 }
@@ -216,7 +216,7 @@ class ClientInput {
 
     update() { 
         const snapshot = this.getSnapshot()
-        this.eventHandler.emit("snapshot", snapshot);
+        this.eventHandler.dispatch("snapshot", snapshot);
     } 
 }
 
