@@ -1,5 +1,6 @@
 
 // event handler does not know about sockets
+// can be used locally for ascync updates like user input 
 export class EventHandler {
     constructor() {
         this.listeners = new Map();
@@ -114,12 +115,45 @@ export class NetworkInterface {
 
 
 /*
-// ----------------------
 // Usage
-// ----------------------
 
+// Local 
+const events = new EventHandler();
+
+events.on("modalOpened", data => {
+    console.log("Open modal:", data.id);
+});
+
+events.on("scoreChanged", score => {
+    console.log("Score:", score);
+});
+
+events.emit(
+    "modalOpened",
+    { id: "settings" }
+);
+
+events.emit(
+    "scoreChanged",
+    100
+);
+class Player {
+    constructor(events) {
+        this.events = events;
+        this.health = 100;
+    }
+
+    damage(amount) {
+        this.health -= amount;
+        this.events.emit("playerDamaged", { health: this.health }
+        );
+    }
+}
+
+
+
+//Network 
 const network = new NetworkInterface(socket, eventSchemas);
-
 
 // Receive network events
 const sub = network.on(
