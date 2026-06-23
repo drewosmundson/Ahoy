@@ -7,13 +7,19 @@ import { createWorld } from "./world/world.js"
 import { createCamera } from './components/Camera.js';
 
 
-class boatController(inputManagerInstance, boatInstance){}
+class Boat {
 
-class aiManualController(inputManagerInstnce, aiInputInstance) {
-    
-    
-    
-    } 
+
+
+}
+
+
+class BoatController {
+    constructor (inputManagerInstance, boatInstance) {
+
+    }
+
+}
 
 
 // receives buffer snapshots from inputSource ansny via eventHandler
@@ -40,12 +46,9 @@ class InputManager {
     }
 }
 
-class networkEventHandler {
-    
-    } 
 
-class LocalEventHandler {
-    constructor(network = () => {}) {
+class EventHandler {
+    constructor(network = null) {
         this.listeners = new Map();
         this.network  = network;
     }
@@ -53,24 +56,27 @@ class LocalEventHandler {
         if (!this.listeners.has(event)) {
             this.listeners.set(event, []);
         }
+
         this.listeners.get(event).push(callback);
+
         return {
             unsubscribe: () => {
                 this.off(event, callback);
-            }, 
+            },
             // pause: () =>{},
         };
     }
+
     off(event, callback) {
         const callbacks = this.listeners.get(event);
         if (!callbacks) return;
-        
+
         const index = callbacks.indexOf(callback);
-        
+
         if (index !== -1) {
             callbacks.splice(index, 1);
         }
-        
+
         if (callbacks.length === 0) {
             this.listeners.delete(event);
         }
@@ -93,80 +99,6 @@ class LocalEventHandler {
     }
 }
 
-
-
-
-class AiInput { 
-    constructor(localEventHandler, networkEventHandler)
-        this.updateBrain = this.randomMovements
-        this.actionPercent = { 
-            moveForward = 0
-            moveBackward = 0 
-            moveLeft = 0 
-            moveRight = 0 
-            fireProjectileLeft  = 0 
-            fireProjectileRight = 0 
-        }
-    } 
-
-    randomMovements(heightmap, boats) { 
-        this.actionPercent.moveForward += 100
-    }
-
-    
-    calculateNextAction() { 
-        const willEmit = false
-        for(const [key, value] of Object.entries(this.possibleActions)) {
-            if ( value > 100 )
-            this.possibleActions[key] = 0; 
-            actions[key] = true;
-            willEmit = true
-        } 
-        if (!willEmit) {
-            return false
-        }
-        return true
-    } 
-    
-    this.actions = {
-        moveForward:  false,
-        moveBackward: false,
-        moveLeft:     false,
-        moveRight:    false,
-        fireProjectileLeft:  false,
-        fireProjectileRight: false,
-    }
-
-    this.toggles = {
-        pointerLocked: false,
-        toggleCamera:  false,
-        toggleTerrain: false,
-        toggleFog:     false,
-    }
-    
-    getSnapshot() {
-        const snapshot = {
-            timestamp: performance.now(),
-            actions: { ...this.actions },
-            toggles: { ...this.toggles },
-            mouse: {
-                deltaPitch: this.mouseMovement.deltaPitch,
-                deltaYaw: this.mouseMovement.deltaYaw,
-            }
-        }
-        this.resetOneTimeActions();
-        return snapshot
-    }
-    
-   update() { 
-        this.updateBrain()
-        this.actions = calculateNextActions
-        const snapshot = this.getSnapshot()
-        this.localEventHandler.emit("snapshot", snapshot);
-        //this.networkEventHandler.emit("snapshot", snapshot);
-    } 
-    
-}
 
 class ClientInput {
     constructor(localEventHandler, networkEventHandler) {
@@ -287,14 +219,15 @@ class ClientInput {
     update() { 
         const snapshot = this.getSnapshot()
         this.localEventHandler.emit("snapshot", snapshot);
-        //this.networkEventHandler.emit("snapshot", snapshot);
+        this.networkEventHandler.emit("snapshot", snapshot);
     } 
 }
 
+
 export class Game {
     constructor(network) {
-        this.networkEventHandler = new NetworkEventHandler(network);
-        this.localEventHandler = new LocalEventHandler();
+        this.networkEventHandler = new EventHandler(network);
+        this.localEventHandler = new EventHandler();
         this.heightmap = createHeightmap();
     }
 
@@ -304,9 +237,8 @@ export class Game {
         this.camera = createCamera(canvas, THREE.PerspectiveCamera);
         this.canvas = canvas
 
-        this.clientInput = new ClientInput(this.localEventHandler, this.networkEventHandler);
-        this.clientInputManager = new InputManager(this.localEventHandler); 
-        this.networkInputManager = new InputManager(this.networkEventHandler)
+        this.clientInput = new ClientInput();
+        this.
 
         this.world = createWorld(this.scene, this.heightmap);
 
@@ -330,6 +262,9 @@ export class Game {
     stop() {
         this.renderer.setAnimationLoop(null);
     }
+
+
+
 
     handleWindowResize = () => {
         const windowWidth = window.innerWidth;
