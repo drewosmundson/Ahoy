@@ -19,6 +19,14 @@ class BoatController {
 
     }
 }
+class camera {
+
+}
+
+
+class cameraController { 
+    
+    }
 
 
 // receives buffer snapshots from inputSource ansny via eventHandler
@@ -31,12 +39,22 @@ class InputManager {
         this.eventHandler.on('snapshot', (snapshot) => {
             this.snapshotBuffer.push(snapshot);
         });
+        this.eventHandler.on("mouseMovement, (mouseData) => {
+            
+        }
     }
 
     changeInputSource(NewEventHandler) {
         this.eventHandler = NewEventHandler;
     }
-    
+    flattenBuffer(snapshotBuffer) { 
+        snapshotBuffer.forEach(snapshot => {
+            Object.entries(snapshot.actions) 
+            
+            }) 
+            Object.entries(snapshot.toggles)
+        
+    }
 
     pollInputs() {
         const flat = this.snapshotBuffer;
@@ -44,6 +62,10 @@ class InputManager {
         return snapshot;
     }
 }
+
+class MouseInput {
+    
+    }
 
 
 class ClientInput {
@@ -68,7 +90,7 @@ class ClientInput {
         })
         document.addEventListener('mousemove', (event) => {
             this.handleMouseMove(event);
-            this.update();
+            this.updateMouse()
         });
 
         this.keyBindings = {
@@ -152,10 +174,6 @@ class ClientInput {
             timestamp: performance.now(),
             actions: { ...this.actions },
             toggles: { ...this.toggles },
-            mouse: {
-                deltaPitch: this.mouseMovement.deltaPitch,
-                deltaYaw: this.mouseMovement.deltaYaw,
-            }
         }
         this.resetOneTimeActions();
         return snapshot
@@ -165,6 +183,10 @@ class ClientInput {
         const snapshot = this.getSnapshot()
         this.events.emit("snapshot", snapshot);
     } 
+    updateMouse() {
+        const mouseData = this.mouseMovement
+        this.events.emit("mouseMove", mouseData);
+     }
 }
 
 
