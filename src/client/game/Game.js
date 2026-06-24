@@ -36,11 +36,12 @@ class InputManager {
     constructor(events, network) {
         this.network = network
         this.snapshotBuffer = [];
+        this.cameraMovementBuffer = []; 
         this.eventHandler.on('snapshot', (snapshot) => {
             this.snapshotBuffer.push(snapshot);
         });
-        this.eventHandler.on("mouseMovement, (mouseData) => {
-            
+        this.eventHandler.on("mouseMovement", (mouseData) => {
+            this.cameraMovementBuffer = []
         }
     }
 
@@ -53,14 +54,19 @@ class InputManager {
             
             }) 
             Object.entries(snapshot.toggles)
-        
     }
 
     pollInputs() {
         const flat = this.snapshotBuffer;
+        const actions 
+        const toggles
         this.snapshotBuffer = [];
         return snapshot;
     }
+    pollMouseInputs { 
+        cameraMovementBuffer.forEach(
+        return { deltaPitch, deltaYaw }
+    } 
 }
 
 class MouseInput {
@@ -164,6 +170,9 @@ class ClientInput {
 
     // Actions that need to be reset to their default go here
     resetOneTimeActions() {
+
+    }
+    resetMouse() {
         this.mouseMovement.deltaPitch = 0;
         this.mouseMovement.deltaYaw = 0;
         // this.mouseMovement.mousewheel = 0;
@@ -184,8 +193,9 @@ class ClientInput {
         this.events.emit("snapshot", snapshot);
     } 
     updateMouse() {
-        const mouseData = this.mouseMovement
+        const mouseData = [mouseMovement.deltaYaw, mousemovment.deltaPitch]
         this.events.emit("mouseMove", mouseData);
+        this.resetMouse() 
      }
 }
 
