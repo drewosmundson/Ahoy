@@ -5,7 +5,7 @@ import { createHeightmap } from "./utils/heightmap.js"
 import { createRenderer } from "./utils/renderer.js"
 import { createWorld } from "./world/world.js"
 import { createCamera } from './components/Camera.js';
-
+import { events } from "../../shared/realtimeEvents.js"
 
 class Boat {
 
@@ -25,10 +25,9 @@ class BoatController {
 // dual use for accepting local changes as well as network updates
 // it is this way so that all controllers accept the same API structure
 class InputManager {
-    constructor(eventHandler) {
-        this.eventHandler = eventHandler
+    constructor(events, network) {
+        this.network = network
         this.snapshotBuffer = [];
-
         this.eventHandler.on('snapshot', (snapshot) => {
             this.snapshotBuffer.push(snapshot);
         });
@@ -37,71 +36,19 @@ class InputManager {
     changeInputSource(NewEventHandler) {
         this.eventHandler = NewEventHandler;
     }
+    
 
     pollInputs() {
-        const snapshot = this.snapshotBuffer;
+        const flat = this.snapshotBuffer;
         this.snapshotBuffer = [];
         return snapshot;
     }
 }
 
 
-// publish / subscribe system 
-class EventHandler {
-    constructor() {
-        this.listeners = new Map();
-    }
-    on(event, callback) {
-        if (!this.listeners.has(event)) {
-            this.listeners.set(event, []);
-        }
-
-        this.listeners.get(event).push(callback);
-
-        return {
-            unsubscribe: () => {
-                this.off(event, callback);
-            },
-            // pause: () =>{},
-        };
-    }
-
-    off(event, callback) {
-        const callbacks = this.listeners.get(event);
-        if (!callbacks) return;
-
-        const index = callbacks.indexOf(callback);
-
-        if (index !== -1) {
-            callbacks.splice(index, 1);
-        }
-
-        if (callbacks.length === 0) {
-            this.listeners.delete(event);
-        }
-    }
-
-    publish(event, data) {
-        const callbacks = this.listeners.get(event);
-
-        if (!callbacks) return;
-
-        for (const callback of callbacks) {
-            callback(data);
-        }
-    }
-    
-    attach(subscribe) {
-        subscribe((event, data) => {
-            this.publish(event, data);
-        });
-    }
-}
-
-
 class ClientInput {
-    constructor(eventHandler) {
-        this.eventHandler = localEventHandler;
+    constructor(events) {
+        this.events = events;
 
         document.addEventListener('keydown', (event) => {
             this.handleKeyDown(event);
@@ -216,14 +163,15 @@ class ClientInput {
 
     update() { 
         const snapshot = this.getSnapshot()
-        this.eventHandler.dispatch("snapshot", snapshot);
+        this.events.emit("snapshot", snapshot);
     } 
 }
 
 
 export class Game {
     constructor(network) {
-        this.eventHandler = new EventHandler(network);
+        this.network = network;
+        this.events = events; 
 
         this.heightmap = createHeightmap();
     }
