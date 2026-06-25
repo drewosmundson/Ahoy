@@ -32,46 +32,47 @@ class cameraController {
 // receives buffer snapshots from inputSource ansny via eventHandler
 // dual use for accepting local changes as well as network updates
 // it is this way so that all controllers accept the same API structure
+
+// flatten into bitmask to be sent to the server and controller
 class InputManager {
     constructor(events, network) {
         this.network = network
-        this.snapshotBuffer = [];
-        this.cameraMovementBuffer = []; 
-        this.eventHandler.on('snapshot', (snapshot) => {
-            this.snapshotBuffer.push(snapshot);
+        this.actionBuffer = [];
+        this.toggleBuffer = [];
+        this.cameraBuffer = []; 
+
+        this.eventHandler.on('action', (actionSnapshot) => {
+            this.actionBuffer.push(actionSnapshot);
         });
-        this.eventHandler.on("mouseMovement", (mouseData) => {
-            this.cameraMovementBuffer = []
+        this.eventHandler.on('toggle', (toggleSnapshot) => {
+            this.toggleBuffer.push(toggleSnapshot);
+        });
+        this.eventHandler.on("camera", (cameraSnapshot) => {
+            this.cameraBuffer.push(cameraSnapshot)
+        });
+    }
+
+    flattenBuffer(snapshotBuffer) {
+        const flattenedBuffer = {};
+        snapshotBuffer.forEach(snapshot => {
+            Object.entries(snapshot).forEach(([key, value]))
+            if (value == true && Object.hasOwn(flattenedBuffer, key)) {
+                
+            }
         }
     }
 
-    changeInputSource(NewEventHandler) {
-        this.eventHandler = NewEventHandler;
-    }
-    flattenBuffer(snapshotBuffer) { 
-        snapshotBuffer.forEach(snapshot => {
-            Object.entries(snapshot.actions) 
-            
-            }) 
-            Object.entries(snapshot.toggles)
-    }
-
     pollInputs() {
-        const flat = this.snapshotBuffer;
-        const actions 
-        const toggles
-        this.snapshotBuffer = [];
-        return snapshot;
+
+
     }
-    pollMouseInputs { 
-        cameraMovementBuffer.forEach(
-        return { deltaPitch, deltaYaw }
+    pollCameraInputs { 
+        snapshotBuffer.forEach(snapshot => {
+            Object.entries(snapshot)
+        }
+  
     } 
 }
-
-class MouseInput {
-    
-    }
 
 
 class ClientInput {
@@ -172,6 +173,8 @@ class ClientInput {
     resetOneTimeActions() {
 
     }
+    // It is very unlikely that this will ever be needed as event.movementX resets to 0 after each event and update() is called after each event
+    // this function exists for safty and asurance that the same movement of the mouse will always be deterministic
     resetMouse() {
         this.mouseMovement.deltaPitch = 0;
         this.mouseMovement.deltaYaw = 0;
@@ -184,19 +187,18 @@ class ClientInput {
             actions: { ...this.actions },
             toggles: { ...this.toggles },
         }
-        this.resetOneTimeActions();
         return snapshot
     }
 
     update() { 
-        const snapshot = this.getSnapshot()
-        this.events.emit("snapshot", snapshot);
-    } 
-    updateMouse() {
-        const mouseData = [mouseMovement.deltaYaw, mousemovment.deltaPitch]
+        const mouseData = this.mouseMovement
         this.events.emit("mouseMove", mouseData);
         this.resetMouse() 
-     }
+
+        const snapshot = this.getSnapshot()
+        this.events.emit("snapshot", snapshot);
+        this.resetOneTimeActions() 
+    } 
 }
 
 
