@@ -20,11 +20,14 @@ class BoatController {
     }
 }
 class camera {
+    constructor(
 
 }
 
 
 class cameraController { 
+    
+    
     
     }
 
@@ -34,12 +37,12 @@ class cameraController {
 // it is this way so that all controllers accept the same API structure
 
 // flatten into bitmask to be sent to the server and controller
-class InputManager {
+class NetworkManager  {
     constructor(events, network) {
         this.network = network
         this.actionBuffer = [];
         this.toggleBuffer = [];
-        this.cameraBuffer = []; 
+        
 
         this.eventHandler.on('action', (actionSnapshot) => {
             this.actionBuffer.push(actionSnapshot);
@@ -61,16 +64,11 @@ class InputManager {
             }
         }
     }
-
-    pollInputs() {
-
-
-    }
-    pollCameraInputs { 
-        snapshotBuffer.forEach(snapshot => {
-            Object.entries(snapshot)
-        }
-  
+    // send to server 
+    // send recived to controllers authoratativly 
+    update() {
+        
+    
     } 
 }
 
