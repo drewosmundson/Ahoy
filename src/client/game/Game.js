@@ -7,6 +7,68 @@ import { createWorld } from "./world/world.js"
 import { createCamera } from './components/Camera.js';
 import { events } from "../../shared/realtimeEvents.js"
 
+
+import BoatManager from "./BoatManager.js";
+import CameraManager from "./CameraManager.js";
+import OrbitCamera from "./cameras/OrbitCamera.js";
+
+const boatManager = new BoatManager();
+const cameraManager = new CameraManager();
+
+
+
+export default class PlayerControlSystem {
+
+    constructor(
+        emit
+        input,
+        boats,
+        //planes 
+        //tanks 
+        cameras
+    ) {
+        this.input = input;
+        this.boats = boats;
+        this.cameras = cameras;
+    }
+
+    emit.on( snapshot recieved) 
+
+        if (
+            this.input.pressed("TAB")
+        ) {
+
+            const boat =
+                this.boats.next();
+
+            this.boats
+                .setActiveBoat(
+                    boat.id
+                );
+
+            this.cameras
+                .follow(
+                    boat
+                );
+        }
+    }
+}
+
+
+
+
+cameraManager.set(
+    new OrbitCamera()
+);
+
+cameraManager.current.setTarget(
+    boatManager.activeBoat
+);
+
+
+
+
+
 class Boat {
 
 
