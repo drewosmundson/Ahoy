@@ -1,8 +1,8 @@
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
-import { createHeightmap } from "./utils/heightmap.js"
-import { createRenderer } from "./utils/renderer.js"
+import { createHeightmap } from "./Utilities/heightmap.js"
+import { createRenderer } from "./Utilities/renderer.js"
 import { createWorld } from "./world/world.js"
 import { createCamera } from './components/Camera.js';
 import { events } from "../../shared/realtimeEvents.js"
