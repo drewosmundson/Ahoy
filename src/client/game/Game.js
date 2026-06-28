@@ -19,20 +19,19 @@ const cameraManager = new CameraManager();
 
 export default class PlayerControlSystem {
 
-    constructor(
-        emit
-        input,
-        boats,
-        //planes 
-        //tanks 
-        cameras
-    ) {
+    constructor(emit, input, boats, cameras) {
         this.input = input;
         this.boats = boats;
         this.cameras = cameras;
+        
+        this.loadEvents(emit)
+        
     }
-
-    emit.on( snapshot recieved) 
+    loadEvents(emit) {
+        emit.on(EVENTS.SNAPSHOT, data) {
+            if(data.
+        }
+    }
 
         if (
             this.input.pressed("TAB")
