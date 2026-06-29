@@ -19,16 +19,25 @@ export class Game {
         this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
         this.camera = createCamera(canvas, THREE.PerspectiveCamera);
         this.canvas = canvas
-
+        
+        // for ebents with no side effects like camera movememt
         const events = new EventSystem()
 
         // Init Input
         this.clientInput = new ClientInput(events);
         this.aiInput = new AiInput()
+        
+        this.inputBuffers = {
+            localInputBuffer: new LocalInputBuffer(events);
+            networkInputBuffer: new NetworkInputBuffer(events);
+        }
 
         this.managers = {
+            input: new InputManager(),
+            network: new netManager(), 
             boat: new BoatManager(),
             projectile: new ProjectileManager(),
+            
             camera: new CameraManager(events),
             sound: new SoundManager(events),
         }
@@ -52,12 +61,17 @@ export class Game {
     }
 
     update(time) {
-        const intent = this.clientInputManager.pollInputs();
+        const intents = {} 
         
-        this.managers.forEach(manager => {
-            manager.update(intent)
+        this.inputBuffers.forEach(buffer) => {
+            buffer.pollIntents.push(intents) 
+        }
+        
+        this.intents.forEach(intent) => {
+            this.managers.forEach(manager => {
+                manager.update(intent)
+            });
         });
-        const snapshot = this 
     }
 
     stop() {
@@ -81,6 +95,12 @@ export class Game {
         this.renderer.setSize(width, height, false);
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
+    }
+}
+
+class playerCotrolManager {
+    constructor() {
+        
     }
 }
 
