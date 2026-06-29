@@ -18,6 +18,7 @@ import { mmo } from "./features/mmo.js"
 
 import { eventSchemas } from "../shared/schemas.js";
 import { Game } from "./game/Game.js";
+import { NetworkInterface } from "./app/network.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     const dom = createDom();
@@ -26,14 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const socket = io();
 
-    const emitter =  createEmitter(socket, eventSchemas);
+    const networkInterface =  createEmitter(socket, eventSchemas);
 
 
     const context = {
         dom,
         navigate,
         ui,
-        emitter,
+        networkInterface,
         Game,
     };
     // As this becomes large it would be good practice to inialize only the nessesary event listeners

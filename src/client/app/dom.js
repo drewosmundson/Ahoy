@@ -2,7 +2,7 @@
 
 
 
-export function createDom(){ 
+export function createDom() {
     const screens = {
         mainMenu:             mustGet("screen-main"),
         singleplayer:         mustGet("screen-singleplayer"),     

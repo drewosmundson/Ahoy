@@ -8,6 +8,25 @@ export function createCamera(canvas, PerspectiveCamera) {
 }
 
 
+
+export class CameraManager {
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
 // export class CameraController { 
 //   constructior(camera) {
 //   this.camera = new perspectiveCamera(75, aspect, 0.1, 1000);
