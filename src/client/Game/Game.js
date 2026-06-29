@@ -20,17 +20,17 @@ export class Game {
         this.camera = createCamera(canvas, THREE.PerspectiveCamera);
         this.canvas = canvas
 
-        const eventSystem = new EventSystem()
+        const events = new EventSystem()
 
         // Init Input
-        this.clientInput = new ClientInput(eventSystem);
-        //this.aiInput = new aiInput(this.eventSystem)
+        this.clientInput = new ClientInput(events);
+        this.aiInput = new AiInput()
 
         this.managers = {
-            boat: new BoatManager(eventSystem),
-            camera: new CameraManager(eventSystem),
-            sound: new SoundManager(eventSystem),
-            // projectile: new ProjectileManager(),
+            boat: new BoatManager(),
+            projectile: new ProjectileManager(),
+            camera: new CameraManager(events),
+            sound: new SoundManager(events),
         }
 
         this.world = createWorld(this.scene, this.heightmap);
@@ -52,11 +52,12 @@ export class Game {
     }
 
     update(time) {
-        const snapshots = this.clientInputManager.pollInputs();
-
+        const intent = this.clientInputManager.pollInputs();
+        
         this.managers.forEach(manager => {
-            manager.update(snapshots)
+            manager.update(intent)
         });
+        const snapshot = this 
     }
 
     stop() {
