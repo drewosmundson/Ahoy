@@ -61,18 +61,21 @@ export class Game {
     }
 
     update(time) {
-        const intents = {} 
+        const intents = clientInputBuffer.pollIntents()
         
-        this.inputBuffers.forEach(buffer) => {
-            buffer.pollIntents.push(intents) 
-        }
         
-        this.intents.forEach(intent) => {
-            this.managers.forEach(manager => {
-                manager.update(intent)
-            });
+        this.managers.forEach(manager => {
+            manager.update(intents)
         });
+        
+        
+        
+        
+        
     }
+
+
+
 
     stop() {
         this.renderer.setAnimationLoop(null);
