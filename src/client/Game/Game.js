@@ -11,36 +11,50 @@ import { createWorld } from "./world/World.js"
 export class Game {
     constructor(networkInterface) {
         this.networkInterface = networkInterface;
+        this.networkBuffer = new EventBuffer();
         this.heightmap = createHeightmap();
     }
 
-    setup(canvas) {
+    // Lobby Data Example:
+    // [teamID, vehicleType, howControlled] 
+    // how controlled is determined by the server for each player"
+    // the server will attempt to balance this among all the players in the lobby
+    // with priority towards the first player on a particular team"
+    // another player on the clients own team will be network. 
+    // same team players will show the same number but then network as the howControlled
+    // lobbyData = [
+    //     [0, "boat", "ai"]
+    //     [1, "plane", "ai"],
+    //     [1, "boat", "client"]
+    //     [3, "boat", "network"]
+    // ]
+    setup(canvas, lobbyData) {
         this.scene = new THREE.Scene();
         this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
         this.camera = createCamera(canvas, THREE.PerspectiveCamera);
         this.canvas = canvas
+
+
+        const events  = new EventSystem();
+        const buffer  = new bufferSystem(events),
         
-        // for ebents with no side effects like camera movememt
-        const events = new EventSystem()
+
+        // Add needed systems here to each ECS group this is done to reduce time complexity iterating all the systems over each components
+        // this is dependncy injection for systems into. My thoughts are that components should be organized into groups to reduce complexity
+        this.managers = {
+            input:      new InputManager(),
+            network:    new netManager(),
+            boat:       new BoatManager(),
+            projectile: new ProjectileManager(),
+            camera:     new CameraManager(events),
+            sound:      new SoundManager(events),
+        }
 
         // Init Input
         this.clientInput = new ClientInput(events);
         this.aiInput = new AiInput()
-        
-        this.inputBuffers = {
-            localInputBuffer: new LocalInputBuffer(events);
-            networkInputBuffer: new NetworkInputBuffer(events);
-        }
+  
 
-        this.managers = {
-            input: new InputManager(),
-            network: new netManager(), 
-            boat: new BoatManager(),
-            projectile: new ProjectileManager(),
-            
-            camera: new CameraManager(events),
-            sound: new SoundManager(events),
-        }
 
         this.world = createWorld(this.scene, this.heightmap);
 
@@ -48,9 +62,11 @@ export class Game {
     }
 
 
+
     start() {
+        
         this.managers.forEach(manager => {
-            manager.start()
+            manager.start(lobbyData)
         });
 
         this.handleWindowResize();
@@ -62,16 +78,11 @@ export class Game {
 
     update(time) {
         const intents = clientInputBuffer.pollIntents()
-        
-        
+
         this.managers.forEach(manager => {
             manager.update(intents)
         });
-        
-        
-        
-        
-        
+
     }
 
 
