@@ -11,7 +11,7 @@ import { createWorld } from "./world/World.js"
 export class Game {
     constructor(networkInterface) {
         this.networkInterface = networkInterface;
-        this.networkBuffer = new EventBuffer();
+        this.networkBuffer = new EventBuffer(this.networkInterface);
         this.heightmap = createHeightmap();
     }
 
@@ -28,46 +28,46 @@ export class Game {
     //     [1, "boat", "client"]
     //     [3, "boat", "network"]
     // ]
-    setup(canvas, lobbyData) {
+    setup(canvas) {
         this.scene = new THREE.Scene();
         this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
         this.camera = createCamera(canvas, THREE.PerspectiveCamera);
         this.canvas = canvas
 
-
-        const events  = new EventSystem();
-        const buffer  = new bufferSystem(events),
-        
+        const events       = new LocalEvents();
+        const localBuffer  = new EventBuffer(events)
 
         // Add needed systems here to each ECS group this is done to reduce time complexity iterating all the systems over each components
-        // this is dependncy injection for systems into. My thoughts are that components should be organized into groups to reduce complexity
+        // this is dependncy injection for systems into. My thoughts are that components should be organized into groups of systems to average time 
+        // complexity 
         this.managers = {
             input:      new InputManager(),
-            network:    new netManager(),
             boat:       new BoatManager(),
+            plane:      new PlaneManager(),
             projectile: new ProjectileManager(),
             camera:     new CameraManager(events),
             sound:      new SoundManager(events),
         }
-
-        // Init Input
-        this.clientInput = new ClientInput(events);
-        this.aiInput = new AiInput()
-  
-
-
-        this.world = createWorld(this.scene, this.heightmap);
+        // This has methods like attach to object that makes sure camera and boat end up at the same location
+        this.managerCoordinator = new ManagerCoordinator(this.managers);
 
         window.addEventListener('resize', this.handleWindowResize);
     }
 
 
 
-    start() {
-        
+    start(lobbyData, newHeightmap) {
+        if (newHeightmap != null) {
+            this.heightmap = newHeightmap;
+        }
+
         this.managers.forEach(manager => {
             manager.start(lobbyData)
         });
+
+        this.managerCoordinator.start(lobbyData)
+
+        this.world = createWorld(this.scene, this.heightmap);
 
         this.handleWindowResize();
         this.renderer.setAnimationLoop((time) => {
@@ -77,16 +77,18 @@ export class Game {
     }
 
     update(time) {
-        const intents = clientInputBuffer.pollIntents()
+        const intentUpdates = this.localInputBuffer.poll()
 
         this.managers.forEach(manager => {
-            manager.update(intents)
+            manager.update(intentUpdates)
         });
 
+        const authoritativeUpdates = this.networkInputBuffer.poll()
+
+        this.managers.forEach(manager => {
+            manager.update(authoritativeUpdates)
+        });
     }
-
-
-
 
     stop() {
         this.renderer.setAnimationLoop(null);
