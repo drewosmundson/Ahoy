@@ -36,6 +36,8 @@ export class Game {
 
         const events       = new LocalEvents();
         const localBuffer  = new EventBuffer(events)
+        const PredictSystem 
+        const lerpSystem
 
         // Add needed systems here to each ECS group this is done to reduce time complexity iterating all the systems over each components
         // this is dependncy injection for systems into. My thoughts are that components should be organized into groups of systems to average time 
@@ -44,11 +46,12 @@ export class Game {
             input:      new InputManager(),
             boat:       new BoatManager(),
             plane:      new PlaneManager(),
-            projectile: new ProjectileManager(),
+            projectile: new ProjectileManager(events),
             camera:     new CameraManager(events),
             sound:      new SoundManager(events),
         }
         // This has methods like attach to object that makes sure camera and boat end up at the same location
+        
         this.managerCoordinator = new ManagerCoordinator(this.managers);
 
         window.addEventListener('resize', this.handleWindowResize);
@@ -65,8 +68,6 @@ export class Game {
             manager.start(lobbyData)
         });
 
-        this.managerCoordinator.start(lobbyData)
-
         this.world = createWorld(this.scene, this.heightmap);
 
         this.handleWindowResize();
@@ -80,13 +81,15 @@ export class Game {
         const intentUpdates = this.localInputBuffer.poll()
 
         this.managers.forEach(manager => {
-            manager.update(intentUpdates)
+
         });
 
         const authoritativeUpdates = this.networkInputBuffer.poll()
 
         this.managers.forEach(manager => {
-            manager.update(authoritativeUpdates)
+            manager.updateIntent(intentUpdates)
+            manager.updateAuth(authoritativeUpdates)
+            manager.reconcile(authoratativeUpdates
         });
     }
 
