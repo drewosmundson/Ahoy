@@ -35,13 +35,16 @@ export class Game {
         this.canvas = canvas
 
         const events       = new LocalEvents();
-        const localBuffer  = new EventBuffer(events)
+        const eventBuffer  = new EventBuffer(events)
         const PredictSystem 
         const lerpSystem
 
         // Add needed systems here to each ECS group this is done to reduce time complexity iterating all the systems over each components
         // this is dependncy injection for systems into. My thoughts are that components should be organized into groups of systems to average time 
         // complexity 
+
+        // 7/2 managers might jusg be a collections of components that stores all togeather 
+        // differnt controllers change behavior of systems that interact with the mangers 
         this.managers = {
             input:      new InputManager(),
             boat:       new BoatManager(),
@@ -56,8 +59,6 @@ export class Game {
 
         window.addEventListener('resize', this.handleWindowResize);
     }
-
-
 
     start(lobbyData, newHeightmap) {
         if (newHeightmap != null) {
@@ -78,19 +79,15 @@ export class Game {
     }
 
     update(time) {
-        const intentUpdates = this.localInputBuffer.poll()
+        const intentUpdates = this.eventBuffer.poll()
+        this.networkHandeler.send(intentUpdates)
+        
+        
 
-        this.managers.forEach(manager => {
-
-        });
-
+  
         const authoritativeUpdates = this.networkInputBuffer.poll()
 
-        this.managers.forEach(manager => {
-            manager.updateIntent(intentUpdates)
-            manager.updateAuth(authoritativeUpdates)
-            manager.reconcile(authoratativeUpdates
-        });
+        
     }
 
     stop() {
