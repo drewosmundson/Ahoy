@@ -81,12 +81,14 @@ export class Game {
     update(time) {
         const intentUpdates = this.eventBuffer.poll()
         this.networkHandeler.send(intentUpdates)
-        
-        
 
   
-        const authoritativeUpdates = this.networkInputBuffer.poll()
+        this.systems.update(intentUpdates) 
+        
 
+
+        const authoritativeUpdates = this.networkInputBuffer.poll()
+        
         
     }
 
