@@ -10,8 +10,8 @@ import { createWorld } from "./world/World.js"
 
 export class Game {
     constructor(networkInterface) {
-        this.networkInterface = networkInterface;
-        this.networkBuffer = new EventBuffer(this.networkInterface);
+
+        
         this.heightmap = createHeightmap();
     }
 
@@ -34,28 +34,38 @@ export class Game {
         this.camera = createCamera(canvas, THREE.PerspectiveCamera);
         this.canvas = canvas
 
-        const events       = new LocalEvents();
-        const eventBuffer  = new EventBuffer(events)
-        const PredictSystem 
-        const lerpSystem
-
+        const realTimeEvents = new LocalEvents();
+        const networkInterface = networkInterface;
+        
+        
+        this.localEventBuffer  = new EventBuffer(this.localEvents)
+        this.networkEventBuffer = new EventBuffer(this.networkEvents);
+        
         // Add needed systems here to each ECS group this is done to reduce time complexity iterating all the systems over each components
         // this is dependncy injection for systems into. My thoughts are that components should be organized into groups of systems to average time 
         // complexity 
 
         // 7/2 managers might jusg be a collections of components that stores all togeather 
         // differnt controllers change behavior of systems that interact with the mangers 
-        this.managers = {
-            input:      new InputManager(),
-            boat:       new BoatManager(),
-            plane:      new PlaneManager(),
-            projectile: new ProjectileManager(events),
-            camera:     new CameraManager(events),
+        this.managers = { 
+            input:      new InputManager(lobbyDat),
+            boat:       new BoatManager(lobbyData),
+            plane:      new PlaneManager(lobbyData),
+            projectile: new ProjectileManager(),
+            camera:     new CameraManager(realTimeEvents),
             sound:      new SoundManager(events),
         }
-        // This has methods like attach to object that makes sure camera and boat end up at the same location
+        const transformComponents = { 
+            boats,
+            camera,
+            
+         } 
         
-        this.managerCoordinator = new ManagerCoordinator(this.managers);
+        this.systems = {
+            transform : createTransformSystem(transformComponents)
+            
+        } 
+        // This has methods like attach to object that makes sure camera and boat end up at the same location
 
         window.addEventListener('resize', this.handleWindowResize);
     }
