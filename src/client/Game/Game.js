@@ -9,9 +9,7 @@ import { createWorld } from "./world/World.js"
 
 
 export class Game {
-    constructor(networkInterface) {
-
-        
+    constructor() {
         this.heightmap = createHeightmap();
     }
 
@@ -28,15 +26,19 @@ export class Game {
     //     [1, "boat", "client"]
     //     [3, "boat", "network"]
     // ]
-    setup(canvas) {
+    // starts on joining a lobby 
+    setup(canvas, newHeightmap, NetworkEvents) {
         this.scene = new THREE.Scene();
         this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
         this.camera = createCamera(canvas, THREE.PerspectiveCamera);
         this.canvas = canvas
-
-        const realTimeEvents = new LocalEvents();
-        const networkInterface = networkInterface;
         
+        if (newHeightmap != null) {
+            this.heightmap = newHeightmap;
+        }
+
+        const localEvents = new LocalEvents();
+        const networkEvents = new NetworkEvents();
         
         this.localEventBuffer  = new EventBuffer(this.localEvents)
         this.networkEventBuffer = new EventBuffer(this.networkEvents);
@@ -47,34 +49,50 @@ export class Game {
 
         // 7/2 managers might jusg be a collections of components that stores all togeather 
         // differnt controllers change behavior of systems that interact with the mangers 
-        this.managers = { 
-            input:      new InputManager(lobbyDat),
-            boat:       new BoatManager(lobbyData),
-            plane:      new PlaneManager(lobbyData),
+
+        const components = { 
+            boat:       new BoatManager(),
+            plane:      new PlaneManager(),
             projectile: new ProjectileManager(),
-            camera:     new CameraManager(realTimeEvents),
-            sound:      new SoundManager(events),
+            camera:     new Camera(),
+            sound:      new Sound(),
         }
-        const transformComponents = { 
-            boats,
-            camera,
-            
-         } 
-        
+        // when different components groups need to interact 
+        // tells the manager something happened manager then processes this
+        // similar to how a manager processes input from user or client 
+        // intentUpdste 
+        // systemsUpdate
+        // reconcile
+        // controllers interperet the uodates from systems and the 
         this.systems = {
-            transform : createTransformSystem(transformComponents)
+            terrainCollition: createCollitionSystem(this.heightmap, components = {
+                components.boats,
+                components.projectiles,
+                components.planes,
+            }, 
+            projectileCollition: createProjectileCollition(projectiles, components = {
+                components.boats,
+                components.planes,
+            },
+            compontentCollition: createComponentCollition(components = {
+                components.boats,
+                components.planes,
+            }
+            cameraFollow: createCameraFollowSystem(camera, components = { 
+                components.boats,
+                components.planes,
+            }
             
-        } 
+        }
+        
+        this.components = components;
+        
         // This has methods like attach to object that makes sure camera and boat end up at the same location
 
         window.addEventListener('resize', this.handleWindowResize);
     }
-
-    start(lobbyData, newHeightmap) {
-        if (newHeightmap != null) {
-            this.heightmap = newHeightmap;
-        }
-
+    // starts when the host clicks start game 
+    start(lobbyData) {
         this.managers.forEach(manager => {
             manager.start(lobbyData)
         });
@@ -92,14 +110,13 @@ export class Game {
         const intentUpdates = this.eventBuffer.poll()
         this.networkHandeler.send(intentUpdates)
 
-  
         this.systems.update(intentUpdates) 
+        this.manager.update(intentUpdates) 
         
-
-
-        const authoritativeUpdates = this.networkInputBuffer.poll()
+        const authUpdates = this.networkInputBuffer.poll()
         
-        
+        this.systems.reconcile(authUpdates) 
+        this.manager.reconcile(authUpdates) 
     }
 
     stop() {
