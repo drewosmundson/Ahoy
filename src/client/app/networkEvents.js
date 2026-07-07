@@ -42,7 +42,7 @@ function createReceiver(socket, eventSchemas) {
 }
 
 
-export class NetworkInterface {
+export class NetworkEvents {
     constructor(socket, eventSchemas) {
         const listeners = new Map(); // event -> Set<callback>
 

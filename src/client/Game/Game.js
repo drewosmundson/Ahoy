@@ -4,30 +4,17 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.m
 import { createHeightmap } from "./utils/heightmap.js"
 import { createRenderer } from "./utils/renderer.js"
 import { createCamera } from './components/Camera.js';
-import { eventSystem } from "./systems/EventSystem.js" 
+import { eventSystem } from "../app/localEvents.js" 
 import { createWorld } from "./world/World.js"
-
 
 export class Game {
     constructor() {
+        // all players create a heightmap, the host will pass on their hightmap to other users
         this.heightmap = createHeightmap();
     }
 
-    // Lobby Data Example:
-    // [teamID, vehicleType, howControlled] 
-    // how controlled is determined by the server for each player"
-    // the server will attempt to balance this among all the players in the lobby
-    // with priority towards the first player on a particular team"
-    // another player on the clients own team will be network. 
-    // same team players will show the same number but then network as the howControlled
-    // lobbyData = [
-    //     [0, "boat", "ai"]
-    //     [1, "plane", "ai"],
-    //     [1, "boat", "client"]
-    //     [3, "boat", "network"]
-    // ]
-    // starts on joining a lobby 
-    setup(canvas, newHeightmap, NetworkEvents) {
+
+    setup(canvas, newHeightmap, localEvents, networkEvents) {
         this.scene = new THREE.Scene();
         this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
         this.camera = createCamera(canvas, THREE.PerspectiveCamera);
@@ -37,64 +24,73 @@ export class Game {
             this.heightmap = newHeightmap;
         }
 
-        const localEvents = new LocalEvents();
-        const networkEvents = new NetworkEvents();
-        
-        this.localEventBuffer  = new EventBuffer(this.localEvents)
-        this.networkEventBuffer = new EventBuffer(this.networkEvents);
-        
-        // Add needed systems here to each ECS group this is done to reduce time complexity iterating all the systems over each components
-        // this is dependncy injection for systems into. My thoughts are that components should be organized into groups of systems to average time 
-        // complexity 
+        // Creates a buffer for async local and network events 
+        // so they can be polled by the systems that need them and order can be maintained
 
-        // 7/2 managers might jusg be a collections of components that stores all togeather 
-        // differnt controllers change behavior of systems that interact with the mangers 
+        this.localEventBuffer  = new EventBuffer(localEvents)
+        this.networkEventBuffer = new EventBuffer(networkEvents);
 
-        const components = { 
-            boat:       new BoatManager(),
-            plane:      new PlaneManager(),
-            projectile: new ProjectileManager(),
-            camera:     new Camera(),
-            sound:      new Sound(),
-        }
-        // when different components groups need to interact 
-        // tells the manager something happened manager then processes this
-        // similar to how a manager processes input from user or client 
-        // intentUpdste 
-        // systemsUpdate
-        // reconcile
-        // controllers interperet the uodates from systems and the 
-        this.systems = {
-            terrainCollition: createCollitionSystem(this.heightmap, components = {
-                components.boats,
-                components.projectiles,
-                components.planes,
-            }, 
-            projectileCollition: createProjectileCollition(projectiles, components = {
-                components.boats,
-                components.planes,
-            },
-            compontentCollition: createComponentCollition(components = {
-                components.boats,
-                components.planes,
-            }
-            cameraFollow: createCameraFollowSystem(camera, components = { 
-                components.boats,
-                components.planes,
-            }
-            
-        }
-        
-        this.components = components;
-        
+        // if a component group takes asyncLocalEvetns it means that component group received real time input from the user
+        // for instance camera orbit controls should not be buffered as this could appear jumpy on very high hz monitors
+        // same with components that do not impact gameplay such as volume controls
+        const camera = new CameraManager(localEvents);
+        const sounds = new SoundManager(localEvents);
+
+        const boats = new BoatManager(this.localEventBuffer, this.networkEventBuffer);
+        const projectiles = new ProjectileManager(this.localEventBuffer, this.networkEventBuffer);
+
+        // when different component groups need to interact, tell the manager something
+        // happened; the manager then processes this — similar to how a manager processes
+        // input from the user or the client: intentUpdate -> systemsUpdate -> reconcile
+
+        this.globalSystems = {
+            terrainCollision: terrainCollisionSystem(this.heightmap, { components: [] }),
+ 
+            projectileCollision: projectileCollisionSystem(projectiles, { components: [boats] }),
+ 
+            boatCollision: boatCollisionSystem(boats, {
+                components: [
+                    boats,
+                    // planes,
+                    // players,
+                ],
+            }),
+ 
+            cameraFollow: cameraFollowSystem(camera, { components: [] }),
+        };
+
+        this.managers = {
+            boats,
+            projectiles,
+            camera,
+            sounds,
+        };
+
         // This has methods like attach to object that makes sure camera and boat end up at the same location
 
         window.addEventListener('resize', this.handleWindowResize);
     }
     // starts when the host clicks start game 
+    // lobby data populates the managers with the quantity of components they need to create 
+    // and which internal systems they need to be assigned to
+
+    // Lobby Data Example:
+    // [teamID, vehicleType, howControlled] 
+    // how controlled is determined by the server for each player"
+    // the server will attempt to balance this among all the players in the lobby
+    // with priority towards the first player on a particular team"
+    // another player on the clients own team will be network. 
+    // same team players will show the same number but then network as the howControlled
+    // lobbyData = {
+    //     { 0, "boat", "ai" }
+    //     { 1, "plane", "ai" },
+    //     { 1, "boat", "client" }
+    //     { 3, "boat", "network" }
+    // }
+
     start(lobbyData) {
-        this.managers.forEach(manager => {
-            manager.start(lobbyData)
+        Object.values(this.managers).forEach((manager) => {
+            manager.start?.(lobbyData);
         });
 
         this.world = createWorld(this.scene, this.heightmap);
@@ -107,16 +103,16 @@ export class Game {
     }
 
     update(time) {
-        const intentUpdates = this.eventBuffer.poll()
-        this.networkHandeler.send(intentUpdates)
-
-        this.systems.update(intentUpdates) 
-        this.manager.update(intentUpdates) 
-        
-        const authUpdates = this.networkInputBuffer.poll()
-        
-        this.systems.reconcile(authUpdates) 
-        this.manager.reconcile(authUpdates) 
+        const intentUpdates = this.localEventBuffer.poll();
+        this.networkEventBuffer.source?.send?.(intentUpdates);
+ 
+        Object.values(this.globalSystems).forEach((system) => system.update?.(intentUpdates));
+        Object.values(this.internalSystems).forEach((manager) => manager.update?.(intentUpdates));
+ 
+        const authUpdates = this.networkEventBuffer.poll();
+ 
+        Object.values(this.globalSystems).forEach((system) => system.reconcile?.(authUpdates));
+        Object.values(this.internalSystems).forEach((manager) => manager.reconcile?.(authUpdates));
     }
 
     stop() {

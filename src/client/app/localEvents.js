@@ -6,7 +6,7 @@
 // Event System does not know about sockets
 // is used locally for async updates like user from user input the manager that receives this can 
 // choose if it wants to process the input then and there or buffer the input and update on tick/frame
-export class EventSystem {
+export class LocalEvents {
     constructor() {
         this.listeners = new Map();
     }
@@ -56,7 +56,6 @@ export class EventSystem {
 
 
 /*
-
 ---- Local Events----
 const events = new EventHandler();
 

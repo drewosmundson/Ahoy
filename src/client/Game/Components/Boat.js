@@ -1,3 +1,13 @@
+class Boat {
+
+
+
+
+}
+
+
+
+
 
 export class BoatManager {
     constructor(eventSystem) {
