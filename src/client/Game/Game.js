@@ -4,8 +4,45 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.m
 import { createHeightmap } from "./utils/heightmap.js"
 import { createRenderer } from "./utils/renderer.js"
 import { createCamera } from './components/Camera.js';
-import { eventSystem } from "../app/localEvents.js" 
+import { eventBus } from "../app/localEvents.js" 
 import { createWorld } from "./world/World.js"
+
+
+class inputManager {
+    
+    
+}
+
+
+class Vehicle {
+    update(dt) {}
+    applyControl(){}
+}
+
+
+class VehicleManager {
+    constructor() { 
+        this.vehicles = new Map(); 
+    }
+    add(vehicle) { 
+        this.vehicles.set(vehicle.id, vehicle); 
+    }
+    update(dt) {
+        for (const v of this.vehicles.values()) {
+            v.update(dt);
+        }
+      }
+ }
+
+
+
+class ControlManager {
+    
+    
+    
+ } 
+
+
 
 export class Game {
     constructor() {
