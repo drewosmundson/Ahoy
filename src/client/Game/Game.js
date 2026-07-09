@@ -4,7 +4,8 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.m
 import { createHeightmap } from "./utils/heightmap.js"
 import { createRenderer } from "./utils/renderer.js"
 import { createCamera } from './components/Camera.js';
-import { eventBus } from "../app/localEvents.js" 
+import { localEventBus } from "../app/localEvents.js" 
+import { networkEventBus } from "..app/networkEvents.js"
 import { createWorld } from "./world/World.js"
 
 
@@ -42,6 +43,56 @@ class ControlManager {
     
  } 
 
+// input from input buffer? 
+// One controller per INPUT SOURCE, not per (input × vehicle) pair
+class LocalController {
+  constructor(vehicle, inputMap) {
+    this.vehicle = vehicle;
+    this.inputMap = inputMap; // translates raw input -> generic intent
+  }
+  update(input) {
+    this.vehicle.applyControl(this.inputMap(input));
+  }
+}
+
+class NetworkController {
+  constructor(vehicle) {
+    this.vehicle = vehicle;
+  }
+  onPacket(packet) {
+    // server already sends intent-shaped data, no interpretation needed
+    this.vehicle.applyControl(packet.cmd);
+  }
+}
+
+class AIController {
+  constructor(vehicle, brain) {
+    this.vehicle = vehicle;
+    this.brain = brain; // strategy object, e.g. PathFollower, Dogfighter
+  }
+  update(dt, world) {
+    this.vehicle.applyControl(this.brain.decide(this.vehicle, world, dt));
+  }
+}
+
+const planeInputMap = (input) => ({
+  throttleDelta: input.up ? 0.02 : (input.down ? -0.02 : 0),
+  pitch: input.mouseY,
+  roll: input.mouseX,
+  fire: input.mouseDown,
+});
+
+const boatInputMap = (input) => ({
+  throttleDelta: input.up ? 0.02 : (input.down ? -0.02 : 0),
+  steer: input.mouseX,
+});
+
+// const planeController = new LocalController(planeC, planeInputMap);
+// const boatController  = new LocalController(dinghy, boatInputMap);
+
+
+
+
 
 
 export class Game {
@@ -64,14 +115,14 @@ export class Game {
         // Creates a buffer for async local and network events 
         // so they can be polled by the systems that need them and order can be maintained
 
-        this.localEventBuffer  = new EventBuffer(localEvents)
-        this.networkEventBuffer = new EventBuffer(networkEvents);
+        this.localEventBuffer  = new EventBuffer(localEventBus)
+        this.networkEventBuffer = new EventBuffer(networkEventBus);
 
         // if a component group takes asyncLocalEvetns it means that component group received real time input from the user
         // for instance camera orbit controls should not be buffered as this could appear jumpy on very high hz monitors
         // same with components that do not impact gameplay such as volume controls
-        const camera = new CameraManager(localEvents);
-        const sounds = new SoundManager(localEvents);
+        const camera = new CameraManager(localEventBus);
+        const sounds = new SoundManager(localEventBus);
 
         const boats = new BoatManager(this.localEventBuffer, this.networkEventBuffer);
         const projectiles = new ProjectileManager(this.localEventBuffer, this.networkEventBuffer);
@@ -176,11 +227,7 @@ export class Game {
     }
 }
 
-class playerCotrolManager {
-    constructor() {
-        
-    }
-}
+
 
 
     // FRAME START
