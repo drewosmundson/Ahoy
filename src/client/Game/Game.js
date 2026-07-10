@@ -56,7 +56,7 @@ class LocalEventBus {
     constructor() {
         this.listeners = new Map();
     }
-    
+
     //  const sub = bus.on('foo', myCallback);
     // sub.unsubscribe();
     on(event, callback) {
@@ -118,7 +118,39 @@ export class NetworkEventBus extends LocalEventBus {
     }
 }
 
+export class NetworkEventBus extends LocalEventBus {
+    constructor(socket, eventSchemas) {
+        super();
+        this._socket = socket;
+        this._publish = createSender(socket, eventSchemas);
 
+        const receiver = createReceiver(socket, eventSchemas);
+        const subscription = receiver((event, data) => {
+            this.emit(event, data);
+        });
+        this._detachSocket = subscription.unsubscribe;
+        this._connected = true;
+    }
+
+    publish(event, data) {
+        if (!this._connected) {
+            throw new Error('Cannot publish: bus is disconnected');
+        }
+        this._publish(event, data);
+    }
+
+    disconnect() {
+        if (!this._connected) return; // idempotent guard
+
+        this._detachSocket();   // remove all socket.on listeners (per event)
+        this.listeners.clear(); // drop all local .on() subscribers too
+        this._connected = false;
+
+        // Only close the socket if this bus owns its lifecycle.
+        // Skip this if the socket is shared/managed elsewhere.
+        this._socket.close?.();
+    }
+}
 
 export class NetworkEventBus {
     constructor(socket, eventSchemas) {
