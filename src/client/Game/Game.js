@@ -3,10 +3,198 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.m
 
 import { createHeightmap } from "./utils/heightmap.js"
 import { createRenderer } from "./utils/renderer.js"
-import { createCamera } from './components/Camera.js';
-import { localEventBus } from "../app/localEvents.js" 
-import { networkEventBus } from "..app/networkEvents.js"
 import { createWorld } from "./world/World.js"
+
+
+
+
+function createSender(socket, eventSchemas) {
+    return function send(event, data) {
+        if (!(event in eventSchemas)) {
+            throw new Error(`Unknown event: ${event}`);
+        }
+
+        if (!eventSchemas[event](data)) {
+            throw new Error(`Invalid payload`);
+        }
+
+        socket.emit(event, { ...data });
+    };
+}
+
+
+function createReceiver(socket, eventSchemas) {
+    return function subscribe(handler) {
+        const cleanup = [];
+
+        for (const event in eventSchemas) {
+            const listener = data => {
+                if (!eventSchemas[event](data)) return;
+
+                handler(event, data);
+            };
+
+            socket.on(event, listener);
+
+            cleanup.push(() => {
+                socket.off(event, listener);
+            });
+        }
+
+        return {
+            unsubscribe() {
+                cleanup.forEach(func => func());
+            }
+        };
+    };
+}
+
+
+
+
+class LocalEventBus {
+    constructor() {
+        this.listeners = new Map();
+    }
+    
+    //  const sub = bus.on('foo', myCallback);
+    // sub.unsubscribe();
+    on(event, callback) {
+        if (!this.listeners.has(event)) {
+            this.listeners.set(event, new Set());
+        }
+
+        this.listeners.get(event).add(callback);
+
+        return {
+            unsubscribe: () => {
+                this.off(event, callback);
+            },
+        };
+    }
+
+    
+    off(event, callback) {
+        const callbacks = this.listeners.get(event);
+
+        if (!callbacks) return;
+
+        callbacks.delete(callback);
+
+        if (callbacks.size === 0) {
+            this.listeners.delete(event);
+        }
+    }
+
+
+    emit(event, data) {
+        const callbacks = this.listeners.get(event);
+        if (!callbacks) return;
+        for (const callback of [...callbacks]) {
+            try {
+                callback(data);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    }
+}
+
+export class NetworkEventBus extends LocalEventBus {
+    constructor(socket, eventSchemas) {
+        super();
+        this._publish = createSender(socket, eventSchemas);
+        this._detach = createReceiver(socket, eventSchemas)((event, data) => {
+            this.emit(event, data);
+        }).unsubscribe;
+    }
+
+    publish(event, data) {
+        this._publish(event, data);
+    }
+
+    disconnect() {
+        this._detach();
+    }
+}
+
+
+
+export class NetworkEventBus {
+    constructor(socket, eventSchemas) {
+        const listeners = new Map(); // event -> Set<callback>
+
+        this.send = createSender(socket, eventSchemas);
+        this.receive = createReceiver(socket, eventSchemas);
+
+        this.disconnect = this.receive((event, data) => {
+            const callbacks = listeners.get(event);
+            if (!callbacks) return;
+            for (const callback of [...callbacks]) {
+                try {
+                    callback(data);
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+        }).unsubscribe;
+
+        this.on = (event, callback) => {
+            if (!listeners.has(event)) listeners.set(event, new Set());
+            listeners.get(event).add(callback);
+            return {
+                unsubscribe: () => {
+                    const callbacks = listeners.get(event);
+                    if (!callbacks) return;
+                    callbacks.delete(callback);
+                    if (callbacks.size === 0) listeners.delete(event);
+                },
+            };
+        };
+    }
+
+    sendEvent(event, data) {
+        this.send(event, data);
+    }
+}
+
+
+
+
+class EventBuffer {
+    constructor(eventBus, bufferedEvent) {
+        this.queue = [];
+        eventBus.on(bufferedEvent, (data) => this.queue.push(data));
+    }
+
+    drain() {
+        const items = this.queue;
+        this.queue = [];
+        return items;
+    }
+}
+
+
+// const networkEvents = new NetworkEventBus(socket, schemas);     // network lane - to and from the server
+// const effectsEvents = new LocalEventBus(schemas);               // presentation lane - fire and forget
+// const simulationEvents = new LocalEventBus(schemas);            // intent lane - feeds the pull pipeline
+
+
+// effects example
+// Authoritative mutation happens directly, NOT via emit.
+// emit is to tell the world this happened.
+
+// class Player {
+//     constructor() {
+//         this.health = 100;
+//     }
+
+//     applyDamage(amount) {
+//         this.health -= amount;
+//         effectsEvents.emit("cameraShake", { intensity: amount / 100 });
+//         effectsEvents.emit("damageNumberPopup", { amount, entityId: this.id });
+//     }
+// }
 
 
 class inputManager {
@@ -20,6 +208,16 @@ class Vehicle {
     applyControl(){}
 }
 
+class Boat extends Vehicle {
+
+
+
+}
+
+class Plane extends Vehicle {
+
+
+}
 
 class VehicleManager {
     constructor() { 
@@ -29,11 +227,12 @@ class VehicleManager {
         this.vehicles.set(vehicle.id, vehicle); 
     }
     update(dt) {
-        for (const v of this.vehicles.values()) {
-            v.update(dt);
+        for (const vehicle of this.vehicles.values()) {
+            vehicle.update(dt);
         }
       }
  }
+
 
 
 
@@ -96,8 +295,10 @@ const boatInputMap = (input) => ({
 
 
 export class Game {
-    constructor() {
+    constructor(socket) {
         // all players create a heightmap, the host will pass on their hightmap to other users
+        this.networkEventBus = new NetworkEventBus(socket, eventSchemas.network)
+        this.localEventBus = new LocalEventBus(eventSchemas.local)
         this.heightmap = createHeightmap();
     }
 
