@@ -50,8 +50,6 @@ function createReceiver(socket, eventSchemas) {
 }
 
 
-
-
 class LocalEventBus {
     constructor() {
         this.listeners = new Map();
@@ -103,18 +101,19 @@ class LocalEventBus {
 export class NetworkEventBus extends LocalEventBus {
     constructor(socket, eventSchemas) {
         super();
-        this._publish = createSender(socket, eventSchemas);
-        this._detach = createReceiver(socket, eventSchemas)((event, data) => {
+        this.publisher = createSender(socket, eventSchemas);
+        this.subscriber = createReceiver(socket, eventSchemas)((event, data) => {
             this.emit(event, data);
-        }).unsubscribe;
+        })
+        this.detach = subscriber.unsubscribe
     }
 
     publish(event, data) {
-        this._publish(event, data);
+        this.publisher(event, data);
     }
 
     disconnect() {
-        this._detach();
+        this.detach();
     }
 }
 
