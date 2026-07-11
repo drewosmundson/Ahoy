@@ -6,8 +6,6 @@ import { createRenderer } from "./utils/renderer.js"
 import { createWorld } from "./world/World.js"
 
 
-
-
 function createSender(socket, eventSchemas) {
     return function send(event, data) {
         if (!(event in eventSchemas)) {
@@ -55,7 +53,7 @@ class LocalEventBus {
         this.listeners = new Map();
     }
 
-    //  const sub = bus.on('foo', myCallback);
+    // const sub = bus.on('foo', myCallback);
     // sub.unsubscribe();
     on(event, callback) {
         if (!this.listeners.has(event)) {
@@ -98,99 +96,56 @@ class LocalEventBus {
     }
 }
 
+
+// const networkBus = new NetworkEventBus(socket, eventSchemas)
+// networkBus.publish(event, data) // events going from client->server or server -> client
+// networkBus.emit(event, data)   // events going to the same process client -> client or server -> server
+// networkBus.on(event, data)     // does not care if this event comes from a publish or an emit
+
 export class NetworkEventBus extends LocalEventBus {
     constructor(socket, eventSchemas) {
         super();
+        this.socket = socket;
+
+
+        // publish('message', { text: 'hello' });    // passes checks, calls socket.emit
+        // publish('badEvent', { text: 'hi' });      // throws "Unknown event: bogusEvent"
+        // publish('badData', { text: 123 });       //throws "Invalid payload" (if schema expects a string)
         this.publisher = createSender(socket, eventSchemas);
-        this.subscriber = createReceiver(socket, eventSchemas)((event, data) => {
+
+        // createReceiver(socket, eventSchemas) returns a subscribe function
+        // this function is called immediately with a handler, which runs
+        //    socket.on() for all events in eventSchemas, and returns an unsubscribe function
+        //  .unsubscribe is stored as this.detach can be called via this.detach() to stop listening
+
+        // The handler passes in broadcasts incoming socket events through this bus's own local emit()
+        // this is so bus.on(event, data) can happen without caring where that event came from
+        this.detach = createReceiver(socket, eventSchemas)((event, data) => {
             this.emit(event, data);
-        })
-        this.detach = subscriber.unsubscribe
+        }).unsubscribe;
+
+        this.connected = true;
     }
 
     publish(event, data) {
+        if (!this.connected) {
+            throw new Error('Cannot publish: bus is disconnected');
+        }
         this.publisher(event, data);
     }
 
     disconnect() {
-        this.detach();
-    }
-}
+        if (!this.connected) return; // idempotent guard
 
-export class NetworkEventBus extends LocalEventBus {
-    constructor(socket, eventSchemas) {
-        super();
-        this._socket = socket;
-        this._publish = createSender(socket, eventSchemas);
-
-        const receiver = createReceiver(socket, eventSchemas);
-        const subscription = receiver((event, data) => {
-            this.emit(event, data);
-        });
-        this._detachSocket = subscription.unsubscribe;
-        this._connected = true;
-    }
-
-    publish(event, data) {
-        if (!this._connected) {
-            throw new Error('Cannot publish: bus is disconnected');
-        }
-        this._publish(event, data);
-    }
-
-    disconnect() {
-        if (!this._connected) return; // idempotent guard
-
-        this._detachSocket();   // remove all socket.on listeners (per event)
+        this.detach();   // remove all socket.on listeners (per event)
         this.listeners.clear(); // drop all local .on() subscribers too
-        this._connected = false;
+        this.connected = false;
 
         // Only close the socket if this bus owns its lifecycle.
         // Skip this if the socket is shared/managed elsewhere.
-        this._socket.close?.();
+        this.socket.close?.();
     }
 }
-
-export class NetworkEventBus {
-    constructor(socket, eventSchemas) {
-        const listeners = new Map(); // event -> Set<callback>
-
-        this.send = createSender(socket, eventSchemas);
-        this.receive = createReceiver(socket, eventSchemas);
-
-        this.disconnect = this.receive((event, data) => {
-            const callbacks = listeners.get(event);
-            if (!callbacks) return;
-            for (const callback of [...callbacks]) {
-                try {
-                    callback(data);
-                } catch (err) {
-                    console.error(err);
-                }
-            }
-        }).unsubscribe;
-
-        this.on = (event, callback) => {
-            if (!listeners.has(event)) listeners.set(event, new Set());
-            listeners.get(event).add(callback);
-            return {
-                unsubscribe: () => {
-                    const callbacks = listeners.get(event);
-                    if (!callbacks) return;
-                    callbacks.delete(callback);
-                    if (callbacks.size === 0) listeners.delete(event);
-                },
-            };
-        };
-    }
-
-    sendEvent(event, data) {
-        this.send(event, data);
-    }
-}
-
-
-
 
 class EventBuffer {
     constructor(eventBus, bufferedEvent) {
@@ -204,6 +159,7 @@ class EventBuffer {
         return items;
     }
 }
+
 
 
 // const networkEvents = new NetworkEventBus(socket, schemas);     // network lane - to and from the server
