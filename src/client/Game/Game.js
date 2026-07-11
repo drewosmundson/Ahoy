@@ -6,48 +6,11 @@ import { createRenderer } from "./utils/renderer.js"
 import { createWorld } from "./world/World.js"
 
 
-function createSender(socket, eventSchemas) {
-    return function send(event, data) {
-        if (!(event in eventSchemas)) {
-            throw new Error(`Unknown event: ${event}`);
-        }
-
-        if (!eventSchemas[event](data)) {
-            throw new Error(`Invalid payload`);
-        }
-
-        socket.emit(event, { ...data });
-    };
-}
 
 
-function createReceiver(socket, eventSchemas) {
-    return function subscribe(handler) {
-        const cleanup = [];
-
-        for (const event in eventSchemas) {
-            const listener = data => {
-                if (!eventSchemas[event](data)) return;
-
-                handler(event, data);
-            };
-
-            socket.on(event, listener);
-
-            cleanup.push(() => {
-                socket.off(event, listener);
-            });
-        }
-
-        return {
-            unsubscribe() {
-                cleanup.forEach(func => func());
-            }
-        };
-    };
-}
 
 
+// local async bus usage
 class LocalEventBus {
     constructor() {
         this.listeners = new Map();
@@ -97,11 +60,53 @@ class LocalEventBus {
 }
 
 
+function createSender(socket, eventSchemas) {
+    return function send(event, data) {
+        if (!(event in eventSchemas)) {
+            throw new Error(`Unknown event: ${event}`);
+        }
+
+        if (!eventSchemas[event](data)) {
+            throw new Error(`Invalid payload`);
+        }
+
+        socket.emit(event, { ...data });
+    };
+}
+
+
+function createReceiver(socket, eventSchemas) {
+    return function subscribe(handler) {
+        const cleanup = [];
+
+        for (const event in eventSchemas) {
+            const listener = data => {
+                if (!eventSchemas[event](data)) return;
+
+                handler(event, data);
+            };
+
+            socket.on(event, listener);
+
+            cleanup.push(() => {
+                socket.off(event, listener);
+            });
+        }
+
+        return {
+            unsubscribe() {
+                cleanup.forEach(func => func());
+            }
+        };
+    };
+}
+
+
+// IPC bus usage
 // const networkBus = new NetworkEventBus(socket, eventSchemas)
 // networkBus.publish(event, data) // events going from client->server or server -> client
 // networkBus.emit(event, data)   // events going to the same process client -> client or server -> server
 // networkBus.on(event, data)     // does not care if this event comes from a publish or an emit
-
 export class NetworkEventBus extends LocalEventBus {
     constructor(socket, eventSchemas) {
         super();
@@ -147,21 +152,6 @@ export class NetworkEventBus extends LocalEventBus {
     }
 }
 
-class EventBuffer {
-    constructor(eventBus, bufferedEvent) {
-        this.queue = [];
-        eventBus.on(bufferedEvent, (data) => this.queue.push(data));
-    }
-
-    drain() {
-        const items = this.queue;
-        this.queue = [];
-        return items;
-    }
-}
-
-
-
 // const networkEvents = new NetworkEventBus(socket, schemas);     // network lane - to and from the server
 // const effectsEvents = new LocalEventBus(schemas);               // presentation lane - fire and forget
 // const simulationEvents = new LocalEventBus(schemas);            // intent lane - feeds the pull pipeline
@@ -184,44 +174,158 @@ class EventBuffer {
 // }
 
 
+
+
 class inputManager {
     
     
 }
 
 
-class Vehicle {
-    update(dt) {}
-    applyControl(){}
-}
 
-class Boat extends Vehicle {
+class ClientInput {
+    constructor(events) {
+        this.events = events;
 
+        document.addEventListener('keydown', (event) => {
+            this.handleKeyDown(event);
+            this.update();
+        });
+        document.addEventListener('keyup', (event) => {
+            this.handleKeyUp(event);
+            this.update();
+        });
+        document.addEventListener('mousedown', (event) => {
+            this.handleKeyDown(event);
+            this.update();
+        });
+        document.addEventListener('mouseup', (event) => {
+            this.handleKeyUp(event);
+            this.update();
+        })
+        document.addEventListener('mousemove', (event) => {
+            this.handleMouseMove(event);
+            this.updateMouse()
+        });
 
+        this.keyBindings = {
+            0:          'fireProjectileLeft',
+            2:          'fireProjectileRight',
+            KeyW:       'moveForward',
+            ArrowUp:    'moveForward',
+            KeyS:       'moveBackward',
+            ArrowDown:  'moveBackward',
+            KeyA:       'moveLeft',
+            ArrowLeft:  'moveLeft',
+            KeyD:       'moveRight',
+            ArrowRight: 'moveRight',
+            KeyM:       'showMap',
+            KeyC: 'toggleCamera',
+            KeyP: 'toggleTerrain',
+            KeyF: 'toggleFog',
+            Escape: 'exitPointerLock',
+        };
+        // make this into a bitmask to compare against what changed then emit what changed
+        // example last emit
+        //wsad LR   pctf xy
+        //0000 0000 0000 0000
+        //0000 0100 1000 0000
 
-}
-
-class Plane extends Vehicle {
-
-
-}
-
-class VehicleManager {
-    constructor() { 
-        this.vehicles = new Map(); 
-    }
-    add(vehicle) { 
-        this.vehicles.set(vehicle.id, vehicle); 
-    }
-    update(dt) {
-        for (const vehicle of this.vehicles.values()) {
-            vehicle.update(dt);
+        this.actions = {
+            moveForward:  false,
+            moveBackward: false,
+            moveLeft:     false,
+            moveRight:    false,
+            fireProjectileLeft:  false,
+            fireProjectileRight: false,
         }
-      }
- }
 
+        this.toggles = {
+            pointerLocked: false,
+            toggleCamera:  false,
+            toggleTerrain: false,
+            toggleFog:     false,
+        }
 
+        this.mouseMovement = {
+            deltaPitch: 0, 
+            deltaYaw:   0,
+        }
+    }
 
+    handleKeyDown(event) {
+        const eventCode = event.code;
+        const eventButton = event.button
+        const buttonPressed = this.keyBindings[eventCode] ?? this.keyBindings[eventButton];
+        if (!buttonPressed) return;
+        if (!event.repeat && this.actions[buttonPressed] !== undefined) {
+            this.actions[buttonPressed] = true;
+        }
+        if (!event.repeat && this.toggles[buttonPressed] !== undefined) {
+            this.toggles[buttonPressed] = !this.toggles[buttonPressed];
+        }
+    }
+
+    handleKeyUp(event) {
+        const eventCode = event.code;
+        const eventButton = event.button;
+        const buttonReleased = this.keyBindings[eventCode] ?? this.keyBindings[eventButton];
+        if (!buttonReleased) return;
+        if ( this.actions[buttonReleased] !== undefined) {
+            this.actions[buttonReleased] = false;
+        }
+    }
+
+    handleMouseMove(event) {
+        if (!this.toggles.pointerLocked) return;
+        this.mouseMovement.deltaPitch += event.movementY;
+        this.mouseMovement.deltaYaw   += event.movementX;
+    }
+
+    // Actions that need to be reset to their default go here
+    resetOneTimeActions() {
+
+    }
+    // It is very unlikely that this will ever be needed as event.movementX resets to 0 after each event and update() is called after each event
+    // this function exists for safty and asurance that the same movement of the mouse will always be deterministic
+    resetMouse() {
+        this.mouseMovement.deltaPitch = 0;
+        this.mouseMovement.deltaYaw = 0;
+        // this.mouseMovement.mousewheel = 0;
+    }
+
+    getSnapshot() {
+        const snapshot = {
+            timestamp: performance.now(),
+            actions: { ...this.actions },
+            toggles: { ...this.toggles },
+        }
+        return snapshot
+    }
+
+    update() { 
+        const mouseData = this.mouseMovement
+        this.events.emit("mouseMove", mouseData);
+        this.resetMouse() 
+
+        const snapshot = this.getSnapshot()
+        this.events.emit("snapshot", snapshot);
+        this.resetOneTimeActions() 
+    } 
+}
+
+class EventBuffer {
+    constructor(eventBus, bufferedEvent) {
+        this.queue = [];
+        eventBus.on(bufferedEvent, (data) => this.queue.push(data));
+    }
+
+    drain() {
+        const items = this.queue;
+        this.queue = [];
+        return items;
+    }
+}
 
 class ControlManager {
     
@@ -229,8 +333,9 @@ class ControlManager {
     
  } 
 
-// input from input buffer? 
-// One controller per INPUT SOURCE, not per (input × vehicle) pair
+// TODO input from input buffer? or send to input buffer after ? ?
+// I am thinking buffering the raw input then translating at update time from input map
+// One controller per INPUT SOURCE, not per (input × vehicle) pair maybe per event buffer 
 class LocalController {
   constructor(vehicle, inputMap) {
     this.vehicle = vehicle;
@@ -275,6 +380,50 @@ const boatInputMap = (input) => ({
 
 // const planeController = new LocalController(planeC, planeInputMap);
 // const boatController  = new LocalController(dinghy, boatInputMap);
+
+
+
+
+
+
+
+
+
+
+
+
+class Vehicle {
+    update(dt) {}
+    applyControl(){}
+}
+
+class Boat extends Vehicle {
+
+
+
+}
+
+class Plane extends Vehicle {
+
+
+}
+
+class VehicleManager {
+    constructor() { 
+        this.vehicles = new Map(); 
+    }
+    add(vehicle) { 
+        this.vehicles.set(vehicle.id, vehicle); 
+    }
+    update(dt) {
+        for (const vehicle of this.vehicles.values()) {
+            vehicle.update(dt);
+        }
+      }
+ }
+
+
+
 
 
 
