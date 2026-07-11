@@ -8,8 +8,6 @@ import { createWorld } from "./world/World.js"
 
 
 
-
-
 // local async bus usage
 class LocalEventBus {
     constructor() {
@@ -172,9 +170,6 @@ export class NetworkEventBus extends LocalEventBus {
 //         effectsEvents.emit("damageNumberPopup", { amount, entityId: this.id });
 //     }
 // }
-
-
-
 
 class inputManager {
     
@@ -384,22 +379,78 @@ const boatInputMap = (input) => ({
 
 
 
+boatDriver()
 
 
 
 
-
-
-
-
+// interface
 class Vehicle {
     update(dt) {}
     applyControl(){}
+    applyAuthority(){} 
 }
-
+// useboatCotroller like thing if i want to have boat be purely data
 class Boat extends Vehicle {
+    constructor() {
+        this.cannonLocation
+        this.location
+        this.throttle
+        this.fireleft
+        this.fireright
+        this.rotateRight
+        this.rotateLeft
+        }
+    setLocation() {
+        
 
+    }
+    
+    
+    
+    setRotation() {
+        
+        
+    }
+    
+    
+    throttleSytem() {
+        
+    }
 
+    rotationSystem() {
+        
+    }
+    
+        
+    predictBoat(){
+        
+        
+    }
+    
+    
+    
+  //BoatConollerSystem{ 
+    update() {
+        
+        this.applyExactComtol()
+        
+        
+        
+        
+        }
+        
+        
+
+    applyExactControl(){
+        
+        }
+    
+    applyIntent() {
+        
+        }
+        
+   // } 
 
 }
 
