@@ -5,176 +5,10 @@ import { createHeightmap } from "./utils/heightmap.js"
 import { createRenderer } from "./utils/renderer.js"
 import { createWorld } from "./world/World.js"
 
-
-
-
-// local async bus usage
-class LocalEventBus {
-    constructor() {
-        this.listeners = new Map();
-    }
-
-    // const sub = bus.on('foo', myCallback);
-    // sub.unsubscribe();
-    on(event, callback) {
-        if (!this.listeners.has(event)) {
-            this.listeners.set(event, new Set());
-        }
-
-        this.listeners.get(event).add(callback);
-
-        return {
-            unsubscribe: () => {
-                this.off(event, callback);
-            },
-        };
-    }
-
-    
-    off(event, callback) {
-        const callbacks = this.listeners.get(event);
-
-        if (!callbacks) return;
-
-        callbacks.delete(callback);
-
-        if (callbacks.size === 0) {
-            this.listeners.delete(event);
-        }
-    }
-
-
-    emit(event, data) {
-        const callbacks = this.listeners.get(event);
-        if (!callbacks) return;
-        for (const callback of [...callbacks]) {
-            try {
-                callback(data);
-            } catch (err) {
-                console.error(err);
-            }
-        }
-    }
-}
-
-
-function createSender(socket, eventSchemas) {
-    return function send(event, data) {
-        if (!(event in eventSchemas)) {
-            throw new Error(`Unknown event: ${event}`);
-        }
-
-        if (!eventSchemas[event](data)) {
-            throw new Error(`Invalid payload`);
-        }
-
-        socket.emit(event, { ...data });
-    };
-}
-
-
-function createReceiver(socket, eventSchemas) {
-    return function subscribe(handler) {
-        const cleanup = [];
-
-        for (const event in eventSchemas) {
-            const listener = data => {
-                if (!eventSchemas[event](data)) return;
-
-                handler(event, data);
-            };
-
-            socket.on(event, listener);
-
-            cleanup.push(() => {
-                socket.off(event, listener);
-            });
-        }
-
-        return {
-            unsubscribe() {
-                cleanup.forEach(func => func());
-            }
-        };
-    };
-}
-
-
-// IPC bus usage
-// const networkBus = new NetworkEventBus(socket, eventSchemas)
-// networkBus.publish(event, data) // events going from client->server or server -> client
-// networkBus.emit(event, data)   // events going to the same process client -> client or server -> server
-// networkBus.on(event, data)     // does not care if this event comes from a publish or an emit
-export class NetworkEventBus extends LocalEventBus {
-    constructor(socket, eventSchemas) {
-        super();
-        this.socket = socket;
-
-
-        // publish('message', { text: 'hello' });    // passes checks, calls socket.emit
-        // publish('badEvent', { text: 'hi' });      // throws "Unknown event: bogusEvent"
-        // publish('badData', { text: 123 });       //throws "Invalid payload" (if schema expects a string)
-        this.publisher = createSender(socket, eventSchemas);
-
-        // createReceiver(socket, eventSchemas) returns a subscribe function
-        // this function is called immediately with a handler, which runs
-        //    socket.on() for all events in eventSchemas, and returns an unsubscribe function
-        //  .unsubscribe is stored as this.detach can be called via this.detach() to stop listening
-
-        // The handler passes in broadcasts incoming socket events through this bus's own local emit()
-        // this is so bus.on(event, data) can happen without caring where that event came from
-        this.detach = createReceiver(socket, eventSchemas)((event, data) => {
-            this.emit(event, data);
-        }).unsubscribe;
-
-        this.connected = true;
-    }
-
-    publish(event, data) {
-        if (!this.connected) {
-            throw new Error('Cannot publish: bus is disconnected');
-        }
-        this.publisher(event, data);
-    }
-
-    disconnect() {
-        if (!this.connected) return; // idempotent guard
-
-        this.detach();   // remove all socket.on listeners (per event)
-        this.listeners.clear(); // drop all local .on() subscribers too
-        this.connected = false;
-
-        // Only close the socket if this bus owns its lifecycle.
-        // Skip this if the socket is shared/managed elsewhere.
-        this.socket.close?.();
-    }
-}
-
-// const networkEvents = new NetworkEventBus(socket, schemas);     // network lane - to and from the server
-// const effectsEvents = new LocalEventBus(schemas);               // presentation lane - fire and forget
-// const simulationEvents = new LocalEventBus(schemas);            // intent lane - feeds the pull pipeline
-
-
-// effects example
-// Authoritative mutation happens directly, NOT via emit.
-// emit is to tell the world this happened.
-
-// class Player {
-//     constructor() {
-//         this.health = 100;
-//     }
-
-//     applyDamage(amount) {
-//         this.health -= amount;
-//         effectsEvents.emit("cameraShake", { intensity: amount / 100 });
-//         effectsEvents.emit("damageNumberPopup", { amount, entityId: this.id });
-//     }
-// }
-
-class inputManager {
-    
-    
-}
+// The thing that should drive this archectiure is the three different sources of truth for the same vehicle over its lifetime
+// A local player's input, a network snapshot, and an AI brain
+// Which one applies to a given vehicle is decided by the server and can be any of the three.
+// Reconciliation (predict locally, correct against authoritative snapshot) also means a single boat's state needs to be diffed and blended, not just set.
 
 
 
@@ -322,34 +156,24 @@ class EventBuffer {
     }
 }
 
-class ControlManager {
-    constructor() 
-    
-    newComtroller()
-    
-    deleteController()
-    
-    update() { 
-        this.controllers.update()
-    } 
-    
-    
-    
- } 
 
-// TODO input from input buffer? or send to input buffer after ? ?
-// I am thinking buffering the raw input then translating at update time from input map
-// One controller per INPUT SOURCE, not per (input × vehicle) pair maybe per event buffer 
 class LocalController {
-  constructor(vehicle, inputMap) {
-    this.vehicle = vehicle;
-    this.inputMap = inputMap; // translates raw input -> generic intent
-  }
-  update(input) {
-    this.vehicle.applyControl(this.inputMap(input));
-  }
+  constructor() { 
+
+    } 
+    update(input) {
+        vehicle.applyIntent(this.inputMap(input));
+    }
 }
 
+class AIController {
+  constructor(brain) { 
+    this.brain = brain;
+ } // brain can outlive any single binding
+  update(vehicle, dt, world) {
+    vehicle.applyIntent(this.brain.decide(vehicle, world, dt));
+  }
+}
 class NetworkController {
   constructor(vehicle) {
     this.vehicle = vehicle;
@@ -360,52 +184,24 @@ class NetworkController {
   }
 }
 
-class AIController {
-  constructor(vehicle, brain) {
-    this.vehicle = vehicle;
-    this.brain = brain; // strategy object, e.g. PathFollower, Dogfighter
-  }
-  update(dt, world) {
-    this.vehicle.applyControl(this.brain.decide(this.vehicle, world, dt));
-  }
-}
 
-const planeInputMap = (input) => ({
-  throttleDelta: input.up ? 0.02 : (input.down ? -0.02 : 0),
-  pitch: input.mouseY,
-  roll: input.mouseX,
-  fire: input.mouseDown,
-});
-
-const boatInputMap = (input) => ({
-  throttleDelta: input.up ? 0.02 : (input.down ? -0.02 : 0),
-  steer: input.mouseX,
-});
-
-// const planeController = new LocalController(planeC, planeInputMap);
-// const boatController  = new LocalController(dinghy, boatInputMap);
-
-
-
-
-boatDriver()
-
-
-
-
-
-
-// interface
-class Vehicle {
-    update(dt) {}
-    applyControl(){}
-    applyAuthority(){} 
-}
-
-
-// useboatCotroller like thing if i want to have boat be purely data
-class Boat extends Vehicle {
+class Plane {
     constructor() {
+        const planeInputMap = (input) => ({
+            throttleDelta: input.up ? 0.02 : (input.down ? -0.02 : 0),
+            pitch: input.mouseY,
+            roll: input.mouseX,
+            fire: input.mouseDown,
+        });
+    }
+}
+
+
+
+class Boat { 
+    constructor() {
+
+        this.team
         this.cannonLocation
         this.location
         this.throttle
@@ -413,14 +209,18 @@ class Boat extends Vehicle {
         this.fireright
         this.rotateRight
         this.rotateLeft
+
+        const boatInputMap = (input) => ({
+            throttleDelta: input.up ? 0.02 : (input.down ? -0.02 : 0),
+            steer: input.mouseX,
+        });
+
         }
     setLocation() {
         
 
     }
-    
-    
-    
+
     setRotation() {
         
         
@@ -434,115 +234,119 @@ class Boat extends Vehicle {
     rotationSystem() {
         
     }
-    
-        
-    predictBoat(){
+
+    predictBoat() {
         
         
     }
-    
-    
-        
+    interpolateBoat() {
 
-    applyExactControl(){
-        
-        }
+    }
+
+    authUpdates() {
+
+    }
     
-    applyIntent() {
-        
-        }
-        
-   // } 
+    intentUpdates() {
+
+    }
+
+    update() {
+
+    }
 
 }
 
-class Plane extends Vehicle {
+    // const lobbyData = [
+        // { teamId: 1, vehicle: "boat",  controller: "ai",     location: { ...initialLocation } },
+        // { teamId: 1, vehicle: "plane", controller: "ai",     location: { ...initialLocation } },
+        // { teamId: 1, vehicle: "boat",  controller: "client", location: { ...initialLocation } },
+        // { teamId: 3, vehicle: "boat",  controller: "network",location: { ...initialLocation } },
+    // ];
 
-
-}
+const vehicleFactories = {
+    boat: createNewBoat,
+    plane: createNewPlane,
+};
 
 class VehicleManager {
-    constructor() { 
+
+    constructor(vehicleFactories) { 
         this.vehicles = new Map(); 
+        this.vehicleFactories = vehicleFactories;
     }
+
+
+    start(lobbyData) {
+        lobbyData.forEach((entry) => {
+            const factory = this.vehicleFactories[entry.vehicle];
+
+            if (!factory) {
+                throw new Error(`Unknown vehicle type: ${entry.vehicle}`);
+            }
+
+            const vehicle = factory();
+            vehicle.location = { ...entry.location };
+            vehicle.controller = entry.controller;
+            vehicle.teamId = entry.teamId;
+
+            this.vehicles.set(vehicle.id, vehicle);
+        });
+    }
+
     add(vehicle) { 
         this.vehicles.set(vehicle.id, vehicle); 
     }
+    
     update(dt) {
         for (const vehicle of this.vehicles.values()) {
             vehicle.update(dt);
         }
-      }
- }
-
-
-
-
-
-
+    }
+}
 
 
 
 export class Game {
-    constructor(socket) {
+    constructor() {
         // all players create a heightmap, the host will pass on their hightmap to other users
-        this.networkEventBus = new NetworkEventBus(socket, eventSchemas.network)
-        this.localEventBus = new LocalEventBus(eventSchemas.local)
         this.heightmap = createHeightmap();
     }
 
 
-    setup(canvas, newHeightmap, localEvents, networkEvents) {
+    setup(canvas, confirmedHeightmap, effectsBus, simulationBus, networkBus) {
         this.scene = new THREE.Scene();
         this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
         this.camera = createCamera(canvas, THREE.PerspectiveCamera);
         this.canvas = canvas
         
-        if (newHeightmap != null) {
-            this.heightmap = newHeightmap;
+        if (confirmedHeightmap != null) {
+            this.heightmap = confirmedHeightmap;
         }
+
+        // -------------------------------------------------------------------------
+        // Managers that can accept fire and forget input from the user
+
+        // If a component group takes async effects Evetns it means that component group received real time input from the user
+        // for instance camera orbit controls should not be buffered as this could appear jumpy on very high hz monitors
+        // same with components that do not impact gameplay such as volume controls
+        // -------------------------------------------------------------------------
+
+        const camera = new CameraManager(effectsBus);
+        const sounds = new SoundManager(effectsBus);
+
 
         // Creates a buffer for async local and network events 
         // so they can be polled by the systems that need them and order can be maintained
+        const simulationEventBuffer  = new EventBuffer(simulationBus, eventSchemas.inputIntent)
+        const networkEventBuffer = new EventBuffer(networkBus, eventSchemas.gameStateAuthority);
 
-        this.localEventBuffer  = new EventBuffer(localEventBus)
-        this.networkEventBuffer = new EventBuffer(networkEventBus);
-
-        // if a component group takes asyncLocalEvetns it means that component group received real time input from the user
-        // for instance camera orbit controls should not be buffered as this could appear jumpy on very high hz monitors
-        // same with components that do not impact gameplay such as volume controls
-        const camera = new CameraManager(localEventBus);
-        const sounds = new SoundManager(localEventBus);
-
-        const boats = new BoatManager(this.localEventBuffer, this.networkEventBuffer);
-        const projectiles = new ProjectileManager(this.localEventBuffer, this.networkEventBuffer);
 
         // when different component groups need to interact, tell the manager something
         // happened; the manager then processes this — similar to how a manager processes
         // input from the user or the client: intentUpdate -> systemsUpdate -> reconcile
+        this.vehicles = new vehicleManager()
 
-        this.globalSystems = {
-            terrainCollision: terrainCollisionSystem(this.heightmap, { components: [] }),
- 
-            projectileCollision: projectileCollisionSystem(projectiles, { components: [boats] }),
- 
-            boatCollision: boatCollisionSystem(boats, {
-                components: [
-                    boats,
-                    // planes,
-                    // players,
-                ],
-            }),
- 
-            cameraFollow: cameraFollowSystem(camera, { components: [] }),
-        };
-
-        this.managers = {
-            boats,
-            projectiles,
-            camera,
-            sounds,
-        };
 
         // This has methods like attach to object that makes sure camera and boat end up at the same location
 
@@ -550,7 +354,7 @@ export class Game {
     }
     // starts when the host clicks start game 
     // lobby data populates the managers with the quantity of components they need to create 
-    // and which internal systems they need to be assigned to
+    // and which internal systems they need to be assigned to   
 
     // Lobby Data Example:
     // [teamID, vehicleType, howControlled] 
@@ -560,10 +364,10 @@ export class Game {
     // another player on the clients own team will be network. 
     // same team players will show the same number but then network as the howControlled
     // lobbyData = {
-    //     { 0, "boat", "ai" }
-    //     { 1, "plane", "ai" },
-    //     { 1, "boat", "client" }
-    //     { 3, "boat", "network" }
+    //     { 1, "boat", "ai", initalLocation }
+    //     { 1, "plane", "ai", initalLocation },
+    //     { 1, "boat", "client", initalLocation }
+    //     { 3, "boat", "network", initalLocation }
     // }
 
     start(lobbyData) {
@@ -617,7 +421,64 @@ export class Game {
     }
 }
 
+const collisionResponses = {
+    'projectile:vessel': (projectile, boat, penetration) => {
+        // effects on the boat (entityB in this pairing)
+        applyDamage(boat, projectile.damage);
+        effectsBus.emit('cameraShake', { intensity: projectile.damage / 100 });
+        effectsBus.emit('damageNumberPopup', { amount: projectile.damage, entityId: boat.id });
+        if (boat.controlSource === 'ai') {
+            boat.brain.notify({ type: 'tookDamage', from: projectile.ownerId });
+        }
 
+        // effects on the projectile (entityA in this pairing)
+        soundsManager.play('impact', { position: projectile.position });
+        managers.projectiles.remove(projectile.id);
+    },
+    'vessel:vessel':      (a, b) => pushApart(a, b),
+    'vessel:terrain':     (boat) => { boat.velocity = 0; },
+    'projectile:terrain': (proj) => removeProjectile(proj.id),
+
+    // new entries only - nothing above was touched
+    'plane:terrain':      (plane) => plane.crash(),
+    'projectile:plane': (proj, plane) => { plane.health -= proj.damage; removeProjectile(proj.id); },
+    'vessel:plane':       (boat, plane) => { /* decide once, here */ },
+};
+
+function resolveCollision({ entityA, entityB, penetration }) {
+    const key = `${entityA.layer}:${entityB.layer}`;
+    const reversedKey = `${entityB.layer}:${entityA.layer}`;
+
+    if (collisionResponses[key]){
+        collisionResponses[key](entityA, entityB, penetration);
+    }
+
+    else if (collisionResponses[reversedKey]) {
+        collisionResponses[reversedKey](entityB, entityA, penetration);
+    }
+}
+
+function entityCollision(entityA, entityB) {
+        const distance = getDistance(entityA.location, entityB.location);
+
+        const hitboxOverlap = entityA.hitboxSphereSize + entityB.hitboxSphereSize;
+        const penetration = hitboxOverlap - distance;
+
+        if (penetration > 0) {
+            return { entityA, entityB, penetration };
+        } 
+        return null;
+}
+
+function collisionSystem(managers, cellSize = 20) {
+    const colliders = collectColliders(managers);
+
+    for (const [a, b] of broadPhase(colliders, cellSize)) {
+        if (entityCollision(a, b)) {
+            resolveCollision(hit);
+        } 
+    }
+}
 
 
     // FRAME START
@@ -658,3 +519,12 @@ export class Game {
 9. Render scene
 
 */
+
+
+
+
+
+
+
+
+

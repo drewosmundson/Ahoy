@@ -26,14 +26,17 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const socket = io();
 
-    const emitter =  createEmitter(socket, eventSchemas);
-
+    const networkBus = new NetworkEventBus(eventSchemas.network, socket);
+    const simulationBus = new LocalEventBus(eventSchemas.simulation);
+    const effectsBus = new LocalEventBus(eventSchemas.effects)
 
     const context = {
         dom,
         navigate,
         ui,
-        emitter,
+        networkBus,
+        simulationBus,
+        effectsBus,
         Game,
     };
     // As this becomes large it would be good practice to inialize only the nessesary event listeners

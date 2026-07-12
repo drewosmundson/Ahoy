@@ -1,6 +1,7 @@
+import { useEffect } from "react";
 
 
-export function singleplayer({ dom, navigate, emitter, Game, CONSTANTS }) {
+export function singleplayer({ dom, navigate, Game, CONSTANTS }) {
   return {
     initEventListeners,
     toMenuScreen,
@@ -18,8 +19,8 @@ export function singleplayer({ dom, navigate, emitter, Game, CONSTANTS }) {
 
   function start() {
     const canvas = dom.canvas.game;
-    const game = new Game(emitter.nullEmitter);
-    game.setup(canvas);
+    const game = new Game();
+    game.setup(canvas, game.heightmap, effectsBus, simulationBus, networkBus);
     navigate.toScreen(dom.screens.game);
     game.start();
   }
