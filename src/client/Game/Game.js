@@ -174,13 +174,14 @@ class AIController {
     vehicle.applyIntent(this.brain.decide(vehicle, world, dt));
   }
 }
+
 class NetworkController {
   constructor(vehicle) {
     this.vehicle = vehicle;
   }
   onPacket(packet) {
     // server already sends intent-shaped data, no interpretation needed
-    this.vehicle.applyControl(packet.cmd);
+    this.vehicle.applyIntent(packet.cmd);
   }
 }
 
@@ -197,18 +198,11 @@ class Plane {
 }
 
 
-
 class Boat { 
     constructor() {
-
         this.team
-        this.cannonLocation
         this.location
-        this.throttle
-        this.fireleft
-        this.fireright
-        this.rotateRight
-        this.rotateLeft
+        this.rotation
 
         const boatInputMap = (input) => ({
             throttleDelta: input.up ? 0.02 : (input.down ? -0.02 : 0),
@@ -243,11 +237,11 @@ class Boat {
 
     }
 
-    authUpdates() {
+    reconcile() {
 
     }
     
-    intentUpdates() {
+    applyIntent() {
 
     }
 
@@ -257,17 +251,6 @@ class Boat {
 
 }
 
-    // const lobbyData = [
-        // { teamId: 1, vehicle: "boat",  controller: "ai",     location: { ...initialLocation } },
-        // { teamId: 1, vehicle: "plane", controller: "ai",     location: { ...initialLocation } },
-        // { teamId: 1, vehicle: "boat",  controller: "client", location: { ...initialLocation } },
-        // { teamId: 3, vehicle: "boat",  controller: "network",location: { ...initialLocation } },
-    // ];
-
-const vehicleFactories = {
-    boat: createNewBoat,
-    plane: createNewPlane,
-};
 
 class VehicleManager {
 
@@ -276,35 +259,40 @@ class VehicleManager {
         this.vehicleFactories = vehicleFactories;
     }
 
-
+    // lobbyData = [
+    //     { 1, "boat", "ai", initalLocation }
+    //     { 1, "plane", "ai", initalLocation },
+    //     { 1, "boat", "client", initalLocation }
+    //     { 3, "boat", "network", initalLocation }
+    // ]
     start(lobbyData) {
         lobbyData.forEach((entry) => {
-            const factory = this.vehicleFactories[entry.vehicle];
-
-            if (!factory) {
-                throw new Error(`Unknown vehicle type: ${entry.vehicle}`);
-            }
-
-            const vehicle = factory();
-            vehicle.location = { ...entry.location };
-            vehicle.controller = entry.controller;
-            vehicle.teamId = entry.teamId;
-
-            this.vehicles.set(vehicle.id, vehicle);
+            add(entry)
         });
     }
 
-    add(vehicle) { 
-        this.vehicles.set(vehicle.id, vehicle); 
+    add(entry) { 
+        const factory = this.vehicleFactories[entry.vehicle];
+
+        if (!factory) {
+            throw new Error(`Unknown vehicle type: ${entry.vehicle}`);
+        }
+
+        const vehicle = factory();
+        vehicle.location = { ...entry.location };
+        vehicle.controller = entry.controller;
+        vehicle.teamId = entry.teamId;
+
+        this.vehicles.set(vehicle.id, vehicle);
     }
-    
+
     update(dt) {
         for (const vehicle of this.vehicles.values()) {
             vehicle.update(dt);
         }
     }
+    
 }
-
 
 
 export class Game {
@@ -345,8 +333,13 @@ export class Game {
         // when different component groups need to interact, tell the manager something
         // happened; the manager then processes this — similar to how a manager processes
         // input from the user or the client: intentUpdate -> systemsUpdate -> reconcile
-        this.vehicles = new vehicleManager()
 
+
+
+        vehicleManager = new VehicleManager() {
+
+            
+        }
 
         // This has methods like attach to object that makes sure camera and boat end up at the same location
 
@@ -420,6 +413,9 @@ export class Game {
         this.camera.updateProjectionMatrix();
     }
 }
+
+
+
 
 const collisionResponses = {
     'projectile:vessel': (projectile, boat, penetration) => {
