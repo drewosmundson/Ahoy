@@ -323,6 +323,15 @@ class EventBuffer {
 }
 
 class ControlManager {
+    constructor() 
+    
+    newComtroller()
+    
+    deleteController()
+    
+    update() { 
+        this.controllers.update()
+    } 
     
     
     
@@ -384,12 +393,16 @@ boatDriver()
 
 
 
+
+
 // interface
 class Vehicle {
     update(dt) {}
     applyControl(){}
     applyAuthority(){} 
 }
+
+
 // useboatCotroller like thing if i want to have boat be purely data
 class Boat extends Vehicle {
     constructor() {
@@ -429,17 +442,6 @@ class Boat extends Vehicle {
     }
     
     
-    
-  //BoatConollerSystem{ 
-    update() {
-        
-        this.applyExactComtol()
-        
-        
-        
-        
-        }
-        
         
 
     applyExactControl(){
