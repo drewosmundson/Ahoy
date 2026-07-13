@@ -12,138 +12,7 @@ import { createWorld } from "./world/World.js"
 
 
 
-class ClientInput {
-    constructor(events) {
-        this.events = events;
-
-        document.addEventListener('keydown', (event) => {
-            this.handleKeyDown(event);
-            this.update();
-        });
-        document.addEventListener('keyup', (event) => {
-            this.handleKeyUp(event);
-            this.update();
-        });
-        document.addEventListener('mousedown', (event) => {
-            this.handleKeyDown(event);
-            this.update();
-        });
-        document.addEventListener('mouseup', (event) => {
-            this.handleKeyUp(event);
-            this.update();
-        })
-        document.addEventListener('mousemove', (event) => {
-            this.handleMouseMove(event);
-            this.updateMouse()
-        });
-
-        this.keyBindings = {
-            0:          'fireProjectileLeft',
-            2:          'fireProjectileRight',
-            KeyW:       'moveForward',
-            ArrowUp:    'moveForward',
-            KeyS:       'moveBackward',
-            ArrowDown:  'moveBackward',
-            KeyA:       'moveLeft',
-            ArrowLeft:  'moveLeft',
-            KeyD:       'moveRight',
-            ArrowRight: 'moveRight',
-            KeyM:       'showMap',
-            KeyC: 'toggleCamera',
-            KeyP: 'toggleTerrain',
-            KeyF: 'toggleFog',
-            Escape: 'exitPointerLock',
-        };
-        // make this into a bitmask to compare against what changed then emit what changed
-        // example last emit
-        //wsad LR   pctf xy
-        //0000 0000 0000 0000
-        //0000 0100 1000 0000
-
-        this.actions = {
-            moveForward:  false,
-            moveBackward: false,
-            moveLeft:     false,
-            moveRight:    false,
-            fireProjectileLeft:  false,
-            fireProjectileRight: false,
-        }
-
-        this.toggles = {
-            pointerLocked: false,
-            toggleCamera:  false,
-            toggleTerrain: false,
-            toggleFog:     false,
-        }
-
-        this.mouseMovement = {
-            deltaPitch: 0, 
-            deltaYaw:   0,
-        }
-    }
-
-    handleKeyDown(event) {
-        const eventCode = event.code;
-        const eventButton = event.button
-        const buttonPressed = this.keyBindings[eventCode] ?? this.keyBindings[eventButton];
-        if (!buttonPressed) return;
-        if (!event.repeat && this.actions[buttonPressed] !== undefined) {
-            this.actions[buttonPressed] = true;
-        }
-        if (!event.repeat && this.toggles[buttonPressed] !== undefined) {
-            this.toggles[buttonPressed] = !this.toggles[buttonPressed];
-        }
-    }
-
-    handleKeyUp(event) {
-        const eventCode = event.code;
-        const eventButton = event.button;
-        const buttonReleased = this.keyBindings[eventCode] ?? this.keyBindings[eventButton];
-        if (!buttonReleased) return;
-        if ( this.actions[buttonReleased] !== undefined) {
-            this.actions[buttonReleased] = false;
-        }
-    }
-
-    handleMouseMove(event) {
-        if (!this.toggles.pointerLocked) return;
-        this.mouseMovement.deltaPitch += event.movementY;
-        this.mouseMovement.deltaYaw   += event.movementX;
-    }
-
-    // Actions that need to be reset to their default go here
-    resetOneTimeActions() {
-
-    }
-    // It is very unlikely that this will ever be needed as event.movementX resets to 0 after each event and update() is called after each event
-    // this function exists for safty and asurance that the same movement of the mouse will always be deterministic
-    resetMouse() {
-        this.mouseMovement.deltaPitch = 0;
-        this.mouseMovement.deltaYaw = 0;
-        // this.mouseMovement.mousewheel = 0;
-    }
-
-    getSnapshot() {
-        const snapshot = {
-            timestamp: performance.now(),
-            actions: { ...this.actions },
-            toggles: { ...this.toggles },
-        }
-        return snapshot
-    }
-
-    update() { 
-        const mouseData = this.mouseMovement
-        this.events.emit("mouseMove", mouseData);
-        this.resetMouse() 
-
-        const snapshot = this.getSnapshot()
-        this.events.emit("snapshot", snapshot);
-        this.resetOneTimeActions() 
-    } 
-}
-
-class EventBuffer {
+export class EventBuffer {
     constructor(eventBus, bufferedEvent) {
         this.queue = [];
         eventBus.on(bufferedEvent, (data) => this.queue.push(data));
@@ -157,141 +26,324 @@ class EventBuffer {
 }
 
 
-class LocalController {
-  constructor() { 
+// local async bus usage
+export class LocalEventBus {
+    constructor() {
+        this.listeners = new Map();
+    }
 
-    } 
-    update(input) {
-        vehicle.applyIntent(this.inputMap(input));
+    // const sub = bus.on('foo', myCallback);
+    // sub.unsubscribe();
+    on(event, callback) {
+        if (!this.listeners.has(event)) {
+            this.listeners.set(event, new Set());
+        }
+
+        this.listeners.get(event).add(callback);
+
+        return {
+            unsubscribe: () => {
+                this.off(event, callback);
+            },
+        };
+    }
+
+    
+    off(event, callback) {
+        const callbacks = this.listeners.get(event);
+
+        if (!callbacks) return;
+
+        callbacks.delete(callback);
+
+        if (callbacks.size === 0) {
+            this.listeners.delete(event);
+        }
+    }
+
+
+    emit(event, data) {
+        const callbacks = this.listeners.get(event);
+        if (!callbacks) return;
+        for (const callback of [...callbacks]) {
+            try {
+                callback(data);
+            } catch (err) {
+                console.error(err);
+            }
+        }
     }
 }
 
-class AIController {
-  constructor(brain) { 
-    this.brain = brain;
- } // brain can outlive any single binding
-  update(vehicle, dt, world) {
-    vehicle.applyIntent(this.brain.decide(vehicle, world, dt));
-  }
-}
 
-class NetworkController {
-  constructor(vehicle) {
-    this.vehicle = vehicle;
-  }
-  onPacket(packet) {
-    // server already sends intent-shaped data, no interpretation needed
-    this.vehicle.applyIntent(packet.cmd);
-  }
+function createSender(socket, eventSchemas) {
+    return function send(event, data) {
+        if (!(event in eventSchemas)) {
+            throw new Error(`Unknown event: ${event}`);
+        }
+
+        if (!eventSchemas[event](data)) {
+            throw new Error(`Invalid payload`);
+        }
+
+        socket.emit(event, { ...data });
+    };
 }
 
 
-class Plane {
-    constructor() {
-        const planeInputMap = (input) => ({
-            throttleDelta: input.up ? 0.02 : (input.down ? -0.02 : 0),
-            pitch: input.mouseY,
-            roll: input.mouseX,
-            fire: input.mouseDown,
+function createReceiver(socket, eventSchemas) {
+    return function subscribe(handler) {
+        const cleanup = [];
+
+        for (const event in eventSchemas) {
+            const listener = data => {
+                if (!eventSchemas[event](data)) return;
+
+                handler(event, data);
+            };
+
+            socket.on(event, listener);
+
+            cleanup.push(() => {
+                socket.off(event, listener);
+            });
+        }
+
+        return {
+            unsubscribe() {
+                cleanup.forEach(func => func());
+            }
+        };
+    };
+}
+
+
+// IPC bus usage
+// const networkBus = new NetworkEventBus(socket, eventSchemas)
+// networkBus.publish(event, data) // events going from client->server or server -> client
+// networkBus.emit(event, data)   // events going to the same process client -> client or server -> server
+// networkBus.on(event, data)     // does not care if this event comes from a publish or an emit
+export class NetworkEventBus extends LocalEventBus {
+    constructor(socket, eventSchemas) {
+        super();
+        this.socket = socket;
+
+
+        // publish('message', { text: 'hello' });    // passes checks, calls socket.emit
+        // publish('badEvent', { text: 'hi' });      // throws "Unknown event: bogusEvent"
+        // publish('badData', { text: 123 });       //throws "Invalid payload" (if schema expects a string)
+        this.publisher = createSender(socket, eventSchemas);
+
+        // createReceiver(socket, eventSchemas) returns a subscribe function
+        // this function is called immediately with a handler, which runs
+        //    socket.on() for all events in eventSchemas, and returns an unsubscribe function
+        //  .unsubscribe is stored as this.detach can be called via this.detach() to stop listening
+
+        // The handler passes in broadcasts incoming socket events through this bus's own local emit()
+        // this is so bus.on(event, data) can happen without caring where that event came from
+        this.detach = createReceiver(socket, eventSchemas)((event, data) => {
+            this.emit(event, data);
+        }).unsubscribe;
+
+        this.connected = true;
+    }
+
+    publish(event, data) {
+        if (!this.connected) {
+            throw new Error('Cannot publish: bus is disconnected');
+        }
+        this.publisher(event, data);
+    }
+
+    disconnect() {
+        if (!this.connected) return; // idempotent guard
+
+        this.detach();   // remove all socket.on listeners (per event)
+        this.listeners.clear(); // drop all local .on() subscribers too
+        this.connected = false;
+
+        // Only close the socket if this bus owns its lifecycle.
+        // Skip this if the socket is shared/managed elsewhere.
+        this.socket.close?.();
+    }
+}
+
+// const networkEvents = new NetworkEventBus(socket, schemas);     // network lane - to and from the server
+// const effectsEvents = new LocalEventBus(schemas);               // presentation lane - fire and forget
+// const simulationEvents = new LocalEventBus(schemas);            // intent lane - feeds the pull pipeline
+
+
+// effects example
+// Authoritative mutation happens directly, NOT via emit.
+// emit is to tell the world this happened.
+
+// class Player {
+//     constructor() {
+//         this.health = 100;
+//     }
+
+//     applyDamage(amount) {
+//         this.health -= amount;
+//         effectsEvents.emit("cameraShake", { intensity: amount / 100 });
+//         effectsEvents.emit("damageNumberPopup", { amount, entityId: this.id });
+//     }
+// }
+
+
+/*
+----- Network Events ----- 
+const network = new NetworkInterface(socket, eventSchemas);
+
+Receive network events
+const sub = network.on("playerJoined", data => {
+    console.log("Player joined:", data);
+});
+
+
+Send network events
+network.sendEvent("move", {
+    x: 10,
+    y: 20
+});
+
+
+Stop listening locally
+sub.unsubscribe();
+
+
+Stop receiving socket events
+network.disconnect();
+*/
+
+
+class LocalControlSystem {
+    constructor(buffer) { 
+        this.locallyControlled = new Map();
+    }
+
+    add(componentId) {
+
+    }
+
+    remove(componentId) {
+
+    }
+
+    update(input, dt) {
+        const intent = this.buffer.drian;
+ 
+        this.locallyControlled.forEach((component) => {
+            component.applyIntent(intent)
         });
     }
 }
 
 
+class NetworkControlSystem {
+    constructor(buffer) { 
+        this.networkControlled = new Map();
+    }
+
+    add(componentId) {
+
+    }
+
+    remove(componentId) {
+
+    }
+
+    update(input, dt) {
+        const state = this.buffer.drian;
+
+        // TODO get most recent state for authority. only pass in flat object
+ 
+        this.locallyControlled.forEach((component) => {
+            component.interpolate(state)
+        });
+    }
+}
+
 class Boat { 
     constructor() {
-        this.team
-        this.location
-        this.rotation
+        this.id;
+        this.team;
+        this.location;
+        this.rotation;
 
         const boatInputMap = (input) => ({
             throttleDelta: input.up ? 0.02 : (input.down ? -0.02 : 0),
             steer: input.mouseX,
         });
 
-        }
+    }
     setLocation() {
-        
 
     }
 
     setRotation() {
-        
-        
-    }
-    
-    
-    throttleSytem() {
-        
-    }
-
-    rotationSystem() {
-        
-    }
-
-    predictBoat() {
-        
-        
-    }
-    interpolateBoat() {
 
     }
 
-    reconcile() {
-
-    }
-    
     applyIntent() {
 
     }
 
-    update() {
+    runAnimations() {
 
     }
-
 }
 
-
 class VehicleManager {
-
     constructor(vehicleFactories) { 
         this.vehicles = new Map(); 
         this.vehicleFactories = vehicleFactories;
     }
 
     // lobbyData = [
-    //     { 1, "boat", "ai", initalLocation }
+    //     { id, team, "boat", "ai", initalLocation }
     //     { 1, "plane", "ai", initalLocation },
     //     { 1, "boat", "client", initalLocation }
     //     { 3, "boat", "network", initalLocation }
-    // ]
+    // ]    
     start(lobbyData) {
         lobbyData.forEach((entry) => {
             add(entry)
         });
     }
 
+    getVehicle(vehicleId) {
+        return vehicles.vehicleId
+    }
+
     add(entry) { 
         const factory = this.vehicleFactories[entry.vehicle];
-
         if (!factory) {
             throw new Error(`Unknown vehicle type: ${entry.vehicle}`);
         }
 
         const vehicle = factory();
-        vehicle.location = { ...entry.location };
-        vehicle.controller = entry.controller;
+
         vehicle.teamId = entry.teamId;
+        vehicle.location = { ...entry.location };
+        vehicle.rotation = entry.rotation 
+
+        const controlSystem = this.vehicleControlSystems[entry.controller];
+
+        if (!controller) {
+            throw new Error(`Unknown controller type: ${entry.controller}`);
+        }
+
+        controlSystem.add(vehicle.id, vehicle)
+        collisionSystem.add(vehicle.id, vehicle)
 
         this.vehicles.set(vehicle.id, vehicle);
     }
 
     update(dt) {
         for (const vehicle of this.vehicles.values()) {
-            vehicle.update(dt);
+            vehicle.runAnimations(dt);
         }
     }
-    
 }
 
 
@@ -312,6 +364,7 @@ export class Game {
             this.heightmap = confirmedHeightmap;
         }
 
+
         // -------------------------------------------------------------------------
         // Managers that can accept fire and forget input from the user
 
@@ -320,29 +373,26 @@ export class Game {
         // same with components that do not impact gameplay such as volume controls
         // -------------------------------------------------------------------------
 
-        const camera = new CameraManager(effectsBus);
-        const sounds = new SoundManager(effectsBus);
+
+        const simulationEventBuffer  = new EventBuffer(simulationBus, eventSchemas.intentGameState)
+        const networkEventBuffer     = new EventBuffer(networkBus, eventSchemas.authorityGameState);
+
+        const vehicleManager    = new VehicleManager()
+        const projectileManager = new ProjectileManager()
+        const cameraManager     = new CameraManager(effectsBus, eventSchemas.effects);
+        const soundManager      = new SoundManager(effectsBus, eventSchemas.effects);
+
+        const collisonSystem     = new CollisionSystem(this.heightmap)
+        const localControlSystem = new localControlSystem()
+
+        this.systems = {
 
 
-        // Creates a buffer for async local and network events 
-        // so they can be polled by the systems that need them and order can be maintained
-        const simulationEventBuffer  = new EventBuffer(simulationBus, eventSchemas.inputIntent)
-        const networkEventBuffer = new EventBuffer(networkBus, eventSchemas.gameStateAuthority);
 
 
-        // when different component groups need to interact, tell the manager something
-        // happened; the manager then processes this — similar to how a manager processes
-        // input from the user or the client: intentUpdate -> systemsUpdate -> reconcile
-
-
-
-        vehicleManager = new VehicleManager() {
-
-            
         }
 
         // This has methods like attach to object that makes sure camera and boat end up at the same location
-
         window.addEventListener('resize', this.handleWindowResize);
     }
     // starts when the host clicks start game 
