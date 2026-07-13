@@ -292,27 +292,28 @@ class Boat {
 
     }
 }
-
+function boatFactory() {
+    
+    
+}
 class VehicleManager {
-    constructor(vehicleFactories) { 
+    constructor(vehicleFactories, systems) { 
         this.vehicles = new Map(); 
         this.vehicleFactories = vehicleFactories;
     }
 
     // lobbyData = [
-    //     { id, team, "boat", "ai", initalLocation }
+    //     { id, "boat", "ai", initalLocation }
     //     { 1, "plane", "ai", initalLocation },
     //     { 1, "boat", "client", initalLocation }
     //     { 3, "boat", "network", initalLocation }
     // ]    
     start(lobbyData) {
-        lobbyData.forEach((entry) => {
-            add(entry)
-        });
+        lobbyData.forEach(entry => this.add(entry));
     }
 
     getVehicle(vehicleId) {
-        return vehicles.vehicleId
+        return this.vehicles.get(vehicleId);
     }
 
     add(entry) { 
@@ -363,7 +364,11 @@ export class Game {
         if (confirmedHeightmap != null) {
             this.heightmap = confirmedHeightmap;
         }
-
+        
+        this.vehicleFactories = {
+            boat: boatFactory
+            plane: planeFactoy
+        }
 
         // -------------------------------------------------------------------------
         // Managers that can accept fire and forget input from the user
@@ -372,8 +377,6 @@ export class Game {
         // for instance camera orbit controls should not be buffered as this could appear jumpy on very high hz monitors
         // same with components that do not impact gameplay such as volume controls
         // -------------------------------------------------------------------------
-
-
         const simulationEventBuffer  = new EventBuffer(simulationBus, eventSchemas.intentGameState)
         const networkEventBuffer     = new EventBuffer(networkBus, eventSchemas.authorityGameState);
 
@@ -381,9 +384,21 @@ export class Game {
         const projectileManager = new ProjectileManager()
         const cameraManager     = new CameraManager(effectsBus, eventSchemas.effects);
         const soundManager      = new SoundManager(effectsBus, eventSchemas.effects);
+        
+        
+        this.managers = {
+            
+            
+        } 
 
-        const collisonSystem     = new CollisionSystem(this.heightmap)
-        const localControlSystem = new localControlSystem()
+        // Managers are their own ECS world. Entites that are in managers get added to the systems of 
+        // that managers. They fire on update that are specific to that component. like animations on boats or
+        // camera changing. 
+
+
+        const collisonSystem       = new CollisionSystem(this.heightmap)
+        const localControlSystem   = new localControlSystem()
+        const networkControlSystem = new NetworkControlSystem() 
 
         this.systems = {
 
@@ -391,6 +406,8 @@ export class Game {
 
 
         }
+        
+
 
         // This has methods like attach to object that makes sure camera and boat end up at the same location
         window.addEventListener('resize', this.handleWindowResize);
