@@ -395,7 +395,6 @@ export class Game {
         // that managers. They fire on update that are specific to that component. like animations on boats or
         // camera changing. 
 
-
         const collisonSystem       = new CollisionSystem(this.heightmap)
         const localControlSystem   = new localControlSystem()
         const networkControlSystem = new NetworkControlSystem() 
