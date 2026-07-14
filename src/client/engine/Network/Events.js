@@ -1,5 +1,4 @@
-
-export class EventBuffer {
+class EventBuffer {
     constructor(eventBus, bufferedEvent) {
         this.queue = [];
         eventBus.on(bufferedEvent, (data) => this.queue.push(data));
@@ -14,7 +13,7 @@ export class EventBuffer {
 
 
 // local async bus usage
-export class LocalEventBus {
+class LocalEventBus {
     constructor() {
         this.listeners = new Map();
     }
@@ -34,7 +33,7 @@ export class LocalEventBus {
             },
         };
     }
-    
+
     off(event, callback) {
         const callbacks = this.listeners.get(event);
 
@@ -103,11 +102,11 @@ function createReceiver(socket, eventSchemas) {
 
 
 // IPC bus usage
-// const networkBus = new NetworkEventBus(socket, eventSchemas)
+// const networkBus = new events.NetworkEventBus(socket, eventSchemas)
 // networkBus.publish(event, data) // events going from client->server or server -> client
 // networkBus.emit(event, data)   // events going to the same process client -> client or server -> server
 // networkBus.on(event, data)     // does not care if this event comes from a publish or an emit
-export class NetworkEventBus extends LocalEventBus {
+class NetworkEventBus extends LocalEventBus {
     constructor(socket, eventSchemas) {
         super();
         this.socket = socket;
@@ -152,9 +151,23 @@ export class NetworkEventBus extends LocalEventBus {
     }
 }
 
-// const networkEvents = new NetworkEventBus(socket, schemas);     // network lane - to and from the server
-// const effectsEvents = new LocalEventBus(schemas);               // presentation lane - fire and forget
-// const simulationEvents = new LocalEventBus(schemas);            // intent lane - feeds the pull pipeline
+// Namespace object 
+export const events = {
+    EventBuffer,
+    LocalEventBus,
+    NetworkEventBus,
+};
+
+
+export { EventBuffer, LocalEventBus, NetworkEventBus };
+
+export default events;
+
+
+
+// const networkEvents = new events.NetworkEventBus(socket, schemas);  // network lane - to and from the server
+// const effectsEvents = new events.LocalEventBus(schemas);            // presentation lane - fire and forget
+// const simulationEvents = new events.LocalEventBus(schemas);         // intent lane - feeds the pull pipeline
 
 
 // effects example
@@ -175,8 +188,16 @@ export class NetworkEventBus extends LocalEventBus {
 
 
 /*
------ Network Events ----- 
-const network = new NetworkInterface(socket, eventSchemas);
+----- Usage -----
+import events from './events.js';
+// or: import { events } from './events.js';
+
+const buffer = new events.EventBuffer(someBus, 'someEvent');
+const localBus = new events.LocalEventBus();
+const networkBus = new events.NetworkEventBus(socket, eventSchemas);
+
+----- Network Events -----
+const network = new events.NetworkEventBus(socket, eventSchemas);
 
 Receive network events
 const sub = network.on("playerJoined", data => {
@@ -185,7 +206,7 @@ const sub = network.on("playerJoined", data => {
 
 
 Send network events
-network.sendEvent("move", {
+network.publish("move", {
     x: 10,
     y: 20
 });
@@ -198,3 +219,4 @@ sub.unsubscribe();
 Stop receiving socket events
 network.disconnect();
 */
+
