@@ -1,5 +1,4 @@
 
-
 export class EventBuffer {
     constructor(eventBus, bufferedEvent) {
         this.queue = [];
@@ -35,7 +34,6 @@ export class LocalEventBus {
             },
         };
     }
-
     
     off(event, callback) {
         const callbacks = this.listeners.get(event);
@@ -49,7 +47,6 @@ export class LocalEventBus {
         }
     }
 
-
     emit(event, data) {
         const callbacks = this.listeners.get(event);
         if (!callbacks) return;
@@ -62,7 +59,6 @@ export class LocalEventBus {
         }
     }
 }
-
 
 function createSender(socket, eventSchemas) {
     return function send(event, data) {

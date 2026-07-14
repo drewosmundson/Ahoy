@@ -4,18 +4,18 @@ import { createTerrain } from "./Terrain.js"
 import { createWater } from "./Water.js"
 
 
-export function createWorld(scene, heightmap) {
-    const worldComponents = {
+export function createSceneComponents(scene, heightmap) {
+    const sceneComponents = {
         lighting: createLighting(scene),
         terrain: createTerrain(scene, heightmap),
         water: createWater(scene),
         skybox: createSkybox(scene),
     }
-    return worldComponents;
+    return sceneComponents;
 }
 
 
-class World {
+class SceneManager {
     constructor() {
 
     }
