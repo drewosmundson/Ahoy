@@ -5,7 +5,7 @@ import { createHeightmap } from "./utils/heightmap.js"
 import { createRenderer } from "./utils/renderer.js"
 import { createScene } from "./scene/scene.js"
 
-import { EventBuffer, NetworkEventBus, LocalEventBus } from './Network/Events.js';
+import { events } from './Network/Events.js';
 
 // The thing that should drive this archectiure is the three different sources of truth for the same vehicle over its lifetime
 // A local player's input, a network snapshot, and an AI brain
@@ -108,6 +108,9 @@ class VehicleManager {
     getVehicle(vehicleId) {
         return this.vehicles.get(vehicleId);
     }
+    getAllVehicles() {
+        return this.vehicles
+    } 
 
     add(entry) { 
         const factory = this.vehicleFactories[entry.vehicle];
@@ -132,13 +135,14 @@ class VehicleManager {
 
         this.vehicles.set(vehicle.id, vehicle);
     }
-
-    update(dt) {
-        for (const vehicle of this.vehicles.values()) {
-            vehicle.runAnimations(dt);
-        }
-    }
 }
+
+
+    
+
+
+
+
 
 
 export class Game {
