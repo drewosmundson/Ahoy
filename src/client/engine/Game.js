@@ -13,7 +13,7 @@ import { events } from './Network/Events.js';
 // Reconciliation (predict locally, correct against authoritative snapshot) also means a single boat's state needs to be diffed and blended, not just set.
 
 
-class LocalControlSystem {
+class LocalController {
     constructor(buffer) { 
         this.locallyControlled = new Map();
     }
@@ -35,7 +35,7 @@ class LocalControlSystem {
 }
 
 
-class NetworkControlSystem {
+class NetworkController {
     constructor(buffer) { 
         this.networkControlled = new Map();
     }
@@ -63,6 +63,7 @@ class Boat {
         this.team;
         this.location;
         this.rotation;
+        this.hasCollision;
 
         const boatInputMap = (input) => ({
             throttleDelta: input.up ? 0.02 : (input.down ? -0.02 : 0),
@@ -78,6 +79,11 @@ class Boat {
 
     }
 
+    collisionResponse(CollidingMass) {
+
+
+    }
+
     applyIntent() {
 
     }
@@ -86,6 +92,7 @@ class Boat {
 
     }
 }
+
 
 class VehicleManager {
     constructor(vehicleFactories, systems) { 
@@ -103,7 +110,7 @@ class VehicleManager {
         lobbyData.forEach(entry => this.add(entry));
     }
 
-    getVehicle(vehicleId) {
+    getVehicle(vehicleId) { 
         return this.vehicles.get(vehicleId);
     }
     getAllVehicles() {
@@ -143,14 +150,11 @@ export class Game {
         this.heightmap = createHeightmap();
     }
 
-    setup(canvas, confirmedHeightmap, effectsBus, simulationBus, networkBus) {
+    setup(canvas, confirmedHeightmap) {
         this.scene = new THREE.Scene();
         this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
         this.camera = createCamera(canvas, THREE.PerspectiveCamera);
         this.canvas = canvas
-
-
-        this.entities = new map();
         
         if (confirmedHeightmap != null) {
             this.heightmap = confirmedHeightmap;
@@ -163,35 +167,36 @@ export class Game {
         // for instance camera orbit controls should not be buffered as this could appear jumpy on very high hz monitors
         // same with components that do not impact gameplay such as volume controls
         // -------------------------------------------------------------------------
+        const cameraManager     = new CameraManager(effectsBus, eventSchemas.effects);
+        const soundManager      = new SoundManager(effectsBus, eventSchemas.effects);
+    
+        // -------------------------------------------------------------------------
+        // Managers that take input from the user that will be sent to the server for validation and reconciliation accross users
+
+        // If a component group takes async effects Evetns it means that component group received real time input from the user
+        // These managers events should  be buffered as they update on set ticks so high hz moniter controlled boats dont move slower than others 
+        // -------------------------------------------------------------------------
         const simulationEventBuffer  = new EventBuffer(simulationBus, eventSchemas.intentGameState)
         const networkEventBuffer     = new EventBuffer(networkBus, eventSchemas.authorityGameState);
 
         const vehicleManager    = new VehicleManager(simulationEventBuffer, networkEventBuffer)
-        const projectileManager = new ProjectileManager(simulationEventBuffer, networkEventBuffer)
-        const cameraManager     = new CameraManager(effectsBus, eventSchemas.effects);
-        const soundManager      = new SoundManager(effectsBus, eventSchemas.effects);
-    
+        const projectileManager = new ProjectileManager(simulationEventBuffer, networkEventBuffer )
+        
         this.managers = {
-            vehicleManager,
-            projectileManager,
-            cameraManager,
-            soundManager,
+            
+
+
         }
-
-
-        // Controllers take in input 
-        const localControlSystem   = new LocalControlSystem()
-        const networkControlSystem = new NetworkControlSystem()
-        const collisonSystem       = new CollisionSystem()
-
+        // ---------------------------------------------------------
+        // Systems are to be cross components based they they reach into the managers that have been inseated into them to
+        // query on update 
+        // -------------------------------------------------------------------------------------------------
+        const collisonSystem  = new CollisionSystem(this.heightmap)
 
         this.systems = {
             collisonSystem,
-            networkControlSystem,
-            localControlSystem,
         }
         
-        // This has methods like attach to object that makes sure camera and boat end up at the same location
         window.addEventListener('resize', this.handleWindowResize);
     }
     // starts when the host clicks start game 
@@ -199,23 +204,21 @@ export class Game {
     // and which internal systems they need to be assigned to   
 
     // Lobby Data Example:
-    // [teamID, vehicleType, howControlled] 
-    // how controlled is determined by the server for each player"
-    // the server will attempt to balance this among all the players in the lobby
-    // with priority towards the first player on a particular team"
-    // another player on the clients own team will be network. 
-    // same team players will show the same number but then network as the howControlled
+    // [playerId, teamId, vehicleType, howControlled, initLocation] 
+    // how controlled is determined by the server for each player the server will attempt to balance this among all the players in the lobby with priority towards the first player on a particular team"
+    // another player on the clients own team will be network. same team players will show the same number but then network as the howControlled
     // lobbyData = {
-    //     { 1, "boat", "ai", initalLocation }
-    //     { 1, "plane", "ai", initalLocation },
-    //     { 1, "boat", "client", initalLocation }
-    //     { 3, "boat", "network", initalLocation }
+    //     { 1, "boat", "ai", initLocation }
+    //     { 1, "plane", "ai", initLocation },
+    //     { 1, "boat", "client", initLocation }
+    //     { 3, "boat", "network", initLocation }
     // }
 
     start(lobbyData) {
         Object.values(this.managers).forEach((manager) => {
             manager.start?.(lobbyData);
         });
+
 
         this.sceneTerrain = createSceneTerrain(this.scene, this.heightmap);
 
@@ -228,11 +231,7 @@ export class Game {
 
     update(time) {
         const intentUpdates = this.localEventBuffer.poll();
-
-
-
         const authUpdates = this.networkEventBuffer.poll();
- 
     }
 
     stop() {
@@ -320,48 +319,6 @@ function collisionSystem(managers, cellSize = 20) {
         } 
     }
 }
-
-
-    // FRAME START
-/*
-1. NetworkManager receives snapshots asynchronously
-   - buffers snapshots
-   - stores authoritative states
-
-   AI Brain updates every few hundred frames adds to intent state
-   
-   user input is taken ready to be pulled adds to intent state
-
-2. Managers assign controllers to certain objects one of each r
-   - PlayerController pulls from PlayerInputSource 
-   - AIController pulls from AIInputSource 
-   - NetworkController/RemoteController pulls from snapshot buffer
-
-3. Controllers update locally controlled entities
-   - PlayerController pulls from PlayerInputSource
-   - AIController pulls from AIInputSource
-   - NetworkController/RemoteController pulls from snapshot buffer
-
-4. Locally controlled entities simulate immediately
-   - local boat movement
-   - local projectiles
-   - local sounds
-
-6. Send local player inputs to server
-
-7. Remote entities interpolate/extrapolate
-   - interpolate between snapshots
-   - extrapolate briefly if next snapshot missing
-
-8. Reconcile locally predicted entities
-   - compare predicted state vs authoritative snapshot
-   - apply soft correction
-
-9. Render scene
-
-*/
-
-
 
 
 
