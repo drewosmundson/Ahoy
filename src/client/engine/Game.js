@@ -18,12 +18,12 @@ class LocalControlSystem {
         this.locallyControlled = new Map();
     }
 
-    add(componentId) {
-
+    add(component) {
+        this.locallyControlled.set(component.id, component)
     }
 
-    remove(componentId) {
-
+    remove(component) {
+        this.locallyControlled.delete(component.id)
     }
 
     update(input, dt) {
@@ -40,19 +40,17 @@ class NetworkControlSystem {
         this.networkControlled = new Map();
     }
 
-    add(componentId) {
-
+    add(component) {
+        this.networkControlled.set(component.id, component)
     }
 
-    remove(componentId) {
-
+    remove(component) {
+        this.networkControlled.delete(component.id)
     }
+
 
     update(input, dt) {
         const state = this.buffer.drian;
-
-        // TODO get most recent state for authority. only pass in flat object
- 
         this.locallyControlled.forEach((component) => {
             component.interpolate(state)
         });
@@ -138,12 +136,6 @@ class VehicleManager {
 }
 
 
-    
-
-
-
-
-
 
 export class Game {
     constructor() {
@@ -156,6 +148,9 @@ export class Game {
         this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
         this.camera = createCamera(canvas, THREE.PerspectiveCamera);
         this.canvas = canvas
+
+
+        this.entities = new map();
         
         if (confirmedHeightmap != null) {
             this.heightmap = confirmedHeightmap;
@@ -183,9 +178,12 @@ export class Game {
             soundManager,
         }
 
+
+        // Controllers take in input 
+        const localControlSystem   = new LocalControlSystem()
+        const networkControlSystem = new NetworkControlSystem()
         const collisonSystem       = new CollisionSystem()
-        const localControlSystem   = new localControlSystem()
-        const networkControlSystem = new NetworkControlSystem() 
+
 
         this.systems = {
             collisonSystem,
