@@ -62,6 +62,13 @@ class NetworkController {
     }
 }
 
+
+class Collider() {
+
+
+
+}
+
 class Boat { 
     constructor() {
         this.id;
@@ -70,8 +77,10 @@ class Boat {
         this.mass
         this.location = new Vector2()
         this.velocity = new Vector2()
+
+        // systems
         this.controller
-        this.hasCollision;
+        this.collider
 
 
         const boatInputMap = (input) => ({
@@ -134,7 +143,8 @@ class VehicleManager {
     
     // inseart from inside manager on creation
     // and whenever triggerd on updatw 
-    
+    //vehicleManager = new VehicleManager(systems)
+    //this.systems.collisions.add(boat24)
     
 
     add(entry) { 
@@ -197,9 +207,11 @@ export class Game {
         const simulationEventBuffer  = new EventBuffer(simulationBus, eventSchemas.intentGameState)
         const networkEventBuffer     = new EventBuffer(networkBus, eventSchemas.authorityGameState);
 
-        const vehicleManager    = new VehicleManager(simulationEventBuffer, networkEventBuffer)
+
+        const vehicleManager    = new VehicleManager(simulationEventBuffer, networkEventBuffer, collisionSystem)
         const projectileManager = new ProjectileManager(simulationEventBuffer, networkEventBuffer )
-        
+
+        const collisonSystem  = new CollisionSystem(this.heightmap)
         this.managers = {
             
 
@@ -208,7 +220,6 @@ export class Game {
         // Systems are to be cross components based they they reach into the managers that have been inseated into them to
         // query on update 
         // -------------------------------------------------------------------------------------------------
-        const collisonSystem  = new CollisionSystem(this.heightmap, this.managers)
         
         this.systems = {
             collisonSystem,
@@ -301,6 +312,34 @@ const collisionResponses = {
     'projectile:plane': (proj, plane) => { plane.health -= proj.damage; removeProjectile(proj.id); },
     'vessel:plane':       (boat, plane) => { /* decide once, here */ },
 };
+
+
+
+class CollisionSystem {
+    constructor(heightmap) {   
+        this.heightmap = heightmap
+        entitiesWithCollider = (entityWithCollisionLocation, colliderShape)
+        entitiesWithCollider = new Map()
+
+        this.gridSize = heightmap.length >> 4 
+        
+    }
+
+    getEntitiesColliders() {
+
+
+    }
+
+    createGrid(heightmap)
+    
+    collisionCheck() {
+        
+
+
+    }
+
+
+}
 
 function resolveCollision({ entityA, entityB, penetration }) {
     const key = `${entityA.layer}:${entityB.layer}`;
