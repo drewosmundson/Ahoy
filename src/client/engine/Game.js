@@ -125,6 +125,17 @@ class VehicleManager {
     getAllVehicles() {
         return this.vehicles
     } 
+    
+    // ststem interaction options 
+    // from outside 
+    getVehiclesWithCollisons() {
+        
+    }
+    
+    // inseart from inside manager on creation
+    // and whenever triggerd on updatw 
+    
+    
 
     add(entry) { 
         const factory = this.vehicleFactories[entry.vehicle];
