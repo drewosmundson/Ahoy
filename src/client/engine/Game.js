@@ -38,9 +38,6 @@ class Vector2 {
         
         
     }
-    
-    degreeToRadians() 
-    
 } 
 
 class NetworkController {
@@ -69,10 +66,13 @@ class Boat {
     constructor() {
         this.id;
         this.team;
-        this.location;
         this.rotation;
-        this.mass;
+        this.mass
+        this.location = new Vector2()
+        this.velocity = new Vector2()
+        this.controller
         this.hasCollision;
+
 
         const boatInputMap = (input) => ({
             throttleDelta: input.up ? 0.02 : (input.down ? -0.02 : 0),
@@ -88,7 +88,7 @@ class Boat {
         this.rotation = radians
     }
 
-    collisionResponse(forceVector) {
+    applyCollision(){
         
     }
 
@@ -174,7 +174,7 @@ export class Game {
         // for instance camera orbit controls should not be buffered as this could appear jumpy on very high hz monitors
         // same with components that do not impact gameplay such as volume controls
         // -------------------------------------------------------------------------
-        const cameraManager     = new CameraManager(effectsBus, eventSchemas.effects);
+        const cameraManager     = new CameraManager(this.camera, effectsBus, eventSchemas.effects);
         const soundManager      = new SoundManager(effectsBus, eventSchemas.effects);
     
         // -------------------------------------------------------------------------
@@ -192,14 +192,13 @@ export class Game {
         this.managers = {
             
 
-
         }
         // ---------------------------------------------------------
         // Systems are to be cross components based they they reach into the managers that have been inseated into them to
         // query on update 
         // -------------------------------------------------------------------------------------------------
-        const collisonSystem  = new CollisionSystem(this.heightmap)
-
+        const collisonSystem  = new CollisionSystem(this.heightmap, this.managers)
+        
         this.systems = {
             collisonSystem,
         }
