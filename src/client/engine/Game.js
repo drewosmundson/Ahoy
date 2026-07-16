@@ -33,7 +33,15 @@ class LocalController {
         });
     }
 }
-
+class Vector2 {
+    constructor() {
+        
+        
+    }
+    
+    degreeToRadians() 
+    
+} 
 
 class NetworkController {
     constructor(buffer) { 
@@ -63,6 +71,7 @@ class Boat {
         this.team;
         this.location;
         this.rotation;
+        this.mass;
         this.hasCollision;
 
         const boatInputMap = (input) => ({
@@ -71,17 +80,16 @@ class Boat {
         });
 
     }
-    setLocation() {
-
+    setLocation(vector) {
+        this.locaion = vector
     }
 
-    setRotation() {
-
+    setRotation(radians) {
+        this.rotation = radians
     }
 
-    collisionResponse(CollidingMass) {
-
-
+    collisionResponse(forceVector) {
+        
     }
 
     applyIntent() {
@@ -95,9 +103,10 @@ class Boat {
 
 
 class VehicleManager {
-    constructor(vehicleFactories, systems) { 
+    constructor(vehicleFactories, controllers) { 
         this.vehicles = new Map(); 
         this.vehicleFactories = vehicleFactories;
+        this.controllers = controllers
     }
 
     // lobbyData = [
@@ -122,20 +131,18 @@ class VehicleManager {
         if (!factory) {
             throw new Error(`Unknown vehicle type: ${entry.vehicle}`);
         }
-
         const vehicle = factory();
-
+        
+        const controlSystem = this.vehicleControlSystems[entry.controller];
+        if (!controller) {
+            throw new Error(`Unknown controller type: ${entry.controller}`);
+        }
+        vehicle.control = controlSystem
         vehicle.teamId = entry.teamId;
         vehicle.location = { ...entry.location };
         vehicle.rotation = entry.rotation 
 
-        const controlSystem = this.vehicleControlSystems[entry.controller];
 
-        if (!controller) {
-            throw new Error(`Unknown controller type: ${entry.controller}`);
-        }
-
-        controlSystem.add(vehicle.id, vehicle)
         collisionSystem.add(vehicle.id, vehicle)
 
         this.vehicles.set(vehicle.id, vehicle);
