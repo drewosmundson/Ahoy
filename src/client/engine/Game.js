@@ -321,7 +321,7 @@ class CollisionSystem {
         entitiesWithCollider = (entityWithCollisionLocation, colliderShape)
         entitiesWithCollider = new Map()
 
-        this.gridSize = heightmap.length >> 4 
+        this.gridSize = Math.max(heightmap.length >> 4, 1);
         
     }
 
