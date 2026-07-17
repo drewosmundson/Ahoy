@@ -13,7 +13,9 @@ import { events } from './Network/Events.js';
 // Reconciliation (predict locally, correct against authoritative snapshot) also means a single boat's state needs to be diffed and blended, not just set.
 
 
-class LocalController {
+class ControlManager 
+
+class LocalControllerSystem {
     constructor(buffer) { 
         this.locallyControlled = new Map();
     }
@@ -25,6 +27,11 @@ class LocalController {
     remove(component) {
         this.locallyControlled.delete(component.id)
     }
+    
+    applyIntent(component, intent) {
+        const component.
+
+    }
 
     update(input, dt) {
         const intent = this.buffer.drian();
@@ -33,14 +40,9 @@ class LocalController {
         });
     }
 }
-class Vector2 {
-    constructor() {
-        
-        
-    }
-} 
 
-class NetworkController {
+
+class NetworkControllerSystem {
     constructor(buffer) { 
         this.networkControlled = new Map();
     }
@@ -53,6 +55,9 @@ class NetworkController {
         this.networkControlled.delete(component.id)
     }
 
+    interpolateEntity() {
+        
+    } 
 
     update(input, dt) {
         const state = this.buffer.drian;
@@ -63,11 +68,7 @@ class NetworkController {
 }
 
 
-class Collider() {
 
-
-
-}
 
 class Boat { 
     constructor() {
@@ -77,16 +78,17 @@ class Boat {
         this.mass
         this.location = new Vector2()
         this.velocity = new Vector2()
-
-        // systems
-        this.controller
-        this.collider
-
-
-        const boatInputMap = (input) => ({
+      
+        this.boatInputMap = (input) => ({
             throttleDelta: input.up ? 0.02 : (input.down ? -0.02 : 0),
             steer: input.mouseX,
         });
+        
+        this.animations 
+        
+        this.controller
+        
+        this.collider
 
     }
     setLocation(vector) {
@@ -97,13 +99,7 @@ class Boat {
         this.rotation = radians
     }
 
-    applyCollision(){
-        
-    }
 
-    applyIntent() {
-
-    }
 
     runAnimations() {
 
@@ -140,24 +136,26 @@ class VehicleManager {
     getVehiclesWithCollisons() {
         
     }
-    
     // inseart from inside manager on creation
     // and whenever triggerd on updatw 
     //vehicleManager = new VehicleManager(systems)
     //this.systems.collisions.add(boat24)
     
-
     add(entry) { 
         const factory = this.vehicleFactories[entry.vehicle];
         if (!factory) {
             throw new Error(`Unknown vehicle type: ${entry.vehicle}`);
         }
-        const vehicle = factory();
         
         const controlSystem = this.vehicleControlSystems[entry.controller];
         if (!controller) {
             throw new Error(`Unknown controller type: ${entry.controller}`);
         }
+        
+        const collisionSystem 
+        
+        const vehicle = factory(controlSystem, );
+        
         vehicle.control = controlSystem
         vehicle.teamId = entry.teamId;
         vehicle.location = { ...entry.location };
