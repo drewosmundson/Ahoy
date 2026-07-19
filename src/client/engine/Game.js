@@ -13,9 +13,7 @@ import { events } from './Network/Events.js';
 // Reconciliation (predict locally, correct against authoritative snapshot) also means a single boat's state needs to be diffed and blended, not just set.
 
 
-class ControlManager 
-
-class LocalControllerSystem {
+class LocalController {
     constructor(buffer) { 
         this.locallyControlled = new Map();
     }
@@ -24,18 +22,18 @@ class LocalControllerSystem {
         this.locallyControlled.set(component.id, component)
     }
 
-    remove(component) {
+        remove(component) {
         this.locallyControlled.delete(component.id)
     }
     
     applyIntent(component, intent) {
-        const component.
-
+        const oldIntent = component.intended
+        
     }
 
     update(input, dt) {
-        const intent = this.buffer.drian();
         this.locallyControlled.forEach((component) => {
+            const intent = this.buffer.drian(component.id);
             component.applyIntent(intent)
         });
     }
@@ -69,14 +67,20 @@ class NetworkControllerSystem {
 
 
 
-
+//components passed into the object 
+// other places the components are tracked in the manager 
+// and sytems systems have a referencbe to the component jn tbe boat
+// manager.boat.component like anamations specific controller and collider shape
+// if boat compoeknts are not null the systems run these from managers 
+// tje managers know all possoble componens an object can use 
 class Boat { 
     constructor() {
         this.id;
         this.team;
         this.rotation;
-        this.mass
+        this.mass 
         this.location = new Vector2()
+        this.intendedLocation = new Vector2()
         this.velocity = new Vector2()
       
         this.boatInputMap = (input) => ({
