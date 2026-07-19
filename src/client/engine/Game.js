@@ -40,7 +40,7 @@ class LocalController {
 }
 
 
-class NetworkControllerSystem {
+class NetworkController {
     constructor(buffer) { 
         this.networkControlled = new Map();
     }
@@ -59,13 +59,21 @@ class NetworkControllerSystem {
 
     update(input, dt) {
         const state = this.buffer.drian;
-        this.locallyControlled.forEach((component) => {
-            component.interpolate(state)
+        this.networkControlled.forEach((component) => {
+            const input = component.inputMap(state)
+            component.interpolate(input)
         });
     }
 }
 
-
+class controllerSystem {
+    constructor(){
+        
+        
+    }
+    
+    
+}
 
 //components passed into the object 
 // other places the components are tracked in the manager 
@@ -88,11 +96,12 @@ class Boat {
             steer: input.mouseX,
         });
         
+        // components
         this.animations 
         
-        this.controller
+        this.controller 
         
-        this.collider
+        this.collider 
 
     }
     setLocation(vector) {
