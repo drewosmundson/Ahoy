@@ -7,7 +7,9 @@ export const GAME_CONFIG = {
   SOUNDS,
   COLORS,
   WATER,
-  ANIMATION
+  ANIMATION,
+  FIXED_DT,
+  HITBOX_SIZE,
 }
 
 const HEIGHTMAP = {
@@ -71,4 +73,13 @@ const ANIMATION = {
 
 const DIFFICULTY = {
   MAX_ENEMIES: 10
+}
+
+const FIXED_DT = 1 / 60;
+
+
+const HITBOX_SIZE = {
+    BOAT: 5,
+    PLANE: 10, 
+    PROJECTILE: 2,
 }

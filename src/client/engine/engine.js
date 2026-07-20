@@ -1,10 +1,17 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
-import { createHeightmap } from "./utils/heightmap.js"
+import { createHeightmap } from "./landscape/heightmap.js"
 import { createRenderer } from "./utils/renderer.js"
-import { createScene } from "./scene/scene.js"
+import { createScene } from "./landscape/terrain.js"
 
-import { EventBuffer, LocalEventBus, NetworkEventBus } from './Network/Events.js';
+
+
+import { LocalEventBus, NetworkEventBus } from '../../shared/eventBus.js';
+import { EventBuffer } from '../../shared/eventBuffer.js';
+import { CONSTANTS } from "../..shared/constants.js";
+
+
+
 
 // ============================================================================
 // OWNERSHIP MODEL
@@ -45,7 +52,7 @@ import { EventBuffer, LocalEventBus, NetworkEventBus } from './Network/Events.js
 
 // ----------------------------------------------------------------------------
 // Controllers: stateless. Each just knows how to turn "input for this vehicle"
-// into a mutation of that vehicle. No maps, no buffers, no ids stored here.
+// into a mutation of that vehicle.
 // ----------------------------------------------------------------------------
 
 const LocalController = {
@@ -658,11 +665,20 @@ export class Game {
         const effectsBus = new LocalEventBus();
         const intentBus = new LocalEventBus();
 
-        const vehicleManager = new VehicleManager(this.localPlayerId, intentBus, networkBus);
-        const projectileManager = new ProjectileManager(simulationBus, networkBus);
-        const planeManager = new PlaneManager(simulationBus, networkBus);
 
-        this.managers = [vehicleManager, projectileManager, planeManager];
+        const coordinator = new VehicleCoordinator(this.localPlayerId);
+        const boatManager = new BoatManager(this.localPlayerId, intentBus, networkBus, coordinator);
+        const planeManager = new PlaneManager(this.localPlayerId, intentBus, networkBus, coordinator);
+
+        this.coordinator = coordinator; // input handling calls coordinator.switchControl(id) on this
+
+
+
+        const projectileManager = new ProjectileManager(simulationBus, networkBus);
+
+
+
+        this.managers = [boatManager, planeManager, projectileManager];
 
         // Translates button/toggle snapshots into per-vehicle intent, feeding
         // whichever vehicle is currently active in vehicleManager.

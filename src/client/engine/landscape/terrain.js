@@ -1,6 +1,71 @@
-export function createTerrain(scene, heightmap, GraphicsLib) {
 
-    const terrain = new Terrain(heightmap.length, GraphicsLib );
+
+export function createSceneLandscape(scene, heightmap) {
+    const landscape = {
+        lighting: createLighting(scene),
+        water: createWater(scene),
+        land: createLand(scene, heightmap),
+        skybox: createSkybox(scene),
+    }
+    return landscape;
+}
+
+
+class LandscapeManager {
+    constructor() {
+
+    }
+}
+
+
+
+export function createLighting(scene, AmbientLight, DirectionalLight) {
+    const lighting = new Lighting(AmbientLight, DirectionalLight);
+    scene.add(lighting.newDirectionalLight(0xffffff));
+    scene.add(lighting.newAmbiantLight(0xFFF5EE, 50, 50, 50))
+    return lighting
+}
+
+
+class Lighting {
+  constructor(AmbientLight, DirectionalLight) { 
+    this.AmbientLight = AmbientLight;
+    this.DirectionalLight = DirectionalLight
+
+  }
+  newAmbiantLight(color) {
+    const ambientLight = new this.AmbientLight(color, 0.3);
+    return ambientLight
+  }
+  newDirectionalLight(color, x, y, z) {
+    const directionalLight = new this.DirectionalLight(color, 1);
+    directionalLight.position.set(x, y, z);
+    return directionalLight;
+  }
+  updateDirectionalLight(light){
+
+  
+
+  }
+  updateAmbiantLight(light) {
+
+
+  }
+}
+
+
+
+
+export function createSkybox() {
+    return;
+}
+
+
+
+
+export function createLand(scene, heightmap, GraphicsLib) {
+
+    const terrain = new Land(heightmap.length, GraphicsLib );
 
     terrain.updateHeightmap(heightmap);
 
@@ -24,7 +89,7 @@ export function createTerrain(scene, heightmap, GraphicsLib) {
 
 
 
-export class Terrain {
+export class Land {
     constructor(size, GraphicsLib) {
         this.size = size;
         this.GraphicsLib = GraphicsLib;
