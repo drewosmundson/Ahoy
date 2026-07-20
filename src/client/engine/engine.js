@@ -1,7 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
 import { createHeightmap } from "./landscape/Heightmap.js"
-import { createRenderer } from "./utils/renderer.js"
+import { createRenderer } from "./utils/Renderer.js"
 import { createScene } from "./landscape/Terrain.js"
 
 
