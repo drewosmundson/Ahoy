@@ -1,16 +1,13 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
-import { createHeightmap } from "./landscape/heightmap.js"
+import { createHeightmap } from "./landscape/Heightmap.js"
 import { createRenderer } from "./utils/renderer.js"
-import { createScene } from "./landscape/terrain.js"
-
+import { createScene } from "./landscape/Terrain.js"
 
 
 import { LocalEventBus, NetworkEventBus } from '../../shared/eventBus.js';
 import { EventBuffer } from '../../shared/eventBuffer.js';
 import { CONSTANTS } from "../..shared/constants.js";
-
-
 
 
 // ============================================================================
