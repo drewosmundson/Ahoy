@@ -1,13 +1,11 @@
-
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
 import { createHeightmap } from "./utils/heightmap.js"
 import { createRenderer } from "./utils/renderer.js"
 import { createScene } from "./scene/scene.js"
 
-import { events } from './Network/Events.js';
+import { EventBuffer, LocalEventBus, NetworkEventBus } from './Network/Events.js';
 
- 
 // ============================================================================
 // OWNERSHIP MODEL
 // ----------------------------------------------------------------------------
@@ -28,13 +26,11 @@ import { events } from './Network/Events.js';
 // BUS WIRING
 // ----------------------------------------------------------------------------
 // ClientInput emits onto TWO separate buses, and they are handled completely
-// differently — mixing them was a bug in an earlier pass of this file:
+// differently:
 //
 // - "mouseMove" -> an EFFECTS bus. Consumed immediately, every render frame,
 //   at monitor refresh rate. Drives camera look / aim reticle only. NEVER
 //   buffered, NEVER sent to the server, and NEVER touches VehicleManager.
-//   High-hz mouse input staying unbuffered is what keeps it feeling instant
-//   regardless of network tick rate.
 // - "snapshot" (button/toggle actions) -> the SIMULATION lane. InputTranslator
 //   turns this into { throttleDelta, steer } for whichever vehicle is
 //   currently active and emits "intent". VehicleManager's intentBuffer drains
@@ -46,12 +42,11 @@ import { events } from './Network/Events.js';
 // which client owns which vehicle — it just broadcasts everyone's state.
 // authorityBuffer drains those and VehicleManager flattens+indexes them by id.
 // ============================================================================
- 
+
 // ----------------------------------------------------------------------------
 // Controllers: stateless. Each just knows how to turn "input for this vehicle"
 // into a mutation of that vehicle. No maps, no buffers, no ids stored here.
 // ----------------------------------------------------------------------------
- 
 
 const LocalController = {
     // intent: { throttleDelta, steer } for THIS vehicle only, already
@@ -77,9 +72,7 @@ const LocalController = {
 const AIController = {
     // Drives any of THIS client's owned vehicles that aren't the active one.
     // brainOutput isn't sourced from either buffer — it comes from a
-    // behavior tree / brain keyed by vehicle.id, not yet built. Signature is
-    // already correct for that: swap `undefined` in VehicleManager.update's
-    // `input` ternary for a real brain lookup later.
+    // behavior tree / brain keyed by vehicle.id (see AISystem stub below).
     update(vehicle, brainOutput, dt) {
         if (!brainOutput) return;
         vehicle.throttle = clamp(vehicle.throttle + brainOutput.throttleDelta, -1, 1);
@@ -87,7 +80,7 @@ const AIController = {
         integrate(vehicle, dt);
     },
 };
- 
+
 const NetworkController = {
     // snapshot: the latest authoritative { location, rotation, velocity } for
     // THIS vehicle, or undefined if nothing arrived this tick.
@@ -107,14 +100,12 @@ const NetworkController = {
         }
     },
 };
- 
+
 const controllers = {
     local: LocalController,
     network: NetworkController,
     ai: AIController,
 };
-
-
 
 // ----------------------------------------------------------------------------
 // InputTranslator: the only piece that knows both "what ClientInput's button
@@ -122,27 +113,27 @@ const controllers = {
 // ClientInput vehicle-agnostic and keeps VehicleManager input-source-agnostic.
 // Deliberately has NOTHING to do with mouse movement — see CameraEffects below.
 // ----------------------------------------------------------------------------
- 
+
 class InputTranslator {
     constructor(simulationBus, intentBus, manager) {
         this.manager = manager;
- 
+
         // Every button/toggle change re-emits a full snapshot. That's our
         // cue to (re)compute intent for whichever vehicle is active right
         // now and push it out as an "intent" event.
         simulationBus.on("snapshot", (snapshot) => {
             const activeId = this.manager.activeVehicleId;
             if (activeId == null) return; // no vehicle to control yet
- 
+
             const activeVehicle = this.manager.getVehicle(activeId);
             if (!activeVehicle) return;
- 
+
             const intent = activeVehicle.inputMap(snapshot.actions);
             intentBus.emit("intent", { id: activeId, data: intent });
         });
     }
 }
- 
+
 // ----------------------------------------------------------------------------
 // CameraEffects: consumes mouse deltas directly off the EFFECTS bus, every
 // frame, completely outside VehicleManager's tick. Nothing here is buffered
@@ -151,12 +142,12 @@ class InputTranslator {
 // it exists purely to make local camera/aim feel instant regardless of
 // network tick rate or server updates.
 // ----------------------------------------------------------------------------
- 
+
 class CameraEffects {
     constructor(effectsBus) {
         this.yaw = 0;
         this.pitch = 0;
- 
+
         effectsBus.on("mouseMove", (data) => {
             const SENSITIVITY = 0.002;
             this.yaw += data.deltaYaw * SENSITIVITY;
@@ -167,34 +158,38 @@ class CameraEffects {
     }
 }
 
-
-
 // ----------------------------------------------------------------------------
 // Boat: plain data + a couple of setters, plus the one place a vehicle knows
 // how to turn RAW ACTION BOOLEANS into movement intent. ClientInput never
 // needs to know this mapping exists — it just hands over actions/toggles.
 // ----------------------------------------------------------------------------
- 
+
 class Boat {
     constructor(id) {
         this.id = id;
         this.teamId = null;
         this.ownerId = null; // fixed at lobby start, never changes for the match
- 
+
         this.location = { x: 0, y: 0 };
         this.rotation = 0;
         this.velocity = { x: 0, y: 0 };
         this.throttle = 0;
+
+        // Collision-system metadata. Kept here (not on CollisionSystem)
+        // since it's a per-vehicle-type property, same reasoning as inputMap.
+        this.layer = "vessel";
+        this.hitboxSphereSize = 5;
+        this.collidesWithTerrain = true;
     }
- 
+
     setLocation(loc) {
         this.location = { ...loc };
     }
- 
+
     setRotation(radians) {
         this.rotation = radians;
     }
- 
+
     // Vehicle-specific input mapping. A plane would define its own version of
     // this with different bindings/feel — that's the whole reason this lives
     // on the vehicle rather than in InputTranslator or ClientInput.
@@ -207,57 +202,58 @@ class Boat {
     }
 }
 
-
 // ----------------------------------------------------------------------------
 // VehicleManager: owns vehicles + both buffers. Dispatches each vehicle to
 // the correct stateless controller every tick.
 // ----------------------------------------------------------------------------
- 
+
 class VehicleManager {
     // intentBus: LocalEventBus that InputTranslator emits "intent" onto.
     // networkBus: NetworkEventBus (or LocalEventBus stand-in) — used for BOTH
     // draining incoming "worldSnapshot" AND publishing this client's own
-    // vehicle state out via networkBus.publish(). Two directions, one bus. 
+    // vehicle state out via networkBus.publish(). Two directions, one bus.
     constructor(localPlayerId, intentBus, networkBus) {
         this.vehicles = new Map();
         this.localPlayerId = localPlayerId;
         this.activeVehicleId = null; // which of MY vehicles is player-controlled right now
         this.networkBus = networkBus;
- 
+
         this.intentBuffer = new EventBuffer(intentBus, "intent");
         this.authorityBuffer = new EventBuffer(networkBus, "worldSnapshot");
     }
- 
+
     // lobbyData: [{ id, vehicle: "boat", ownerId, location, rotation, teamId, initiallyActive? }]
     // Ownership is fixed here for the whole match — never revisited after this.
     start(lobbyData) {
-        lobbyData.forEach((entry) => this.add(entry));
- 
+        lobbyData
+            .filter((entry) => entry.vehicle === "boat")
+            .forEach((entry) => this.add(entry));
+
         const initial = lobbyData.find(
-            (e) => e.ownerId === this.localPlayerId && e.initiallyActive
+            (e) => e.vehicle === "boat" && e.ownerId === this.localPlayerId && e.initiallyActive
         );
         if (initial) this.activeVehicleId = initial.id;
     }
- 
+
     add(entry) {
         if (entry.vehicle !== "boat") {
             throw new Error(`Unknown vehicle type: ${entry.vehicle}`);
         }
- 
+
         const vehicle = new Boat(entry.id);
         vehicle.ownerId = entry.ownerId;
         vehicle.teamId = entry.teamId;
         vehicle.setLocation(entry.location);
         vehicle.setRotation(entry.rotation ?? 0);
- 
+
         this.vehicles.set(vehicle.id, vehicle);
         return vehicle;
     }
- 
+
     getVehicle(id) {
         return this.vehicles.get(id);
     }
- 
+
     // Pure local bookkeeping. No cross-player check needed — ownership
     // between players is fixed for the match, so just confirm the requested
     // vehicle is actually one of THIS client's own.
@@ -268,14 +264,14 @@ class VehicleManager {
         }
         this.activeVehicleId = vehicleId;
     }
- 
+
     // What should drive this vehicle THIS tick, derived fresh every call.
     controllerFor(vehicle) {
         if (vehicle.ownerId !== this.localPlayerId) return "network";
         return vehicle.id === this.activeVehicleId ? "local" : "ai";
     }
- 
-    // Called once per tick from Game.update(). Order matters:
+
+    // Called once per tick from Game.fixedUpdate(). Order matters:
     //   1. Drain both buffers (whatever accumulated since last tick).
     //   2. Dispatch each vehicle to its controller — this is where vehicle
     //      state for THIS tick becomes final.
@@ -292,7 +288,7 @@ class VehicleManager {
     update(dt) {
         const intents = indexById(this.intentBuffer.drain());
         const snapshots = indexWorldSnapshots(this.authorityBuffer.drain());
- 
+
         this.vehicles.forEach((vehicle) => {
             const controlSource = this.controllerFor(vehicle);
             const controller = controllers[controlSource];
@@ -304,7 +300,7 @@ class VehicleManager {
                     : undefined; // AI reads from its own brain — see AIController TODO
             controller.update(vehicle, input, dt);
         });
- 
+
         this.vehicles.forEach((vehicle) => {
             if (vehicle.ownerId !== this.localPlayerId) return; // not ours to broadcast
             this.networkBus.publish("vehicleState", {
@@ -315,20 +311,248 @@ class VehicleManager {
             });
         });
     }
+
+    // ---- CollisionSystem hooks -------------------------------------------
+    // CollisionSystem doesn't know or care what a "vehicle manager" is; it
+    // just asks every manager to contribute colliders/renderables into a
+    // shared output array.
+    collectColliders(output) {
+        this.vehicles.forEach((v) => {
+            output.push({
+                id: v.id,
+                layer: v.layer,
+                location: v.location,
+                velocity: v.velocity,
+                hitboxSphereSize: v.hitboxSphereSize,
+                collidesWithTerrain: v.collidesWithTerrain,
+                ownerId: v.ownerId,
+                controlSource: this.controllerFor(v),
+                entity: v,
+            });
+        });
+    }
+
+    collectRenderables(output) {
+        this.vehicles.forEach((v) => {
+            output.push({ id: v.id, type: "boat", location: v.location, rotation: v.rotation });
+        });
+    }
 }
 
+// ----------------------------------------------------------------------------
+// Minimal stand-ins for the other managers/systems referenced by Game but
+// not defined anywhere in the original file. These are intentionally thin —
+// just enough shape (start/update/collectColliders/collectRenderables) for
+// the manager/system loops to run without crashing. Replace with the real
+// implementations as they land.
+// ----------------------------------------------------------------------------
 
-const FIXED_DT = 1 / 60;
+class ProjectileManager {
+    constructor(simulationBus, networkBus) {
+        this.simulationBus = simulationBus;
+        this.networkBus = networkBus;
+        this.projectiles = new Map();
+    }
 
- 
+    start(_lobbyData) {}
+
+    update(_dt) {
+        // TODO: drain fire-intent events, integrate projectile motion.
+    }
+
+    remove(id) {
+        this.projectiles.delete(id);
+    }
+
+    collectColliders(output) {
+        this.projectiles.forEach((p) => {
+            output.push({
+                id: p.id,
+                layer: "projectile",
+                location: p.location,
+                velocity: p.velocity,
+                hitboxSphereSize: p.hitboxSphereSize ?? 1,
+                collidesWithTerrain: true,
+                ownerId: p.ownerId,
+                entity: p,
+            });
+        });
+    }
+
+    collectRenderables(output) {
+        this.projectiles.forEach((p) => {
+            output.push({ id: p.id, type: "projectile", location: p.location });
+        });
+    }
+}
+
+class PlaneManager {
+    constructor(simulationBus, networkBus) {
+        this.simulationBus = simulationBus;
+        this.networkBus = networkBus;
+        this.planes = new Map();
+    }
+
+    start(_lobbyData) {}
+
+    update(_dt) {
+        // TODO: same shape as VehicleManager, once plane flight model exists.
+    }
+
+    collectColliders(_output) {}
+
+    collectRenderables(_output) {}
+}
+
+class AISystem {
+    constructor(managers) {
+        this.managers = managers;
+    }
+
+    update(_dt) {
+        // TODO: for each AI-controlled vehicle across managers, compute
+        // brainOutput and feed it in wherever AIController expects it.
+    }
+}
+
+// ----------------------------------------------------------------------------
+// Collision handling
+// ----------------------------------------------------------------------------
+
+// Builds the layer-pair -> response-function map. Takes its dependencies as
+// explicit params instead of reaching for bare globals (effectsBus,
+// soundsManager, managers were undeclared globals in the original file).
+function createCollisionResponses({ effectsBus, soundManager, projectileManager }) {
+    return {
+        "projectile:vessel": (projectile, boat) => {
+            // effects on the boat (entityB in this pairing)
+            applyDamage(boat, projectile.damage);
+            effectsBus.emit("cameraShake", { intensity: projectile.damage / 100 });
+            effectsBus.emit("damageNumberPopup", { amount: projectile.damage, entityId: boat.id });
+            if (boat.controlSource === "ai") {
+                boat.brain?.notify({ type: "tookDamage", from: projectile.ownerId });
+            }
+
+            // effects on the projectile (entityA in this pairing)
+            soundManager.play("impact", { position: projectile.location });
+            projectileManager.remove(projectile.id);
+        },
+        "vessel:vessel": (a, b) => pushApart(a, b),
+        "vessel:terrain": (boat) => {
+            boat.velocity = { x: 0, y: 0 };
+        },
+        "projectile:terrain": (proj) => projectileManager.remove(proj.id),
+        "plane:terrain": (plane) => plane.crash?.(),
+        "projectile:plane": (proj, plane) => {
+            plane.health -= proj.damage;
+            projectileManager.remove(proj.id);
+        },
+        "vessel:plane": (_boat, _plane) => {
+            // TODO: decide once, here, what a boat/plane collision does.
+        },
+    };
+}
+
+class CollisionSystem {
+    constructor(managers, heightmap, { effectsBus, soundManager, projectileManager }, cellSize = 20) {
+        this.managers = managers;
+        this.heightmap = heightmap;
+        this.cellSize = cellSize;
+        this.collisionResponses = createCollisionResponses({ effectsBus, soundManager, projectileManager });
+    }
+
+    update(_dt) {
+        const colliders = [];
+
+        for (const manager of this.managers) {
+            manager.collectColliders?.(colliders);
+        }
+
+        const pairs = broadPhase(colliders, this.cellSize);
+
+        for (const [a, b] of pairs) {
+            const hit = entityCollision(a, b);
+            if (hit) this.resolveCollision(hit);
+        }
+
+        for (const entity of colliders) {
+            if (!entity.collidesWithTerrain) continue;
+
+            const hit = terrainCollision(entity, this.heightmap);
+            if (hit) this.resolveCollision(hit);
+        }
+    }
+
+    resolveCollision({ entityA, entityB, penetration }) {
+        const key = `${entityA.layer}:${entityB.layer}`;
+        const reversedKey = `${entityB.layer}:${entityA.layer}`;
+
+        if (this.collisionResponses[key]) {
+            this.collisionResponses[key](entityA.entity ?? entityA, entityB.entity ?? entityB, penetration);
+        } else if (this.collisionResponses[reversedKey]) {
+            this.collisionResponses[reversedKey](entityB.entity ?? entityB, entityA.entity ?? entityA, penetration);
+        }
+    }
+}
+
+function entityCollision(entityA, entityB) {
+    const distance = getDistance(entityA.location, entityB.location);
+    const hitboxOverlap = entityA.hitboxSphereSize + entityB.hitboxSphereSize;
+    const penetration = hitboxOverlap - distance;
+
+    if (penetration > 0) {
+        return { entityA, entityB, penetration };
+    }
+    return null;
+}
+
+// Naive O(n^2) fallback broad-phase. Fine for small entity counts / tests;
+// swap for a real spatial hash keyed by cellSize once entity counts grow.
+function broadPhase(colliders, _cellSize) {
+    const pairs = [];
+    for (let i = 0; i < colliders.length; i++) {
+        for (let j = i + 1; j < colliders.length; j++) {
+            pairs.push([colliders[i], colliders[j]]);
+        }
+    }
+    return pairs;
+}
+
+// Placeholder terrain check: real version should sample `heightmap` under
+// entity.location and compare to entity's vertical extent / hitbox.
+function terrainCollision(_entity, _heightmap) {
+    return null;
+}
+
+function getDistance(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function pushApart(a, b) {
+    const dx = b.location.x - a.location.x;
+    const dy = b.location.y - a.location.y;
+    const dist = Math.hypot(dx, dy) || 1;
+    const nx = dx / dist;
+    const ny = dy / dist;
+    const overlap = (a.hitboxSphereSize + b.hitboxSphereSize - dist) / 2;
+    a.location.x -= nx * overlap;
+    a.location.y -= ny * overlap;
+    b.location.x += nx * overlap;
+    b.location.y += ny * overlap;
+}
+
+function applyDamage(entity, amount) {
+    entity.health = (entity.health ?? 100) - amount;
+}
+
 // ----------------------------------------------------------------------------
 // helpers
 // ----------------------------------------------------------------------------
- 
+
 function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
 }
- 
+
 function integrate(vehicle, dt) {
     const speed = vehicle.throttle * 50; // arbitrary units/sec at full throttle
     vehicle.velocity = {
@@ -338,21 +562,21 @@ function integrate(vehicle, dt) {
     vehicle.location.x += vehicle.velocity.x * dt;
     vehicle.location.y += vehicle.velocity.y * dt;
 }
- 
+
 function shortestAngleDelta(from, to) {
     let delta = (to - from) % (Math.PI * 2);
     if (delta > Math.PI) delta -= Math.PI * 2;
     if (delta < -Math.PI) delta += Math.PI * 2;
     return delta;
 }
- 
+
 // "intent" events already arrive as { id, data } — one per emit.
 function indexById(entries) {
     const map = new Map();
     entries.forEach((e) => map.set(e.id, e.data));
     return map;
 }
- 
+
 // "worldSnapshot" events each carry the WHOLE lobby: { vehicles: [{id, ...}] }.
 // Flatten every tick's worth of these (usually just one) into id -> state,
 // last one wins if more than one arrived since the last drain.
@@ -364,148 +588,50 @@ function indexWorldSnapshots(entries) {
     return map;
 }
 
-class VehicleManager {
-    start(lobbyData) {}
-
-    update(dt) {}
-
-    collectColliders(output) {}
-
-    collectRenderables(output) {}
+// createCamera wasn't defined in the original file either — thin wrapper so
+// Game.setup has something real to call.
+function createCamera(canvas, CameraClass) {
+    const aspect = canvas.clientWidth / canvas.clientHeight || 16 / 9;
+    return new CameraClass(60, aspect, 0.1, 5000);
 }
 
+// ----------------------------------------------------------------------------
+// eventSchemas: required by NetworkEventBus — createSender validates outgoing
+// publish() calls against these, and createReceiver only wires up
+// socket.on(...) for events listed here (so unknown/unexpected socket
+// messages are ignored rather than silently trusted). Only events that
+// actually cross the client<->server boundary belong here — effects-only
+// events (cameraShake, damageNumberPopup, mouseMove, etc.) never do, since
+// those stay on LocalEventBus and never touch NetworkEventBus.
+// ----------------------------------------------------------------------------
+
+const eventSchemas = {
+    // Sent client -> server -> other clients: "here's where my vehicles are now."
+    vehicleState: (data) =>
+        !!data &&
+        typeof data.id !== "undefined" &&
+        !!data.location && typeof data.location.x === "number" && typeof data.location.y === "number" &&
+        typeof data.rotation === "number" &&
+        !!data.velocity && typeof data.velocity.x === "number" && typeof data.velocity.y === "number",
+
+    // Sent server -> client: "here's every vehicle in the lobby, this tick."
+    worldSnapshot: (data) => Array.isArray(data?.vehicles),
+};
+
+const FIXED_DT = 1 / 60;
+
+// ----------------------------------------------------------------------------
+// Game: top-level wiring. Fixed-timestep loop; managers simulate, systems
+// react across managers (collision, AI, etc).
+// ----------------------------------------------------------------------------
 
 export class Game {
-    constructor() {
-        // all players create a heightmap, the host will pass on their hightmap to other users
-        this.heightmap = createHeightmap();
-    }
-
-    setup(canvas, confirmedHeightmap) {
-        this.scene = new THREE.Scene();
-        this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
-        this.camera = createCamera(canvas, THREE.PerspectiveCamera);
-        this.canvas = canvas
-        //-------------------------------------------------------------------------
-        // Managers that can accept fire and forget input from the user
-
-        // If a component group takes async effects Evetns it means that component group received real time input from the user
-        // for instance camera orbit controls should not be buffered as this could appear jumpy on very high hz monitors
-        // same with components that do not impact gameplay such as volume controls
-        // -------------------------------------------------------------------------
-        const cameraManager     = new CameraManager(this.camera, effectsBus, eventSchemas.effects);
-        const soundManager      = new SoundManager(effectsBus, eventSchemas.effects);
-    
-        // -------------------------------------------------------------------------
-        // Managers that take input from the user that will be sent to the server for validation and reconciliation accross users
-
-        // If a component group takes async effects Evetns it means that component group received real time input from the user
-        // These managers events should  be buffered as they update on set ticks so high hz moniter controlled boats dont move slower than others 
-        // -------------------------------------------------------------------------
-        const simulationEventBuffer  = new EventBuffer(simulationBus, eventSchemas.intentGameState)
-        const networkEventBuffer     = new EventBuffer(networkBus, eventSchemas.authorityGameState);
-
-
-        const vehicleManager    = new VehicleManager(simulationEventBuffer, networkEventBuffer, collisionSystem)
-        const projectileManager = new ProjectileManager(simulationEventBuffer, networkEventBuffer )
-
-
-        this.managers = [
-            vehicleManager,
-            projectileManager
-        ];
-        // ---------------------------------------------------------
-        // Systems are to be cross components based they they reach into the managers that have been inseated into them to
-        // query on update 
-        // -------------------------------------------------------------------------------------------------
-        
-        const collisonSystem  = new CollisionSystem(this.heightmap)
-
-        this.systems = [
-            collisionSystem
-        ];
-
-
-
-        window.addEventListener('resize', this.handleWindowResize);
-    }
-    // starts when the host clicks start game 
-    // lobby data populates the managers with the quantity of components they need to create 
-    // and which internal systems they need to be assigned to   
-
-    // Lobby Data Example:
-    // [playerId, teamId, vehicleType, howControlled, initLocation] 
-    // how controlled is determined by the server for each player the server will attempt to balance this among all the players in the lobby with priority towards the first player on a particular team"
-    // another player on the clients own team will be network. same team players will show the same number but then network as the howControlled
-    // lobbyData = {
-    //     { 1, "boat", "ai", initLocation }
-    //     { 1, "plane", "ai", initLocation },
-    //     { 1, "boat", "client", initLocation }
-    //     { 3, "boat", "network", initLocation }
-    // }
-
-    start(lobbyData) {
-        Object.values(this.managers).forEach((manager) => {
-            manager.start?.(lobbyData);
-        });
-
-        this.sceneTerrain = createSceneTerrain(this.scene, this.heightmap);
-
-        this.previousTime = performance.now();
-        this.accumulator = 0;
-
-        this.handleWindowResize();
-
-        this.renderer.setAnimationLoop((time) => {
-            let frame = (time - this.previousTime) / 1000;
-            this.previousTime = time;
-
-            this.accumulator += frame;
-
-            while (this.accumulator >= FIXED_DT) {
-                this.fixedUpdate(FIXED_DT);
-                this.accumulator -= FIXED_DT;
-            }
-
-            this.renderer.render(this.scene, this.camera);
-        });
-    }
-
-    fixedUpdate(dt) {
-
-        for (const manager of this.managers)
-            manager.update(dt);
-
-        for (const system of this.systems)
-            system.update(dt);
-    }
-
-    stop() {
-        this.renderer.setAnimationLoop(null);
-    }
-
-
-    handleWindowResize = () => {
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
-        let width = windowWidth;
-        let height = (width * 9) / 16;
-
-        if (height > windowHeight) {
-        height = windowHeight;
-        width = (height * 16) / 9;
-        }
-
-        this.canvas.style.width = `${width}px`;
-        this.canvas.style.height = `${height}px`;
-        this.renderer.setSize(width, height, false);
-        this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
-    }
-}
-
-export class Game {
-    constructor() {
+    // socket: an already-connected transport (e.g. a socket.io client
+    // instance) implementing on/off/emit/close — handed straight to
+    // NetworkEventBus, which owns validating traffic against eventSchemas.
+    constructor(localPlayerId, socket) {
+        this.localPlayerId = localPlayerId;
+        this.socket = socket;
         this.heightmap = createHeightmap();
 
         this.managers = [];
@@ -521,25 +647,53 @@ export class Game {
         this.scene = createScene();
         this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
         this.camera = createCamera(canvas, THREE.PerspectiveCamera);
+        this.canvas = canvas;
 
+        // -------------------------------------------------------------------
+        // Buses. See BUS WIRING note at the top of this file for why mouse
+        // and buttons/toggles are split across effectsBus vs simulationBus.
+        // -------------------------------------------------------------------
         const simulationBus = new LocalEventBus();
-        const networkBus = new NetworkEventBus();
+        const networkBus = new NetworkEventBus(this.socket, eventSchemas);
         const effectsBus = new LocalEventBus();
+        const intentBus = new LocalEventBus();
 
-        this.managers = [
-            new VehicleManager(localPlayerId, simulationBus, networkBus),
-            new ProjectileManager(simulationBus, networkBus),
-            new PlaneManager(simulationBus, networkBus)
-        ];
+        const vehicleManager = new VehicleManager(this.localPlayerId, intentBus, networkBus);
+        const projectileManager = new ProjectileManager(simulationBus, networkBus);
+        const planeManager = new PlaneManager(simulationBus, networkBus);
+
+        this.managers = [vehicleManager, projectileManager, planeManager];
+
+        // Translates button/toggle snapshots into per-vehicle intent, feeding
+        // whichever vehicle is currently active in vehicleManager.
+        this.inputTranslator = new InputTranslator(simulationBus, intentBus, vehicleManager);
+        // Immediate, unbuffered, unnetworked mouse-look.
+        this.cameraEffects = new CameraEffects(effectsBus);
+
+        const soundManager = { play: (_name, _opts) => {} }; // TODO: real audio manager
 
         this.systems = [
-            new CollisionSystem(this.managers, this.heightmap),
-            new AISystem(this.managers)
+            new CollisionSystem(this.managers, this.heightmap, {
+                effectsBus,
+                soundManager,
+                projectileManager,
+            }),
+            new AISystem(this.managers),
         ];
+
+        this.buses = { simulationBus, networkBus, effectsBus, intentBus };
 
         window.addEventListener("resize", this.handleWindowResize);
     }
 
+    // starts when the host clicks start game
+    // lobby data populates the managers with the quantity of components they need to create
+    // and which internal systems they need to be assigned to
+    //
+    // Lobby Data Example:
+    // [{ id, vehicle: "boat", ownerId, teamId, location, rotation, initiallyActive }]
+    // "howControlled" (ai / client / network) is derived, not stored — see
+    // VehicleManager.controllerFor / the OWNERSHIP MODEL note up top.
     start(lobbyData) {
         for (const manager of this.managers) {
             manager.start?.(lobbyData);
@@ -559,7 +713,7 @@ export class Game {
         let frameTime = (time - this.previousTime) / 1000;
         this.previousTime = time;
 
-        frameTime = Math.min(frameTime, 0.25);
+        frameTime = Math.min(frameTime, 0.25); // clamp so tab-switch stalls don't cause a spiral of death
 
         this.accumulator += frameTime;
 
@@ -586,147 +740,81 @@ export class Game {
     }
 
     handleWindowResize = () => {
-        // resize logic
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        let width = windowWidth;
+        let height = (width * 9) / 16;
+
+        if (height > windowHeight) {
+            height = windowHeight;
+            width = (height * 16) / 9;
+        }
+
+        this.canvas.style.width = `${width}px`;
+        this.canvas.style.height = `${height}px`;
+        this.renderer.setSize(width, height, false);
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
     };
 }
 
-
-
-const collisionResponses = {
-    "projectile:vessel": projectileHitsBoat,
-    "projectile:plane": projectileHitsPlane,
-    "vessel:vessel": boatHitsBoat,
-    "vessel:terrain": boatHitsTerrain,
-    "plane:terrain": planeHitsTerrain,
-    "projectile:terrain": projectileHitsTerrain
-};
-
-const collisionResponses = {
-    'projectile:vessel': (projectile, boat, penetration) => {
-        // effects on the boat (entityB in this pairing)
-        applyDamage(boat, projectile.damage);
-        effectsBus.emit('cameraShake', { intensity: projectile.damage / 100 });
-        effectsBus.emit('damageNumberPopup', { amount: projectile.damage, entityId: boat.id });
-        if (boat.controlSource === 'ai') {
-            boat.brain.notify({ type: 'tookDamage', from: projectile.ownerId });
-        }
-
-        // effects on the projectile (entityA in this pairing)
-        soundsManager.play('impact', { position: projectile.position });
-        managers.projectiles.remove(projectile.id);
-    },
-    'vessel:vessel':      (a, b) => pushApart(a, b),
-    'vessel:terrain':     (boat) => { boat.velocity = 0; },
-    'projectile:terrain': (proj) => removeProjectile(proj.id),
-
-    // new entries only - nothing above was touched
-    'plane:terrain':      (plane) => plane.crash(),
-    'projectile:plane': (proj, plane) => { plane.health -= proj.damage; removeProjectile(proj.id); },
-    'vessel:plane':       (boat, plane) => { /* decide once, here */ },
-};
-
-
-
-class CollisionSystem {
-    constructor(managers, heightmap, cellSize = 20) {
-        this.managers = managers;
-        this.heightmap = heightmap;
-        this.cellSize = cellSize;
-    }
-
-    update(dt) {
-        const colliders = [];
-
-        for (const manager of this.managers) {
-            manager.collectColliders(colliders);
-        }
-
-        const pairs = broadPhase(colliders, this.cellSize);
-
-        for (const [a, b] of pairs) {
-            const hit = entityCollision(a, b);
-
-            if (hit) {
-                resolveCollision(hit);
-            }
-        }
-
-        for (const entity of colliders) {
-            if (!entity.collidesWithTerrain) {
-                continue;
-            }
-
-            const hit = terrainCollision(entity, this.heightmap);
-
-            if (hit) {
-                resolveCollision(hit);
-            }
-        }
-    }
+// createSceneTerrain wasn't defined in the original file either — thin
+// pass-through so Game.start has something real to call. Replace with the
+// real terrain builder.
+function createSceneTerrain(scene, heightmap) {
+    // TODO: build terrain mesh from heightmap and add to scene.
+    return { scene, heightmap };
 }
 
-function resolveCollision({ entityA, entityB, penetration }) {
-    const key = `${entityA.layer}:${entityB.layer}`;
-    const reversedKey = `${entityB.layer}:${entityA.layer}`;
+// ----------------------------------------------------------------------------
+// Self-contained smoke test for the vehicle/controller/input system. Doesn't
+// touch Game/THREE/canvas at all (those need a real browser), so this is the
+// part that can actually run end-to-end here in Node.
+// ----------------------------------------------------------------------------
 
-    if (collisionResponses[key]){
-        collisionResponses[key](entityA, entityB, penetration);
-    }
-
-    else if (collisionResponses[reversedKey]) {
-        collisionResponses[reversedKey](entityB, entityA, penetration);
-    }
+// Fake transport standing in for a real socket.io client: publish() ->
+// socket.emit() -> loops straight back into socket.on() listeners, as if
+// the server echoed the message straight back to this same client. Good
+// enough to exercise NetworkEventBus's real validate-then-send/receive path
+// without an actual server.
+function createMockSocket() {
+    const listeners = new Map();
+    return {
+        on(event, handler) {
+            if (!listeners.has(event)) listeners.set(event, new Set());
+            listeners.get(event).add(handler);
+        },
+        off(event, handler) {
+            listeners.get(event)?.delete(handler);
+        },
+        emit(event, data) {
+            listeners.get(event)?.forEach((h) => h(data));
+        },
+        close() {},
+    };
 }
-
-function entityCollision(entityA, entityB) {
-        const distance = getDistance(entityA.location, entityB.location);
-
-        const hitboxOverlap = entityA.hitboxSphereSize + entityB.hitboxSphereSize;
-        const penetration = hitboxOverlap - distance;
-
-        if (penetration > 0) {
-            return { entityA, entityB, penetration };
-        } 
-        return null;
-}
-
-function collisionSystem(managers, cellSize = 20) {
-    const colliders = collectColliders(managers);
-
-    for (const [a, b] of broadPhase(colliders, cellSize)) {
-        if (entityCollision(a, b)) {
-            resolveCollision(hit);
-        } 
-    }
-}
-
-
-
-
-
-
 
 function testing() {
     const simulationBus = new LocalEventBus(); // button/toggle snapshots -> ticked intent
     const effectsBus = new LocalEventBus();     // mouse deltas -> immediate, unbuffered, unnetworked
     const intentBus = new LocalEventBus();      // InputTranslator -> VehicleManager
-    const networkBus = new LocalEventBus();     // stand-in for NetworkEventBus in this demo
- 
+    const networkBus = new NetworkEventBus(createMockSocket(), eventSchemas); // real bus, fake transport
+
     const manager = new VehicleManager("P1", intentBus, networkBus);
     manager.start([
         { id: 1, vehicle: "boat", ownerId: "P1", location: { x: 0, y: 0 }, teamId: "A", initiallyActive: true },
         { id: 2, vehicle: "boat", ownerId: "P1", location: { x: 20, y: 0 }, teamId: "A" },
         { id: 3, vehicle: "boat", ownerId: "P2", location: { x: 0, y: 0 }, teamId: "B" },
     ]);
- 
+
     new InputTranslator(simulationBus, intentBus, manager);
     const camera = new CameraEffects(effectsBus);
- 
+
     for (let tick = 0; tick < 4; tick++) {
         // Mouse moves every frame regardless of tick — applied instantly via
         // CameraEffects, never reaching intentBus, never reaching the network.
         effectsBus.emit("mouseMove", { deltaPitch: 0, deltaYaw: 25 });
- 
+
         // Player holds "up" — this is what drives the vehicle, via buttons.
         simulationBus.emit("snapshot", {
             timestamp: tick,
@@ -737,7 +825,7 @@ function testing() {
             },
             toggles: { pointerLocked: true, toggleCamera: false, toggleTerrain: false, toggleFog: false },
         });
- 
+
         // Simulate a server "worldSnapshot" broadcast for the whole lobby,
         // arriving every other tick (packet loss / lower send rate sim).
         // This client only actually USES boat 3's entry (boat 1/2 are its own).
@@ -748,14 +836,14 @@ function testing() {
                 ],
             });
         }
- 
+
         // Mid-run: player switches from boat 1 to boat 2.
         if (tick === 2) {
             manager.switchControl(2);
         }
- 
+
         manager.update(1 / 30);
- 
+
         const b1 = manager.getVehicle(1);
         const b2 = manager.getVehicle(2);
         const b3 = manager.getVehicle(3);
@@ -767,5 +855,5 @@ function testing() {
         );
     }
 }
- 
+
 testing();
