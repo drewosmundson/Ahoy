@@ -1,5 +1,11 @@
 
 
+// createCamera wasn't defined in the original file either — thin wrapper so
+// Game.setup has something real to call.
+function createCamera(canvas, Camera) {
+    const aspect = canvas.clientWidth / canvas.clientHeight || 16 / 9;
+    return new Camera(60, aspect, 0.1, 5000);
+}
 
 
 
@@ -27,3 +33,5 @@ class CameraManager {
         });
     }
 }
+
+

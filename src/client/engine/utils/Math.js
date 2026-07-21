@@ -18,3 +18,16 @@ export function clampToGround(entity, groundHeight) {
 
 
 
+
+function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+}
+
+
+
+function shortestAngleDelta(from, to) {
+    let delta = (to - from) % (Math.PI * 2);
+    if (delta > Math.PI) delta -= Math.PI * 2;
+    if (delta < -Math.PI) delta += Math.PI * 2;
+    return delta;
+}

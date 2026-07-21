@@ -181,7 +181,7 @@ class VehicleManager {
     // right now — this client is authoritative for its own vehicles. If the
     // server ever needs to correct one of them, that correction would still
     // arrive on `authorityBuffer`; check it here for owned vehicles too.
-    update(dt) {
+    update(dt, intents) {
         const intents = indexById(this.intentBuffer.drain());
         const snapshots = indexWorldSnapshots(this.authorityBuffer.drain());
 
@@ -234,4 +234,3 @@ class VehicleManager {
         });
     }
 }
-s
