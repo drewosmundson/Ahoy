@@ -1,4 +1,12 @@
-export class BoatManager {
+
+
+
+
+
+
+
+
+export class PlaneManager {
     constructor(localPlayerId, intentBus, networkBus, coordinator) {
         this.vehicles = new Map();
         this.localPlayerId = localPlayerId;
@@ -11,17 +19,17 @@ export class BoatManager {
 
     start(lobbyData) {
         lobbyData
-            .filter((e) => e.vehicle === "boat")
+            .filter((e) => e.vehicle === "plane")
             .forEach((entry) => this.add(entry));
 
         const initial = lobbyData.find(
-            (e) => e.vehicle === "boat" && e.ownerId === this.localPlayerId && e.initiallyActive
+            (e) => e.vehicle === "plane" && e.ownerId === this.localPlayerId && e.initiallyActive
         );
         if (initial) this.coordinator.setInitialActive(initial.id);
     }
 
     add(entry) {
-        const vehicle = new Boat(entry.id);
+        const vehicle = new Plane(entry.id);
         vehicle.ownerId = entry.ownerId;
         vehicle.teamId = entry.teamId;
         vehicle.setLocation(entry.location);
@@ -43,3 +51,4 @@ export class BoatManager {
 
     // ...update(), collectColliders(), collectRenderables() unchanged
 }
+
