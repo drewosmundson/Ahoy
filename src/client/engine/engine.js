@@ -1,14 +1,27 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
-import { createHeightmap } from "./landscape/Heightmap.js"
+import { createHeightmap } from "./utils/Heightmap.js"
 import { createRenderer } from "./utils/Renderer.js"
-import { createScene } from "./landscape/Terrain.js"
-
+import { createScene, createSceneTerrain } from "./landscape/Terrain.js"
+import { createCamera } from "./utils/Camera.js"
 
 import { LocalEventBus, NetworkEventBus } from '../../shared/eventBus.js';
 import { EventBuffer } from '../../shared/eventBuffer.js';
-import { CONSTANTS } from "../..shared/constants.js";
+import { CONSTANTS } from "../../shared/constants.js";
+import { eventSchemas } from './utils/schemas.js';
 
+import { VehicleCoordinator } from './VehicleCoordinator.js';
+import { BoatManager } from './BoatManager.js';
+import { PlaneManager } from './PlaneManager.js';
+import { InputTranslator } from './InputTranslator.js';
+import { ProjectileManager } from './ProjectileManager.js';
+import { CameraManager } from './CameraManager.js';
+import { SoundManager } from './SoundManager.js';
+import { EffectsManager } from './EffectsManager.js';
+import { CollisionSystem } from './CollisionSystem.js';
+import { AISystem } from './AISystem.js';
+
+const FIXED_DT = CONSTANTS.FIXED_DT ?? 1 / 60;
 
 // ----------------------------------------------------------------------------
 // Game: top-level wiring. Fixed-timestep loop; managers simulate, systems
@@ -21,7 +34,7 @@ export class Game {
     constructor() {
         this.heightmap = createHeightmap();
 
-        this.managers = [];
+        this.componentManagers = [];
         this.systems = [];
 
         this.previousTime = 0;
@@ -30,48 +43,51 @@ export class Game {
 
     setup(canvas, localPlayerId, confirmedHeightmap) {
         this.localPlayerId = localPlayerId;
-        
-        this.heightmap = confirmedHeightmap ?? this.heightmap;
+        this.canvas        = canvas;
+        this.heightmap     = confirmedHeightmap ?? this.heightmap;
+        this.renderer      = createRenderer(canvas, THREE.WebGLRenderer);
+        this.scene         = createScene();
+        this.camera        = createCamera(canvas, THREE.PerspectiveCamera);
 
-        this.scene = createScene();
-        this.renderer = createRenderer(canvas, THREE.WebGLRenderer);
-        this.camera = createCamera(canvas, THREE.PerspectiveCamera);
-        this.canvas = canvas;
 
-        // -------------------------------------------------------------------
-        // Buses: 
-        // and buttons/toggles are split across effectsBus vs simulationBus.
-        // -------------------------------------------------------------------
-        const effectsBus = new LocalEventBus(); // no buffering straight to manager fire and forget
-        const simulationBus = new LocalEventBus();
-        const intentBus = new LocalEventBus();
-        const networkBus = new NetworkEventBus(eventSchemas);
-
-        // Compoments 
-
-        const boatManager = new BoatManager(this.localPlayerId, intentBus, networkBus, coordinator);
-        const planeManager = new PlaneManager(this.localPlayerId, intentBus, networkBus, coordinator);
-
-        this.coordinator = coordinator; // input handling calls coordinator.switchControl(id) on this
+        const effectsBus  = new LocalEventBus(eventSchemas);    // no buffering, straight to manager, fire and forget
+        const simulationBus = new LocalEventBus(eventSchemas);  // gets buffered, polled by managers on update tick
+        const intentBus   = new LocalEventBus(eventSchemas);    // InputTranslator -> vehicle managers, buffered
+        const networkBus  = new NetworkEventBus(eventSchemas);  // gets buffered, sent to the server on update tick
 
 
 
+
+        // ==== Simulated & Reconciled Components  ===========================
+        // ----------- Controllable Simulated & Reconciled -------------------
+        this.vehicleCoordinator = new VehicleCoordinator(this.localPlayerId);
+        const boatManager  = new BoatManager(this.localPlayerId, intentBus, networkBus, this.vehicleCoordinator);
+        const planeManager = new PlaneManager(this.localPlayerId, intentBus, networkBus, this.vehicleCoordinator);
+
+        // ----------- Non Controllable Simulated & Reconciled ----------------
         const projectileManager = new ProjectileManager(simulationBus, networkBus);
+        // ====================================================================
 
 
-        this.managers = [boatManager, planeManager, projectileManager];
+
+
+
+        // ==== Reactionary Components  =======================================
+        // ----------- Camera Required ----------------------------------------
+        const cameraManager = new CameraManager(this.camera, effectsBus);
+        const soundManager   = new SoundManager();
+
+        // ----------- No Camera Required ----------------
+        const effectManager = new EffectsManager(effectsBus);
+        // ====================================================================
+
+        this.inputTranslator = new InputTranslator(simulationBus, intentBus, this.vehicleCoordinator);
+
         
-        // Translates button/toggle snapshots into per-vehicle intent, feeding
-        // whichever vehicle is currently active in vehicleManager.
-        this.coordinator = new VehicleCoordinator(this.localPlayerId);
-        this.inputTranslator = new InputTranslator(simulationBus, intentBus, vehicleManager);
+        this.simulatedComponents   = [boatManager, planeManager, projectileManager];
+        this.reactionaryComponents = [cameraManager, soundManager, effectManager];
+        this.managers = [...this.simulatedComponents, ...this.reactionaryComponents];
 
-
-
-        // Immediate, unbuffered, unnetworked mouse-look.
-        this.cameraEffects = new CameraEffects(effectsBus);
-
-        const soundManager = { play: (_name, _opts) => {} }; // TODO: real audio manager
 
         this.systems = [
             new CollisionSystem(this.managers, this.heightmap, {
@@ -94,7 +110,7 @@ export class Game {
     // Lobby Data Example:
     // [{ id, vehicle: "boat", ownerId, teamId, location, rotation, initiallyActive }]
     // "howControlled" (ai / client / network) is derived, not stored — see
-    // VehicleManager.controllerFor / the OWNERSHIP MODEL note up top.
+    // OWNERSHIP MODEL note below / VehicleCoordinator.
     start(lobbyData) {
         for (const manager of this.managers) {
             manager.start?.(lobbyData);
@@ -162,60 +178,40 @@ export class Game {
 // ----------------------------------------------------------------------------
 // - Ownership is FIXED at lobby start and never changes for the match. Each
 //   player is assigned a set of vehicles up front; that assignment is final.
-// - A player actively controls exactly ONE of their own vehicles at a time.
-//   All their OTHER owned vehicles run on AI. Switching which one is active
-//   is pure local client state — no ownership check against other players is
-//   ever needed, since a client can only switch among vehicles it already owns.
+// - A player actively controls exactly ONE of their own vehicles at a time,
+//   tracked centrally by VehicleCoordinator (not per-manager). All their
+//   OTHER owned vehicles run on AI. Switching which one is active is pure
+//   local client state — no ownership check against other players is ever
+//   needed, since a client can only switch among vehicles it already owns.
 // - Every client is authoritative for ALL of its own vehicles (active or AI)
 //   and is responsible for simulating + broadcasting their state. A client
 //   never simulates another player's vehicle — it only blends toward that
-//   player's broadcast snapshots (NetworkController).
+//   player's broadcast snapshots (controllers.network / Boat.reconcile).
 // - So "controlSource" is NOT a stored fact — it's derived every tick from
-//   (vehicle.ownerId, manager.activeVehicleId). See VehicleManager.controllerFor.
+//   (vehicle.ownerId, coordinator.activeVehicleId). See
+//   BoatManager.controllerFor / VehicleCoordinator.isActive.
 // - Controllers themselves are STATELESS strategies: update(vehicle, data, dt).
+//   See controllers.js.
 //
 // BUS WIRING
 // ----------------------------------------------------------------------------
 // ClientInput emits onto TWO separate buses, and they are handled completely
 // differently:
 //
-// - "mouseMove" -> an EFFECTS bus. Consumed immediately, every render frame,
-//   at monitor refresh rate. Drives camera look / aim reticle only. NEVER
-//   buffered, NEVER sent to the server, and NEVER touches VehicleManager.
-// - "snapshot" (button/toggle actions) -> the SIMULATION lane. InputTranslator
-//   turns this into { throttleDelta, steer } for whichever vehicle is
-//   currently active and emits "intent". VehicleManager's intentBuffer drains
-//   that on its own fixed tick. This IS what eventually gets broadcast to
-//   other clients (via the vehicle's simulated state), just not per-mouse-move.
+// - "mouseMove" -> the EFFECTS bus. Consumed immediately, every render
+//   frame, at monitor refresh rate. Drives camera look / aim reticle only.
+//   NEVER buffered, NEVER sent to the server, and NEVER touches any vehicle
+//   manager or the coordinator.
+// - "snapshot" (button/toggle actions) -> the SIMULATION bus. InputTranslator
+//   turns this into { throttleDelta, steer } for whichever vehicle the
+//   coordinator says is active, and emits "intent". Each vehicle manager's
+//   intentBuffer drains that on its own fixed tick. This IS what eventually
+//   gets broadcast to other clients (via the vehicle's simulated state), just
+//   not per-mouse-move.
 //
-// Network snapshots arrive as ONE event per tick containing the WHOLE lobby's
-// vehicle states ("worldSnapshot"), since the server doesn't know or care
-// which client owns which vehicle — it just broadcasts everyone's state.
-// authorityBuffer drains those and VehicleManager flattens+indexes them by id.
+// Network snapshots arrive as ONE event per tick containing the WHOLE
+// lobby's vehicle states ("worldSnapshot"), since the server doesn't know or
+// care which client owns which vehicle — it just broadcasts everyone's
+// state. Each manager's authorityBuffer drains those and flattens+indexes
+// them by id.
 // ============================================================================
-
-
-
-
-
-
-
-// "intent" events already arrive as { id, data } — one per emit.
-function indexById(entries) {
-    const map = new Map();
-    entries.forEach((e) => map.set(e.id, e.data));
-    return map;
-}
-
-// "worldSnapshot" events each carry the WHOLE lobby: { vehicles: [{id, ...}] }.
-// Flatten every tick's worth of these (usually just one) into id -> state,
-// last one wins if more than one arrived since the last drain.
-function indexWorldSnapshots(entries) {
-    const map = new Map();
-    entries.forEach((snapshot) => {
-        snapshot.vehicles.forEach((v) => map.set(v.id, v));
-    });
-    return map;
-}
-
-

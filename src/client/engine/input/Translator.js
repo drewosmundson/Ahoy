@@ -3,25 +3,27 @@
 // InputTranslator: the only piece that knows both "what ClientInput's button
 // snapshot looks like" and "what a vehicle's controller needs". Keeps
 // ClientInput vehicle-agnostic and keeps VehicleManager input-source-agnostic.
-// Deliberately has NOTHING to do with mouse movement — see CameraEffects below.
+// Deliberately has NOTHING to do with mouse movement
 // ----------------------------------------------------------------------------
-
+// I think this just needs to be replaced by the buffer and not needed 
 class InputTranslator {
-    constructor(simulationBus, intentBus, manager) {
-        this.manager = manager;
+    constructor(simulationBus, intentBus, coordinator) {
+        // takes the shared VehicleCoordinator instead of a single
+        // manager. The coordinator knows the active vehicle regardless of which manager actually owns it.
+        this.coordinator = coordinator;
 
-        // Every button/toggle change re-emits a full snapshot. That's our
-        // cue to (re)compute intent for whichever vehicle is active right
-        // now and push it out as an "intent" event.
         simulationBus.on("snapshot", (snapshot) => {
-            const activeId = this.manager.activeVehicleId;
-            if (activeId == null) return; // no vehicle to control yet
-
-            const activeVehicle = this.manager.getVehicle(activeId);
-            if (!activeVehicle) return;
+            // one call replaces the old
+            //   activeId = this.manager.activeVehicleId
+            //   activeVehicle = this.manager.getVehicle(activeId)
+            // pair. No manager-specific lookup, so it can't silently miss
+            // a vehicle that belongs to a different manager than the one
+            // this class was constructed with.
+            const activeVehicle = this.coordinator.getActiveVehicle();
+            if (!activeVehicle) return; // no vehicle to control yet
 
             const intent = activeVehicle.inputMap(snapshot.actions);
-            intentBus.emit("intent", { id: activeId, data: intent });
+            intentBus.emit("intent", { id: activeVehicle.id, data: intent });
         });
     }
 }
