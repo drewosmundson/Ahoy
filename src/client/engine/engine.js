@@ -34,7 +34,8 @@ export class Game {
     constructor() {
         this.heightmap = createHeightmap();
 
-        this.componentManagers = [];
+        this.simulationManagers = []
+        this.effectsManagers = [] 
         this.systems = [];
 
         this.previousTime = 0;
@@ -51,51 +52,38 @@ export class Game {
 
 
         const effectsBus  = new LocalEventBus(eventSchemas);    // no buffering, straight to manager, fire and forget
-        const simulationBus = new LocalEventBus(eventSchemas);  // gets buffered, polled by managers on update tick
-        const intentBus   = new LocalEventBus(eventSchemas);    // InputTranslator -> vehicle managers, buffered
-        const networkBus  = new NetworkEventBus(eventSchemas);  // gets buffered, sent to the server on update tick
+        const simulationBus = new LocalEventBus(eventSchemas);  // gets buffered, polled on update tick
+        const networkBus  = new NetworkEventBus(eventSchemas);  // gets buffered, polled on update tick
 
 
-
-
+        
         // ==== Simulated & Reconciled Components  ===========================
-        // ----------- Controllable Simulated & Reconciled -------------------
-        this.vehicleCoordinator = new VehicleCoordinator(this.localPlayerId);
         const boatManager  = new BoatManager(this.localPlayerId, intentBus, networkBus, this.vehicleCoordinator);
         const planeManager = new PlaneManager(this.localPlayerId, intentBus, networkBus, this.vehicleCoordinator);
-
-        // ----------- Non Controllable Simulated & Reconciled ----------------
         const projectileManager = new ProjectileManager(simulationBus, networkBus);
         // ====================================================================
 
 
-
-
-
         // ==== Reactionary Components  =======================================
-        // ----------- Camera Required ----------------------------------------
         const cameraManager = new CameraManager(this.camera, effectsBus);
         const soundManager   = new SoundManager();
-
-        // ----------- No Camera Required ----------------
         const effectManager = new EffectsManager(effectsBus);
         // ====================================================================
 
+        this.vehicleCoordinator = new VehicleCoordinator(this.localPlayerId);
         this.inputTranslator = new InputTranslator(simulationBus, intentBus, this.vehicleCoordinator);
-
         
-        this.simulatedComponents   = [boatManager, planeManager, projectileManager];
-        this.reactionaryComponents = [cameraManager, soundManager, effectManager];
-        this.managers = [...this.simulatedComponents, ...this.reactionaryComponents];
+        this.simulationManagers  = [boatManager, planeManager, projectileManager];
+        this.reactionaryManagers = [cameraManager, soundManager, effectManager];
 
 
         this.systems = [
-            new CollisionSystem(this.managers, this.heightmap, {
+            new CollisionSystem(this.simulationManagers, this.heightmap, {
                 effectsBus,
                 soundManager,
                 projectileManager,
             }),
-            new AISystem(this.managers),
+            new AISystem(this.simulationManagers),
         ];
 
         this.buses = { simulationBus, networkBus, effectsBus, intentBus };
