@@ -32,6 +32,15 @@ export class VehicleCoordinator {
     setInitialActive(vehicleId) {
         this.activeVehicleId = vehicleId;
     }
+    
+    // this needs to be on update the first thing updated
+    simulationBus.on("snapshot", (snapshot) => {
+        const activeVehicle = this.getActiveVehicle();
+        if (!activeVehicle) return; // no vehicle to control yet
+        const intent = activeVehicle.inputMap(snapshot.actions);
+        intentBus.emit("intent", { id: activeVehicle.id, data: intent });
+     });
+    
  
     switchControl(vehicleId) {
         const entry = this.registry.get(vehicleId);
