@@ -129,13 +129,16 @@ export class Game {
     }
 
     fixedUpdate(dt) {
-        for (const manager of this.managers) {
-            manager.update(dt);
-        }
+        const userUpdates = this.userInputBuffer.poll() 
+        const networkUpdates = this.networkBuffer.poll()
+        vehicleCoordinator.update(userUpdates, networkUpdates)
+        
+        
+        
 
-        for (const system of this.systems) {
-            system.update(dt);
-        }
+        
+        
+        
     }
 
     stop() {
