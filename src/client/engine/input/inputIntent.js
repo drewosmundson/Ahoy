@@ -4,7 +4,6 @@ class ClientInput {
 
         document.addEventListener('keydown', (event) => {
             this.handleKeyDown(event);
-            this.update();
         });
         document.addEventListener('keyup', (event) => {
             this.handleKeyUp(event);
@@ -74,7 +73,11 @@ class ClientInput {
         const buttonPressed = this.keyBindings[eventCode] ?? this.keyBindings[eventButton];
         if (!buttonPressed) return;
         if (!event.repeat && this.actions[buttonPressed] !== undefined) {
-            this.actions[buttonPressed] = true;
+            const data = {
+                this.actions[buttonPressed],
+                true
+            }
+            this.events.emit("actionButtonPressed", data)
         }
         if (!event.repeat && this.toggles[buttonPressed] !== undefined) {
             this.toggles[buttonPressed] = !this.toggles[buttonPressed];
