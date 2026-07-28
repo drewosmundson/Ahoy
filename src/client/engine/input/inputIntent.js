@@ -1,7 +1,7 @@
 
 
 
-
+// TODO: turn this into a function now that is stateless
 
 
 class ClientInput {
@@ -25,7 +25,7 @@ class ClientInput {
         };
 
 
-        // Keydown / Gamepad Down Event
+        // Keydown event TODO: add Gamepad Down 
         const downActionHandler = (event) => {
             const data = this.handleActionEvent(event);
             if (!data) return;
@@ -37,7 +37,7 @@ class ClientInput {
         });
 
 
-        // Keyup / Gamepad Up Event 
+        // Keyup TODO: add Gamepad up
         const upActionHandler = (event) => {
             const data = this.handleActionEvent(event);
             if (!data) return;
@@ -49,7 +49,7 @@ class ClientInput {
         });
 
 
-        // Mouse Movement Event
+        // Mouse Movement Event 
         document.addEventListener("mousemove", (event) => {
             eventBus.emit("mouseMovement", event.movementX, event.movementY)
         });
@@ -65,28 +65,5 @@ class ClientInput {
         data.timestamp = performance.now(),
         data.action = action;
         return data 
-    }
-
-    handleMovementEvent(event) {
-        const data = this.mouseMovementData;
-        data.timestamp = performance.now();
-        data.dx = 
-        data.dy = event.movementY;
-        return data;
-    }
-
-
-    removeEventListeners() {
-        ["keydown", "mousedown"].forEach(type => {
-            document.removeEventListener(type, downActionHandler);
-        });
-
-        ["keyup", "mouseup"].forEach(type => {
-            document.removeEventListener(type, upActionHandler);
-        });
-
-        ["mousemove"].forEach(type => {
-            document.removeEventListener(type, movementActionHandler);
-        });
     }
 }
