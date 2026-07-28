@@ -23,7 +23,12 @@ class ClientInput {
             KeyF:       'toggleFog',
             Escape:     'exitPointerLock',
         };
-
+        
+        // Empty object that is modified on event to limit object creation
+        this.actionData = {
+            timestamp: 0
+            action: 0
+        }
 
         // Keydown event TODO: add Gamepad Down 
         const downActionHandler = (event) => {
