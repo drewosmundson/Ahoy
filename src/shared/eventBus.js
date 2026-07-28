@@ -33,12 +33,12 @@ class LocalEventBus {
         }
     }
 
-    emit(event, data) {
+    emit(event, ...args) {
         const callbacks = this.listeners.get(event);
         if (!callbacks) return;
         for (const callback of [...callbacks]) {
             try {
-                callback(data);
+                callback(...args);
             } catch (err) {
                 console.error(err);
             }
