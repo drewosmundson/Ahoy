@@ -131,11 +131,22 @@ export class Game {
         });
     }
 
+    // cases when user switches boats 
     fixedUpdate(dt) {
-        
-        const userUpdates = this.userInputBuffer.poll() 
-        const networkUpdates = this.networkBuffer.poll()
-        vehicleCoordinator.update(userUpdates, networkUpdates)
+        const userInputs = this.userInputBuffer.poll() // {
+            // { entityId: [{timestamp, action}, {timestamp, action}], 
+            // { entityId: [{timestamp, action}, {timestamp, action}]
+        const aiInputs = this.aiBrain.getChanges() //
+            // { entityId: [{timestamp, action}, {timestamp, action}]
+            // { entityId: [{timestamp, action}, {timestamp, action}]
+            // { entityId: [{timestamp, action}, {timestamp, action}]
+        const localIntents = getLocalIntents(userInputs, aiInputs)
+
+
+
+
+
+        vehicleCoordinator.update(localIntents, networkUpdates)
         
     }
 
@@ -163,8 +174,19 @@ export class Game {
 }
 
 
-
-    
+    function mergeKeepingDuplicates(obj1, obj2) {
+          const result = { ...obj1 };
+        
+          for (const [key, value] of Object.entries(obj2)) {
+            if (key in result) {
+              result[key] = [result[key], value];
+            } else {
+              result[key] = value;
+            }
+          }
+        
+          return result;
+        }
 
 
 
