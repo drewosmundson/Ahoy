@@ -172,15 +172,7 @@ export class BoatManager {
     // owned vehicles too.
     update(dt, intents, snapshot) {
         this.vehicles.forEach((vehicle) => {
-            const controlSource = this.controllerFor(vehicle);
-            const controller = controllers[controlSource];
-            const input =
-                controlSource === "network"
-                    ? snapshots.get(vehicle.id)
-                    : controlSource === "local"
-                    ? intents.get(vehicle.id)
-                    : undefined; // AI reads from its own brain — see controllers.js TODO
-            controller.update(vehicle, input, dt);
+            vehicle.updateVehicle(intents[vehicle.id], snapshot[vehicle.id]
         });
     }
  
