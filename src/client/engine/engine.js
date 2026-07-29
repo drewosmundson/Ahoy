@@ -50,16 +50,19 @@ export class Game {
         this.scene         = createScene();
         this.camera        = createCamera(canvas, THREE.PerspectiveCamera);
 
+        const localBus  = new LocalEventBus(eventSchemas);  // gets buffered, polled on update tick
+        const serverBus  = new NetworkEventBus(eventSchemas);  // gets buffered, polled on update tick
 
-        const effectsBus  = new LocalEventBus(eventSchemas);    // no buffering, straight to manager, fire and forget
-        const simulationBus = new LocalEventBus(eventSchemas);  // gets buffered, polled on update tick
-        const networkBus  = new NetworkEventBus(eventSchemas);  // gets buffered, polled on update tick
-
-
+        initalizeUserInput(localBus, CONSTANTS.keybindings);
         
+        const keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
+        const keyUpEventBuffer = new EventBuffer(localBus, eventSchemas.keyUp)
+        const networkEventBuffer = new EventBuffer(serverBus, eventSchemas.serverSnapshot)
+    
+
         // ==== Simulated & Reconciled Components  ===========================
-        const boatManager  = new BoatManager(this.localPlayerId, intentBus, networkBus, this.vehicleCoordinator);
-        const planeManager = new PlaneManager(this.localPlayerId, intentBus, networkBus, this.vehicleCoordinator);
+        const boatManager  = new BoatManager(this.localPlayerId, this.vehicleCoordinator);
+        const planeManager = new PlaneManager(this.localPlayerId, this.vehicleCoordinator);
         const projectileManager = new ProjectileManager(simulationBus, networkBus);
         // ====================================================================
 
@@ -71,7 +74,7 @@ export class Game {
         // ====================================================================
 
         this.vehicleCoordinator = new VehicleCoordinator(this.localPlayerId);
-        this.inputTranslator = new InputTranslator(simulationBus, intentBus, this.vehicleCoordinator);
+
         
         this.simulationManagers  = [boatManager, planeManager, projectileManager];
         this.reactionaryManagers = [cameraManager, soundManager, effectManager];
@@ -100,6 +103,7 @@ export class Game {
     // "howControlled" (ai / client / network) is derived, not stored — see
     // OWNERSHIP MODEL note below / VehicleCoordinator.
     start(lobbyData) {
+        
         for (const manager of this.managers) {
             manager.start?.(lobbyData);
         }
@@ -129,15 +133,10 @@ export class Game {
     }
 
     fixedUpdate(dt) {
+        
         const userUpdates = this.userInputBuffer.poll() 
         const networkUpdates = this.networkBuffer.poll()
         vehicleCoordinator.update(userUpdates, networkUpdates)
-        
-        
-        
-
-        
-        
         
     }
 
@@ -163,6 +162,14 @@ export class Game {
         this.camera.updateProjectionMatrix();
     };
 }
+
+
+
+    
+
+
+
+
 
 // ============================================================================
 // OWNERSHIP MODEL
