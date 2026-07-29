@@ -111,14 +111,11 @@ function lerpAngle(a, b, t) {
 // broadcast) is type-agnostic.
 // ----------------------------------------------------------------------------
 export class BoatManager {
-    constructor(localPlayerId, intentBus, networkBus, coordinator) {
+    constructor(localPlayerId, coordinator) {
         this.vehicles = new Map();
         this.localPlayerId = localPlayerId;
         this.networkBus = networkBus;
         this.coordinator = coordinator; // shared, not owned
- 
-        this.intentBuffer = new EventBuffer(intentBus, "intent");
-        this.authorityBuffer = new EventBuffer(networkBus, "worldSnapshot");
     }
  
     start(lobbyData) {
@@ -173,10 +170,7 @@ export class BoatManager {
     // vehicles. If the server ever needs to correct one of them, that
     // correction would still arrive on authorityBuffer; check it here for
     // owned vehicles too.
-    update(dt) {
-        const intents = indexById(this.intentBuffer.drain());
-        const snapshots = indexWorldSnapshots(this.authorityBuffer.drain());
- 
+    update(dt, intents, snapshot) {
         this.vehicles.forEach((vehicle) => {
             const controlSource = this.controllerFor(vehicle);
             const controller = controllers[controlSource];
@@ -187,16 +181,6 @@ export class BoatManager {
                     ? intents.get(vehicle.id)
                     : undefined; // AI reads from its own brain — see controllers.js TODO
             controller.update(vehicle, input, dt);
-        });
- 
-        this.vehicles.forEach((vehicle) => {
-            if (vehicle.ownerId !== this.localPlayerId) return; // not ours to broadcast
-            this.networkBus.publish("vehicleState", {
-                id: vehicle.id,
-                location: vehicle.location,
-                rotation: vehicle.rotation,
-                velocity: vehicle.velocity,
-            });
         });
     }
  

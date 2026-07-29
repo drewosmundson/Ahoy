@@ -1,5 +1,6 @@
 
 
+export const FIXED_DT = CONSTANTS.FIXED_DT ?? 1 / 60;
 
 
 export const GAME_CONFIG = {

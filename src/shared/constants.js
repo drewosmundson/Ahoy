@@ -1,9 +1,6 @@
 
 
 
-
-
-
 export const APP_EVENTS = {
     LOBBY: { 
         CREATE:      'lobby:create',
@@ -35,8 +32,24 @@ export const APP_EVENTS = {
 export const GAME_EVENTS = {
 
 
+}
 
-
+export const KEYBINDINGS = {
+    0:          'fireProjectileLeft',
+    2:          'fireProjectileRight',
+    KeyW:       'moveForward',
+    ArrowUp:    'moveForward',
+    KeyS:       'moveBackward',
+    ArrowDown:  'moveBackward',
+    KeyA:       'moveLeft',
+    ArrowLeft:  'moveLeft',
+    KeyD:       'moveRight',
+    ArrowRight: 'moveRight',
+    KeyM:       'showMap',
+    KeyC:       'toggleCamera',
+    KeyP:       'toggleTerrain',
+    KeyF:       'toggleFog',
+    Escape:     'exitPointerLock',
 }
 
 export const TITLE = {
@@ -49,4 +62,5 @@ export const TITLE = {
     lobbyParticipant:     "Ahoy.io - Lobby",
     game:                 "Ahoy.io - Game",
 }
+
 

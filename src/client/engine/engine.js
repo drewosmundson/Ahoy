@@ -21,7 +21,6 @@ import { EffectsManager } from './EffectsManager.js';
 import { CollisionSystem } from './CollisionSystem.js';
 import { AISystem } from './AISystem.js';
 
-const FIXED_DT = CONSTANTS.FIXED_DT ?? 1 / 60;
 
 // ----------------------------------------------------------------------------
 // Game: top-level wiring. Fixed-timestep loop; managers simulate, systems
@@ -50,10 +49,10 @@ export class Game {
         this.scene         = createScene();
         this.camera        = createCamera(canvas, THREE.PerspectiveCamera);
 
-        const localBus  = new LocalEventBus(eventSchemas);  // gets buffered, polled on update tick
-        const serverBus  = new NetworkEventBus(eventSchemas);  // gets buffered, polled on update tick
+        const localBus  = new LocalEventBus(eventSchemas);    // Intra-process event bus for ansyc updates in the same process
+        const serverBus  = new NetworkEventBus(eventSchemas); // Inter-process event bus for asnyc communication to the server
 
-        initalizeUserInput(localBus, CONSTANTS.keybindings);
+        initalizeUserInput(localBus, CONSTANTS.KEYBINDS);
         
         const keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
         const keyUpEventBuffer = new EventBuffer(localBus, eventSchemas.keyUp)

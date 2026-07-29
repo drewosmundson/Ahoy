@@ -5,29 +5,13 @@
 
 
 class ClientInput {
-    constructor(eventBus) {
-        this.keyBindings = {
-            0:          'fireProjectileLeft',
-            2:          'fireProjectileRight',
-            KeyW:       'moveForward',
-            ArrowUp:    'moveForward',
-            KeyS:       'moveBackward',
-            ArrowDown:  'moveBackward',
-            KeyA:       'moveLeft',
-            ArrowLeft:  'moveLeft',
-            KeyD:       'moveRight',
-            ArrowRight: 'moveRight',
-            KeyM:       'showMap',
-            KeyC:       'toggleCamera',
-            KeyP:       'toggleTerrain',
-            KeyF:       'toggleFog',
-            Escape:     'exitPointerLock',
-        };
-        
+    constructor(eventBus, keyBindings) {
+        this.keyBindings = keyBindings;
+
         // Empty object that is modified on event to limit object creation
         this.actionData = {
-            timestamp: 0
-            action: 0
+            timestamp: 0,
+            action: 0,
         }
 
         // Keydown event TODO: add Gamepad Down 
