@@ -20,6 +20,7 @@ import { SoundManager } from './SoundManager.js';
 import { EffectsManager } from './EffectsManager.js';
 import { CollisionSystem } from './CollisionSystem.js';
 import { AISystem } from './AISystem.js';
+import { act } from 'react';
 
 
 // ----------------------------------------------------------------------------
@@ -135,20 +136,44 @@ export class Game {
     fixedUpdate(dt) {
         const userInputs = this.userInputBuffer.poll() // {
             // { entityId: [{timestamp, action}, {timestamp, action}], 
-            // { entityId: [{timestamp, action}, {timestamp, action}]
         const aiInputs = this.aiBrain.getChanges() //
-            // { entityId: [{timestamp, action}, {timestamp, action}]
-            // { entityId: [{timestamp, action}, {timestamp, action}]
-            // { entityId: [{timestamp, action}, {timestamp, action}]
-        const localIntents = getLocalIntents(userInputs, aiInputs)
-
-
-
-
-
-        vehicleCoordinator.update(localIntents, networkUpdates)
-        
+            // { entityId: [action, action],
+            //  entityId: [{timestamp, action}, {timestamp, action}],
+            //  entityId: [{timestamp, action}, {timestamp, action}],
+            // }
+        const localIntents = getFilteredIntentsFromRawInputs({... aiInputs, ... userInputs,})
+            // if overlap overlap with user
+        this.sendIntentsToServer(localIntents)
+        vehicleCoordinator.update(localIntents, networkSnapshots)
     }
+    
+
+    // this filters the raw input data so that the server and the rest of this local process dont need to go through redundent data. like multiple move forwards in the same tick
+    // this is because you cant have repeated actions on tick. but one still needs to fire 
+    getFilteredIntentsFromRawInputs(inputs) {
+        // inputs = {
+            //   entityId: [ action, action, action, action ],
+            //   entityId: [{timestamp, action}, {timestamp, action}]
+            //   entityId: [{timestamp, action}, {timestamp, action}]
+            // }
+        const intents = {}
+        for (const [entityId, actionsArray] of Object.entries(inputs)) { 
+            const entityIntents = []
+            actionsArray.forEach(action => {
+                if(intents.includes(action)) return
+                intents.push(action)
+            })
+            intents.entityId = entityIntents;
+        }
+    }
+
+
+    sendIntentsToServer(intents) {
+
+
+
+    }
+
 
     stop() {
         this.renderer.setAnimationLoop(null);

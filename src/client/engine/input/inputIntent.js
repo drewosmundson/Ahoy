@@ -1,8 +1,6 @@
 
 
-
 // TODO: turn this into a function now that is stateless
-
 
 class ClientInput {
     constructor(eventBus, keyBindings) {
@@ -14,6 +12,7 @@ class ClientInput {
             action: 0,
         }
 
+        // =========================================
         // Keydown event TODO: add Gamepad Down 
         const downActionHandler = (event) => {
             const data = this.handleActionEvent(event);
@@ -24,8 +23,11 @@ class ClientInput {
         ["keydown", "mousedown"].forEach(type => {
             document.addEventListener(type, downActionHandler);
         });
+        // ==============================================
 
 
+
+        // ==============================================
         // Keyup TODO: add Gamepad up
         const upActionHandler = (event) => {
             const data = this.handleActionEvent(event);
@@ -36,12 +38,16 @@ class ClientInput {
         ["keyup", "mouseup"].forEach(type => {
             document.addEventListener(type, upActionHandler);
         });
+        // ================================================
 
 
+
+        // ===================================================
         // Mouse Movement Event 
         document.addEventListener("mousemove", (event) => {
             eventBus.emit("mouseMovement", event.movementX, event.movementY)
         });
+        // ===================================================
     }
 
     handleActionEvent(event) {
