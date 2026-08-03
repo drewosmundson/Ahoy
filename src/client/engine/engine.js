@@ -134,7 +134,10 @@ export class Game {
 
     // cases when user switches boats 
     fixedUpdate(dt) {
-        vehcleData.vehciles = vehicleCoordinator.update(localIntents, networkSnapshots)
+        const networkSnapshot = snapshotbuffer.poll()
+        comtrolledVehicleId = vehiclecoordinator.getUserControlled() 
+        aiControlled
+        
         const userInputs = this.userInputBuffer.poll(playerEntityId) // {
             // [ action, action, action]
         const aiInputs = this.aiBrain.getChanges() //
@@ -145,7 +148,6 @@ export class Game {
         const localIntents = getFilteredIntentsFromRawInputs({... aiInputs, ... userInputs,})
             // if overlap overlap with user
         this.sendIntentsToServer(localIntents)
-
     }
     
     packetBinaryEncoding = {
@@ -161,26 +163,15 @@ export class Game {
                 BOAT: 0, 
                 Plane: 1,
             }
-        X: { Index 
-        Y: { l
-        Z:
+        X: { Index: 24 }
+        Y: { Index: 32 }
+        Z: { Index: 40 }
         
-        
+            
         }
     }
     
-    
-    dataPacketTypes = {
-        : { 
-            Boat: 0
-            plane: 1
-            tank 2
-            person 3
-        }
-        
-    }
-    
-    
+
     function createPlayerVehicleData(initialData) {
         dataExample = [
             teamId playerId boatype, startinglocx y z  rotation lastaction
