@@ -134,8 +134,9 @@ export class Game {
 
     // cases when user switches boats 
     fixedUpdate(dt) {
-        const userInputs = this.userInputBuffer.poll() // {
-            // { entityId: [{timestamp, action}, {timestamp, action}], 
+        vehcleData.vehciles = vehicleCoordinator.update(localIntents, networkSnapshots)
+        const userInputs = this.userInputBuffer.poll(playerEntityId) // {
+            // [ action, action, action]
         const aiInputs = this.aiBrain.getChanges() //
             // { entityId: [action, action],
             //  entityId: [{timestamp, action}, {timestamp, action}],
@@ -144,8 +145,76 @@ export class Game {
         const localIntents = getFilteredIntentsFromRawInputs({... aiInputs, ... userInputs,})
             // if overlap overlap with user
         this.sendIntentsToServer(localIntents)
-        vehicleCoordinator.update(localIntents, networkSnapshots)
+
     }
+    
+    packetBinaryEncoding = {
+        TEAM_ID_: {
+            INDEX: 0,
+        }
+        PLAYER_id: { 
+            INDEX: 8,
+        }
+        VEHICLES: { 
+            INDEX: 16, 
+            TYPES: { 
+                BOAT: 0, 
+                Plane: 1,
+            }
+        X: { Index 
+        Y: { l
+        Z:
+        
+        
+        }
+    }
+    
+    
+    dataPacketTypes = {
+        : { 
+            Boat: 0
+            plane: 1
+            tank 2
+            person 3
+        }
+        
+    }
+    
+    
+    function createPlayerVehicleData(initialData) {
+        dataExample = [
+            teamId playerId boatype, startinglocx y z  rotation lastaction
+            // ,10000000 1010 1001 11110000 10100000 10101010 1010101011
+            // ,10010010 10101010 10000101 101001000 1001010 1010100 00001010
+        ]
+        
+        const data = initialdata 
+        return { 
+            updateData,
+            getplayerVeicleIDs,
+            getPlayerIdVehicleType,
+        }
+        
+        updateData(entityId, datachange) {
+            
+            
+        }
+        
+        getplayerVeicleIDs(type) { 
+        
+        }
+        
+        getPlayerIdVehicleType(id) {
+            
+        }
+        
+    }
+    const playerVehilce  {
+            
+        
+    
+    
+    } 
     
 
     // this filters the raw input data so that the server and the rest of this local process dont need to go through redundent data. like multiple move forwards in the same tick
