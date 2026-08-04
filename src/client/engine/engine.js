@@ -135,12 +135,13 @@ export class Game {
     // cases when user switches boats 
     fixedUpdate(dt) {
         const networkSnapshot = snapshotbuffer.poll()
-        comtrolledVehicleId = vehiclecoordinator.getUserControlled() 
-        aiControlled
+        const userInputs = this.userInputBuffer.poll() // {
         
-        const userInputs = this.userInputBuffer.poll(playerEntityId) // {
+        comtrolledVehicleId = vehiclecoordinator.getUserControlled() 
+        aiControlledVehicleIds = vehicleCoordinator.getAiControlled() 
+        
             // [ action, action, action]
-        const aiInputs = this.aiBrain.getChanges() //
+        const aiInput  = this.aiBrain.getChanges() //
             // { entityId: [action, action],
             //  entityId: [{timestamp, action}, {timestamp, action}],
             //  entityId: [{timestamp, action}, {timestamp, action}],
@@ -148,51 +149,54 @@ export class Game {
         const localIntents = getFilteredIntentsFromRawInputs({... aiInputs, ... userInputs,})
             // if overlap overlap with user
         this.sendIntentsToServer(localIntents)
+    
+    }
     }
     
-    packetBinaryEncoding = {
-        TEAM_ID_: {
-            INDEX: 0,
-        }
-        PLAYER_id: { 
-            INDEX: 8,
-        }
+    const serverToClientPacketDecoding = {
+        TEAM_ID_: { INDEX: 0 }, 
+        PLAYER_id: { INDEX: 8 },
         VEHICLES: { 
             INDEX: 16, 
-            TYPES: { 
+            VALUE: { 
                 BOAT: 0, 
                 Plane: 1,
-            }
-        X: { Index: 24 }
-        Y: { Index: 32 }
-        Z: { Index: 40 }
-        
-            
-        }
+            },
+        X: { Index: 24 },
+        Y: { Index: 32 },
+        Z: { Index: 40 },
+        PITCH: { INDEX: 48 },
+        YAW: { INDEX: 56 } 
     }
     
-
-    function createPlayerVehicleData(initialData) {
+    class WorldData(initialData, dataSchema) {
         dataExample = [
             teamId playerId boatype, startinglocx y z  rotation lastaction
             // ,10000000 1010 1001 11110000 10100000 10101010 1010101011
             // ,10010010 10101010 10000101 101001000 1001010 1010100 00001010
         ]
         
-        const data = initialdata 
-        return { 
-            updateData,
-            getplayerVeicleIDs,
-            getPlayerIdVehicleType,
+        
+        constructor(initialData, dattaSchema) {
+             this.data = initialdata 
+             dataSchema = dataSchea 
+             
         }
         
         updateData(entityId, datachange) {
-            
-            
+            const updatedUser = data.entityID 
+            const 
         }
         
-        getplayerVeicleIDs(type) { 
         
+        getPlayerDataIds(type) { 
+            vehicleIndex = dataschema.vehicles.index
+            typeIndex = dataschema.vehicles.types.index
+            data.foreach({() => 
+                
+                
+                )}
+            return 
         }
         
         getPlayerIdVehicleType(id) {
