@@ -201,9 +201,13 @@ const serverToClientPacketDecoding = {
         offset: 0
         bits: 8
     },
+    UserId: {
+        offset: 0
+        bits: 8
+    } 
     TEAM_ID_: { 
        offset: 0
-        bits: 8
+       bits: 8
     }
     VEHICLES: { 
         offset: 0
@@ -213,6 +217,8 @@ const serverToClientPacketDecoding = {
             "PLANE",
         ] 
     },
+
+
     },
     X: { Index: 24 },
     Y: { Index: 32 },
@@ -236,6 +242,12 @@ function decodeData(dataPacket, dataSchema) {
     return 
 }
 
+function readField(value, offset, bits) {
+    const mask = (1n << BigInt(bits)) - 1n;
+    return Number((value >> BigInt(offset)) & mask);
+}
+
+
 class WorldData {
     constructor(initalData) {
         this.data = initalData
@@ -244,16 +256,24 @@ class WorldData {
     updateData(entityId, datachange) {
         
     }
-
-    getPlayerDataIds(type) { 
-        const vehicleIndex = dataschema.vehicles.index
-        const typeIndex = dataschema.vehicles.types.index
-        data.foreach({() => 
-            )}
+    // I want all of team xyz returns a list of enties on this team
+    getIdsFromTypeGroup(type) { 
+        const offset = this.dataSchema.type.offest
+        const bits = this.dataSchema.type.bits
+        const entities = []
+        this.data.foreach((entity) => {
+            readFeild(entity, offset, bits) 
+        }
         return 
+    } 
 
-    getIdsOfVehicleTypes(type) {
-        dataschema.vehicles.type
+    getDataFromIds(data, entityId) {
+    
+        data.foreach((entity) => {
+            readFeild(entity, offset, bits) 
+            
+        }
+        return 
     }
     
 }
