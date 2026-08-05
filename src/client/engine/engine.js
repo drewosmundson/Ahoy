@@ -197,14 +197,22 @@ function mergeKeepingDuplicates(obj1, obj2) {
 
 
 const serverToClientPacketDecoding = {
-    PLAYER_id: { INDEX: 0 },
-    TEAM_ID_: { INDEX: 8 }, 
+    entity_id: { 
+        offset: 0
+        bits: 8
+    },
+    TEAM_ID_: { 
+       offset: 0
+        bits: 8
+    }
     VEHICLES: { 
-        INDEX: 16, 
-        VALUE: { 
-            BOAT: 0, 
-            Plane: 1,
-        },
+        offset: 0
+        bits: 8
+        values: [
+            "BOAT",
+            "PLANE",
+        ] 
+    },
     },
     X: { Index: 24 },
     Y: { Index: 32 },
