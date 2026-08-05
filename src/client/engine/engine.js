@@ -20,7 +20,6 @@ import { SoundManager } from './SoundManager.js';
 import { EffectsManager } from './EffectsManager.js';
 import { CollisionSystem } from './CollisionSystem.js';
 import { AISystem } from './AISystem.js';
-import { act } from 'react';
 
 
 // ----------------------------------------------------------------------------
@@ -134,8 +133,8 @@ export class Game {
 
     // cases when user switches boats 
     fixedUpdate(dt) {
-        const networkSnapshot = snapshotbuffer.poll()
-        const userInputs = this.userInputBuffer.poll() // {
+        const networkSnapshot = this.networkSnapshotBuffer.poll()
+        const userInputs = this.userInputBuffer.poll() 
         
         comtrolledVehicleId = vehiclecoordinator.getUserControlled() 
         aiControlledVehicleIds = vehicleCoordinator.getAiControlled() 
@@ -153,88 +152,7 @@ export class Game {
     }
     }
     
-    const serverToClientPacketDecoding = {
-        TEAM_ID_: { INDEX: 0 }, 
-        PLAYER_id: { INDEX: 8 },
-        VEHICLES: { 
-            INDEX: 16, 
-            VALUE: { 
-                BOAT: 0, 
-                Plane: 1,
-            },
-        X: { Index: 24 },
-        Y: { Index: 32 },
-        Z: { Index: 40 },
-        PITCH: { INDEX: 48 },
-        YAW: { INDEX: 56 } 
-    }
-    
-    class WorldData(initialData, dataSchema) {
-        dataExample = [
-            teamId playerId boatype, startinglocx y z  rotation lastaction
-            // ,10000000 1010 1001 11110000 10100000 10101010 1010101011
-            // ,10010010 10101010 10000101 101001000 1001010 1010100 00001010
-        ]
-        
-        
-        constructor(initialData, dattaSchema) {
-             this.data = initialdata 
-             dataSchema = dataSchea 
-             
-        }
-        
-        updateData(entityId, datachange) {
-            const updatedUser = data.entityID 
-            const 
-        }
-        
-        
-        getPlayerDataIds(type) { 
-            vehicleIndex = dataschema.vehicles.index
-            typeIndex = dataschema.vehicles.types.index
-            data.foreach({() => 
-                
-                
-                )}
-            return 
-        }
-        
-        getPlayerIdVehicleType(id) {
-            
-        }
-        
-    }
-    const playerVehilce  {
-            
-        
-    
-    
-    } 
-    
-
-    // this filters the raw input data so that the server and the rest of this local process dont need to go through redundent data. like multiple move forwards in the same tick
-    // this is because you cant have repeated actions on tick. but one still needs to fire 
-    getFilteredIntentsFromRawInputs(inputs) {
-        // inputs = {
-            //   entityId: [ action, action, action, action ],
-            //   entityId: [{timestamp, action}, {timestamp, action}]
-            //   entityId: [{timestamp, action}, {timestamp, action}]
-            // }
-        const intents = {}
-        for (const [entityId, actionsArray] of Object.entries(inputs)) { 
-            const entityIntents = []
-            actionsArray.forEach(action => {
-                if(intents.includes(action)) return
-                intents.push(action)
-            })
-            intents.entityId = entityIntents;
-        }
-    }
-
-
     sendIntentsToServer(intents) {
-
-
 
     }
 
@@ -263,20 +181,100 @@ export class Game {
 }
 
 
-    function mergeKeepingDuplicates(obj1, obj2) {
-          const result = { ...obj1 };
-        
-          for (const [key, value] of Object.entries(obj2)) {
-            if (key in result) {
-              result[key] = [result[key], value];
-            } else {
-              result[key] = value;
-            }
-          }
-        
-          return result;
+function mergeKeepingDuplicates(obj1, obj2) {
+        const result = { ...obj1 };
+    
+        for (const [key, value] of Object.entries(obj2)) {
+        if (key in result) {
+            result[key] = [result[key], value];
+        } else {
+            result[key] = value;
         }
+        }
+    
+        return result;
+    }
 
+
+const serverToClientPacketDecoding = {
+    PLAYER_id: { INDEX: 0 },
+    TEAM_ID_: { INDEX: 8 }, 
+    VEHICLES: { 
+        INDEX: 16, 
+        VALUE: { 
+            BOAT: 0, 
+            Plane: 1,
+        },
+    },
+    X: { Index: 24 },
+    Y: { Index: 32 },
+    Z: { Index: 40 },
+    PITCH: { INDEX: 48 },
+    YAW: { INDEX: 56 },
+}
+
+// dataPacketExample = [
+//     teamId playerId boatype, startinglocx y z  rotation lastaction
+    // ,10000000 1010 1001 11110000 10100000 10101010 1010101011
+    // ,10010010 10101010 10000101 101001000 1001010 1010100 00001010
+// ]
+function decodeData(dataPacket, dataSchema) {
+    dataPacket.forEach(() => {
+        
+
+
+
+    })
+    return 
+}
+
+class WorldData {
+    constructor(initalData) {
+        this.data = initalData
+    }
+
+    updateData(entityId, datachange) {
+        
+    }
+
+    getPlayerDataIds(type) { 
+        const vehicleIndex = dataschema.vehicles.index
+        const typeIndex = dataschema.vehicles.types.index
+        data.foreach({() => 
+            )}
+        return 
+
+    getIdsOfVehicleTypes(type) {
+        dataschema.vehicles.type
+    }
+    
+}
+const playerVehilce  {
+        
+    
+
+
+} 
+    
+
+    // this filters the raw input data so that the server and the rest of this local process dont need to go through redundent data. like multiple move forwards in the same tick
+    // this is because you cant have repeated actions on tick. but one still needs to fire 
+    getFilteredIntentsFromRawInputs(inputs) {
+        // inputs = {
+            //   entityId: [ action, action, action, action ],
+            //   entityId: [{timestamp, action}, {timestamp, action}]
+            //   entityId: [{timestamp, action}, {timestamp, action}]
+            // }
+        const intents = {}
+        for (const [entityId, actionsArray] of Object.entries(inputs)) { 
+            const entityIntents = []
+            actionsArray.forEach(action => {
+                if(intents.includes(action)) return
+                intents.push(action)
+            })
+            intents.entityId = entityIntents;
+        }
+    }
 
 
 
