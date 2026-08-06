@@ -197,34 +197,46 @@ function mergeKeepingDuplicates(obj1, obj2) {
 
 
 const serverToClientPacketDecoding = {
-    entity_id: { 
-        offset: 0
-        bits: 8
+    ENTITY_ID: { 
+        offset: 0,
+        bits: 8,
     },
-    UserId: {
-        offset: 0
-        bits: 8
-    } 
-    TEAM_ID_: { 
-       offset: 0
-       bits: 8
-    }
+    CONTROLGROUP_ID: {
+        offset: 8,
+        bits: 8,
+    },
+    TEAM_ID: { 
+       offset: 16,
+       bits: 8,
+    },
     VEHICLES: { 
-        offset: 0
-        bits: 8
+        offset: 24,
+        bits: 8,
         values: [
             "BOAT",
             "PLANE",
-        ] 
+        ],
     },
-
-
+    X_LOCATION: {
+       offset: 32,
+       bits: 32,
     },
-    X: { Index: 24 },
-    Y: { Index: 32 },
-    Z: { Index: 40 },
-    PITCH: { INDEX: 48 },
-    YAW: { INDEX: 56 },
+    Y_LOCATION: {
+       offset: 64,
+       bits: 32,
+    },
+    Z_LOCATION: {
+       offset: 96,
+       bits: 32,
+    },
+    PITCH: {
+       offset: 128,
+       bits: 16,
+    },
+    YAW: {
+       offset: 132,
+       bits: 16,
+    },
 }
 
 // dataPacketExample = [
@@ -232,15 +244,6 @@ const serverToClientPacketDecoding = {
     // ,10000000 1010 1001 11110000 10100000 10101010 1010101011
     // ,10010010 10101010 10000101 101001000 1001010 1010100 00001010
 // ]
-function decodeData(dataPacket, dataSchema) {
-    dataPacket.forEach(() => {
-        
-
-
-
-    })
-    return 
-}
 
 function readField(value, offset, bits) {
     const mask = (1n << BigInt(bits)) - 1n;
@@ -253,10 +256,18 @@ class WorldData {
         this.data = initalData
     }
 
-    updateData(entityId, datachange) {
+decodeData(dataPacket) {
+
+    
+}
+
+
+    updateData(datachange) {
         
     }
-    // I want all of team xyz returns a list of enties on this team
+
+
+    // return list
     getIdsFromTypeGroup(type) { 
         const offset = this.dataSchema.type.offest
         const bits = this.dataSchema.type.bits
@@ -275,8 +286,10 @@ class WorldData {
         }
         return 
     }
-    
 }
+
+
+
 const playerVehilce  {
         
     
