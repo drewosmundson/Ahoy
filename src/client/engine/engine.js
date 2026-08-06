@@ -102,7 +102,7 @@ export class Game {
     // "howControlled" (ai / client / network) is derived, not stored — see
     // OWNERSHIP MODEL note below / VehicleCoordinator.
     start(lobbyData) {
-        
+        vehicleCoordinator.start(data)
         for (const manager of this.managers) {
             manager.start?.(lobbyData);
         }
@@ -133,22 +133,22 @@ export class Game {
 
     // cases when user switches boats 
     fixedUpdate(dt) {
-        const networkSnapshot = this.networkSnapshotBuffer.poll()
+        
+        
+        userControlledVehicles = vehiclecoordinator.getUserControlled() 
+        aiControlledVehicles = vehicleCoordinator.getAiControlled() 
         const userInputs = this.userInputBuffer.poll() 
-        
-        comtrolledVehicleId = vehiclecoordinator.getUserControlled() 
-        aiControlledVehicleIds = vehicleCoordinator.getAiControlled() 
-        
-            // [ action, action, action]
+            // entity.id, [ action, action, action]
         const aiInput  = this.aiBrain.getChanges() //
             // { entityId: [action, action],
-            //  entityId: [{timestamp, action}, {timestamp, action}],
+          // { entityId: [action, action],
             //  entityId: [{timestamp, action}, {timestamp, action}],
             // }
         const localIntents = getFilteredIntentsFromRawInputs({... aiInputs, ... userInputs,})
             // if overlap overlap with user
+
         this.sendIntentsToServer(localIntents)
-    
+        const networkSnapshot = this.networkSnapshotBuffer.poll()
     }
     }
     
@@ -256,7 +256,7 @@ class WorldData {
         this.data = initalData
     }
 
-decodeData(dataPacket) {
+    decodeData(dataPacket) {
 
     
 }
@@ -289,12 +289,26 @@ decodeData(dataPacket) {
 }
 
 
-
-const playerVehilce  {
-        
+class vehiclCoordinator {
+    constructor() {
     
-
-
+        
+        
+    }
+    
+    getAiControlledVehicles(data) {
+        
+        
+    } 
+    
+    getUserControlledVehicles(data) {
+        
+    } 
+    
+    getNetworkControlledVehicles(data) {
+        
+        
+    } 
 } 
     
 
