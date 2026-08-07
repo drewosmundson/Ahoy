@@ -133,19 +133,20 @@ export class Game {
 
     // cases when user switches boats 
     fixedUpdate(dt) {
-        
-        
-        userControlledVehicles = vehiclecoordinator.getUserControlled() 
-        aiControlledVehicles = vehicleCoordinator.getAiControlled() 
         const userInputs = this.userInputBuffer.poll() 
-            // entity.id, [ action, action, action]
-        const aiInput  = this.aiBrain.getChanges() //
-            // { entityId: [action, action],
-          // { entityId: [action, action],
-            //  entityId: [{timestamp, action}, {timestamp, action}],
-            // }
-        const localIntents = getFilteredIntentsFromRawInputs({... aiInputs, ... userInputs,})
-            // if overlap overlap with user
+            // [ action, action, action]
+        const userIntents = getFilteredIntentsFromRawInputs({ ... userInputs,})
+        vehicleCoordinator.update(userInputs)
+        
+
+        const aiControlledVehicles = vehicleCoordinator.getAiControlled() 
+        const userControlledVehicles = vehiclecoordinator.getUserControlled() 
+        const currentState = world.getstate() 
+        const aiIntents  = this.aiBrain.getChanges(aiComtrolleVehicles, currentState) 
+        
+        
+        
+     
 
         this.sendIntentsToServer(localIntents)
         const networkSnapshot = this.networkSnapshotBuffer.poll()
