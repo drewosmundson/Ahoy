@@ -133,23 +133,40 @@ export class Game {
 
     // cases when user switches boats 
     fixedUpdate(dt) {
-        const userInputs = this.userInputBuffer.poll() 
+        // COLLECT AND PROCESS INPUTS
+        
+        const userIntents = this.userInputBuffer.poll() 
+            // async effects buses are  triggered from new user inputs before the buffer
             // [ action, action, action]
         const userIntents = getFilteredIntentsFromRawInputs({ ... userInputs,})
-        vehicleCoordinator.update(userInputs)
+        vehicleCoordinator.update(userIntents)
         
 
         const aiControlledVehicles = vehicleCoordinator.getAiControlled() 
-        const userControlledVehicles = vehiclecoordinator.getUserControlled() 
         const currentState = world.getstate() 
         const aiIntents  = this.aiBrain.getChanges(aiComtrolleVehicles, currentState) 
         
+        const userControlledVehicles = vehicleCoordinator.getUserControlled()
+        const localIntents = mergeUserAndAiIntents(userIntents, aiIntents
         
-        
-     
-
         this.sendIntentsToServer(localIntents)
+        
+        
+
+        // LOCALSIMULATION 
+
+        simulationManagers.foreach(manager) => {
+            manager.update(localIntents)
+
+        }
+
+
+
+
+        // RECONCILIATION 
+
         const networkSnapshot = this.networkSnapshotBuffer.poll()
+        
     }
     }
     
