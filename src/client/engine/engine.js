@@ -151,15 +151,14 @@ export class Game {
         
         this.sendIntentsToServer(localIntents)
         
-        
+        networkSnapshot
 
         // LOCALSIMULATION 
 
         simulationManagers.foreach(manager) => {
             manager.update(localIntents)
-
+            manager.reconcile(networkSnapshot)
         }
-
 
 
 
