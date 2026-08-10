@@ -58,9 +58,10 @@ export class Game {
         const keyUpEventBuffer = new EventBuffer(localBus, eventSchemas.keyUp)
         const networkEventBuffer = new EventBuffer(serverBus, eventSchemas.serverSnapshot)
     
+        this.vehicleCoordinator = new VehicleCoordinator(this.localPlayerId);
 
         // ==== Simulated & Reconciled Components  ===========================
-        const boatManager  = new BoatManager(this.localPlayerId, this.vehicleCoordinator);
+        const boatManager  = new BoatSimulator(this.localPlayerId, this.vehicleCoordinator);
         const planeManager = new PlaneManager(this.localPlayerId, this.vehicleCoordinator);
         const projectileManager = new ProjectileManager(simulationBus, networkBus);
         // ====================================================================
@@ -72,9 +73,7 @@ export class Game {
         const effectManager = new EffectsManager(effectsBus);
         // ====================================================================
 
-        this.vehicleCoordinator = new VehicleCoordinator(this.localPlayerId);
 
-        
         this.simulationManagers  = [boatManager, planeManager, projectileManager];
         this.reactionaryManagers = [cameraManager, soundManager, effectManager];
 
@@ -85,7 +84,6 @@ export class Game {
                 soundManager,
                 projectileManager,
             }),
-            new AISystem(this.simulationManagers),
         ];
 
         this.buses = { simulationBus, networkBus, effectsBus, intentBus };
@@ -139,7 +137,7 @@ export class Game {
             // async effects buses are  triggered from new user inputs before the buffer
             // [ action, action, action]
         const userIntents = getFilteredIntentsFromRawInputs({ ... userInputs,})
-        vehicleCoordinator.update(userIntents)
+        vehicleCoordinator.updateOwnership(userIntents)
         
 
         const aiControlledVehicles = vehicleCoordinator.getAiControlled() 
@@ -149,24 +147,23 @@ export class Game {
         const userControlledVehicles = vehicleCoordinator.getUserControlled()
         const localIntents = mergeUserAndAiIntents(userIntents, aiIntents
         
-        this.sendIntentsToServer(localIntents)
-        
-        networkSnapshot
-
         // LOCALSIMULATION 
-
         simulationManagers.foreach(manager) => {
-            manager.update(localIntents)
-            manager.reconcile(networkSnapshot)
+            manager.update(localIntents) {
+            worldData.update() 
+            } 
         }
 
-
-
         // RECONCILIATION 
-
         const networkSnapshot = this.networkSnapshotBuffer.poll()
+        simulationManagers.foreach(manager) => {
+            manager.reconcile(networkSnapshot)
+            worldData.update() 
+        }
+        // server housekeeping
+        this.sendIntentsToServer(localIntents)
         
-    }
+        }
     }
     
     sendIntentsToServer(intents) {
@@ -232,6 +229,7 @@ const serverToClientPacketDecoding = {
         values: [
             "BOAT",
             "PLANE",
+            "PROJECTILE",
         ],
     },
     X_LOCATION: {
@@ -279,11 +277,6 @@ class WorldData {
 }
 
 
-    updateData(datachange) {
-        
-    }
-
-
     // return list
     getIdsFromTypeGroup(type) { 
         const offset = this.dataSchema.type.offest
@@ -312,6 +305,7 @@ class vehiclCoordinator {
         
         
     }
+    
     
     getAiControlledVehicles(data) {
         
