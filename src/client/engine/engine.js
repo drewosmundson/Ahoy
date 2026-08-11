@@ -1,4 +1,4 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
+wimport * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
 import { createHeightmap } from "./utils/Heightmap.js"
 import { createRenderer } from "./utils/Renderer.js"
@@ -129,7 +129,10 @@ export class Game {
         });
     }
 
+
+    // BOAT AND MANAGERS AHOUKD NOT OWN LOCATION DATA 
     // cases when user switches boats 
+    // boat manager contains the system that the boats use 
     fixedUpdate(dt) {
         // COLLECT AND PROCESS INPUTS
         
@@ -150,7 +153,6 @@ export class Game {
         // LOCALSIMULATION 
         simulationManagers.foreach(manager) => {
             manager.update(localIntents) {
-            worldData.update() 
             } 
         }
 
@@ -158,11 +160,11 @@ export class Game {
         const networkSnapshot = this.networkSnapshotBuffer.poll()
         simulationManagers.foreach(manager) => {
             manager.reconcile(networkSnapshot)
-            worldData.update() 
         }
         // server housekeeping
         this.sendIntentsToServer(localIntents)
         
+    
         }
     }
     
