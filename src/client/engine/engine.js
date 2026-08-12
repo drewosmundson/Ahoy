@@ -73,10 +73,8 @@ export class Game {
         const effectManager = new EffectsManager(effectsBus);
         // ====================================================================
 
-
         this.simulationManagers  = [boatManager, planeManager, projectileManager];
         this.reactionaryManagers = [cameraManager, soundManager, effectManager];
-
 
         this.systems = [
             new CollisionSystem(this.simulationManagers, this.heightmap, {
@@ -140,9 +138,11 @@ export class Game {
             // async effects buses are  triggered from new user inputs before the buffer
             // [ action, action, action]
         const userIntents = getFilteredIntentsFromRawInputs({ ... userInputs,})
+        
+        this.sendIntentsToServer(localIntents)
+        
         vehicleCoordinator.updateOwnership(userIntents)
         
-
         const aiControlledVehicles = vehicleCoordinator.getAiControlled() 
         const currentState = world.getstate() 
         const aiIntents  = this.aiBrain.getChanges(aiComtrolleVehicles, currentState) 
@@ -152,17 +152,25 @@ export class Game {
         
         // LOCALSIMULATION 
         simulationManagers.foreach(manager) => {
-            manager.update(localIntents) {
-            } 
+            manager.update(localIntents) 
         }
 
+        collisionSystem.update(worldddata ) 
+        
+        
         // RECONCILIATION 
         const networkSnapshot = this.networkSnapshotBuffer.poll()
-        simulationManagers.foreach(manager) => {
-            manager.reconcile(networkSnapshot)
-        }
+        worlddata.reconcile(networkSnapshot)
+        
+        
+        worldData.update(manager.getDeltaRotation, manager.getDeltaLocation)
+        
+        renderSystem.update() 
+  
+
+        
         // server housekeeping
-        this.sendIntentsToServer(localIntents)
+
         
     
         }
@@ -344,6 +352,18 @@ class vehiclCoordinator {
         }
     }
 
+
+function reconcile(snapshot, dt) {
+        const t = clamp(this.reconcileLerpRate * dt, 0, 1);
+ 
+        this.location = {
+            x: lerp(this.location.x, snapshot.location.x, t),
+            y: lerp(this.location.y, snapshot.location.y, t),
+        };
+ 
+        this.rotation = lerpAngle(this.rotation, snapshot.rotation, t);
+        this.velocity = { ...snapshot.velocity };
+    }
 
 
 
