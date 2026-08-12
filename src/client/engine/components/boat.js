@@ -27,11 +27,11 @@ export class Boat {
         this.reconcileLerpRate = 8;
     }
  
-    setLocation(loc) {
+    getDeltaLocation(loc) {
         this.location = { ...loc };
     }
  
-    setRotation(radians) {
+    getDeltaRotation(radians) {
         this.rotation = radians;
     }
  
@@ -65,21 +65,7 @@ export class Boat {
         };
     }
  
-    // called by controllers.network for vehicles owned by other
-    // players. NOT an instant teleport to the snapshot — that would make
-    // every remote boat look jittery. Lerp position, slerp-equivalent
-    // (shortest-angle) rotation, toward the latest snapshot instead.
-    reconcile(snapshot, dt) {
-        const t = clamp(this.reconcileLerpRate * dt, 0, 1);
- 
-        this.location = {
-            x: lerp(this.location.x, snapshot.location.x, t),
-            y: lerp(this.location.y, snapshot.location.y, t),
-        };
- 
-        this.rotation = lerpAngle(this.rotation, snapshot.rotation, t);
-        this.velocity = { ...snapshot.velocity };
-    }
+
 }
  
 const MAX_SPEED = 12;
