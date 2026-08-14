@@ -12,5 +12,6 @@ class EventBuffer {
         this.queue = [];
         return items;
     }
+
 }
 

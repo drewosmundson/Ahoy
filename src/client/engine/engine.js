@@ -77,7 +77,7 @@ export class Game {
         this.reactionaryManagers = [cameraManager, soundManager, effectManager];
 
         this.systems = [
-            new CollisionSystem(this.simulationManagers, this.heightmap, {
+            new CollisionSystem(this.heightmap, {
                 effectsBus,
                 soundManager,
                 projectileManager,
@@ -133,23 +133,18 @@ export class Game {
     // boat manager contains the system that the boats use 
     fixedUpdate(dt) {
         // COLLECT AND PROCESS INPUTS
-        
-        const userIntents = this.userInputBuffer.poll() 
-            // async effects buses are  triggered from new user inputs before the buffer
-            // [ action, action, action]
-        const userIntents = getFilteredIntentsFromRawInputs({ ... userInputs,})
-        
-        this.sendIntentsToServer(localIntents)
-        
-        vehicleCoordinator.updateOwnership(userIntents)
-        
+        // [ action, action, action]
+        const rawInputs = utils.removeDuplicatesInPlace(this.userInputBuffer.poll());
+        const userIntents = vehicleCoordinator.getUserControlled(rawInputs)
+
         const aiControlledVehicles = vehicleCoordinator.getAiControlled() 
         const currentState = world.getstate() 
         const aiIntents  = this.aiBrain.getChanges(aiComtrolleVehicles, currentState) 
         
-        const userControlledVehicles = vehicleCoordinator.getUserControlled()
-        const localIntents = mergeUserAndAiIntents(userIntents, aiIntents
-        
+        const localIntents = utils.merge(userIntents, aiIntents)
+
+        this.sendIntentsToServer(localIntents)
+
         // LOCALSIMULATION 
         simulationManagers.foreach(manager) => {
             manager.update(localIntents) 
@@ -332,25 +327,6 @@ class vehiclCoordinator {
     } 
 } 
     
-
-    // this filters the raw input data so that the server and the rest of this local process dont need to go through redundent data. like multiple move forwards in the same tick
-    // this is because you cant have repeated actions on tick. but one still needs to fire 
-    getFilteredIntentsFromRawInputs(inputs) {
-        // inputs = {
-            //   entityId: [ action, action, action, action ],
-            //   entityId: [{timestamp, action}, {timestamp, action}]
-            //   entityId: [{timestamp, action}, {timestamp, action}]
-            // }
-        const intents = {}
-        for (const [entityId, actionsArray] of Object.entries(inputs)) { 
-            const entityIntents = []
-            actionsArray.forEach(action => {
-                if(intents.includes(action)) return
-                intents.push(action)
-            })
-            intents.entityId = entityIntents;
-        }
-    }
 
 
 function reconcile(snapshot, dt) {
