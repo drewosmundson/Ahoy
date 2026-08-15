@@ -51,6 +51,7 @@ export class Game {
 
         const localBus  = new LocalEventBus(eventSchemas);    // Intra-process event bus for ansyc updates in the same process
         const serverBus  = new NetworkEventBus(eventSchemas); // Inter-process event bus for asnyc communication to the server
+        const effectsBus  = new LocalEventBus(eventSchemas);   // Intra-process event bus for ansyc updates in the same process but can be fired and forgotton never to be reconciled by the server
 
         initalizeUserInput(localBus, CONSTANTS.KEYBINDS);
         
@@ -58,33 +59,26 @@ export class Game {
         const keyUpEventBuffer = new EventBuffer(localBus, eventSchemas.keyUp)
         const networkEventBuffer = new EventBuffer(serverBus, eventSchemas.serverSnapshot)
     
-        this.vehicleCoordinator = new VehicleCoordinator(this.localPlayerId);
+        this.vehicleOwnershipCoordinator = new VehicleOwnershipCoordinator(effectsBus);
 
-        // ==== Simulated & Reconciled Components  ===========================
-        const boatManager  = new BoatSimulator(this.localPlayerId, this.vehicleCoordinator);
-        const planeManager = new PlaneManager(this.localPlayerId, this.vehicleCoordinator);
-        const projectileManager = new ProjectileManager(simulationBus, networkBus);
+        // ==== Simulated & Reconciled Systems  ===========================
+        const boatSimulator  = new BoatSimulator(effectsBus);
+        const planeSimulator = new PlaneSimulator(effectsBus);
+        const projectileSimulator = new ProjectileSimulator(effectsBus);
+        const collisionSystem =  new CollisionSystem(this.heightmap, effectsBus)
+
+        this.simulationSystems  = [boatSimulator, planeSimulator, projectileSimulator, collisionSystem];
         // ====================================================================
 
 
-        // ==== Reactionary Components  =======================================
+        // ==== Reactionary managers  =======================================
         const cameraManager = new CameraManager(this.camera, effectsBus);
-        const soundManager   = new SoundManager();
-        const effectManager = new EffectsManager(effectsBus);
-        // ====================================================================
+        const soundManager   = new SoundManager(effectsBus);
+        const vfxManager = new VFXManager(effectsBus);
+        const terrainManager = new TerrainManager(effectsBus)
 
-        this.simulationManagers  = [boatManager, planeManager, projectileManager];
         this.reactionaryManagers = [cameraManager, soundManager, effectManager];
-
-        this.systems = [
-            new CollisionSystem(this.heightmap, {
-                effectsBus,
-                soundManager,
-                projectileManager,
-            }),
-        ];
-
-        this.buses = { simulationBus, networkBus, effectsBus, intentBus };
+        // ====================================================================
 
         window.addEventListener("resize", this.handleWindowResize);
     }
@@ -98,15 +92,20 @@ export class Game {
     // "howControlled" (ai / client / network) is derived, not stored — see
     // OWNERSHIP MODEL note below / VehicleCoordinator.
     start(lobbyData) {
+        this.previousTime = performance.now();
+        this.accumulator = 0;
+
         vehicleCoordinator.start(data)
-        for (const manager of this.managers) {
+
+        for (const system of this.simulationSystems) {
+            system.start?.(lobbyData);
+        }
+        for (const manager of this.reactionaryManagers) {
             manager.start?.(lobbyData);
         }
 
         createSceneTerrain(this.scene, this.heightmap);
 
-        this.previousTime = performance.now();
-        this.accumulator = 0;
 
         this.handleWindowResize();
 
@@ -132,38 +131,39 @@ export class Game {
     // cases when user switches boats 
     // boat manager contains the system that the boats use 
     fixedUpdate(dt) {
-        // COLLECT AND PROCESS INPUTS
-        // [ action, action, action]
-        const rawInputs = utils.removeDuplicatesInPlace(this.userInputBuffer.poll());
-        const userIntents = vehicleCoordinator.getUserControlled(rawInputs)
+        const rawInputs = utils.removeDuplicatesInPlace(
+            this.userInputBuffer.poll()
+        );
 
-        const aiControlledVehicles = vehicleCoordinator.getAiControlled() 
-        const currentState = world.getstate() 
-        const aiIntents  = this.aiBrain.getChanges(aiComtrolleVehicles, currentState) 
-        
-        const localIntents = utils.merge(userIntents, aiIntents)
+        const userIntents = vehicleCoordinator.getUserControlled(rawInputs);
 
-        this.sendIntentsToServer(localIntents)
+        const worldState = world.getState();
+        const aiControlledVehicles = vehicleCoordinator.getAiControlled();
+        const aiIntents = this.aiBrain.getChanges(
+            aiControlledVehicles,
+            worldState
+        );
 
-        // LOCALSIMULATION 
-        simulationManagers.foreach(manager) => {
-            manager.update(localIntents) 
+        const intents = utils.merge(userIntents, aiIntents);
+
+        this.sendIntentsToServer(intents);
+
+        const changes = [];
+
+        for (const system of simulationSystems) {
+            changes.push(
+                system.simulate(dt, worldState, intents)
+            );
         }
 
-        collisionSystem.update(worldddata ) 
-        
-        
-        // RECONCILIATION 
-        const networkSnapshot = this.networkSnapshotBuffer.poll()
-        worlddata.reconcile(networkSnapshot)
-        
-        
-        worldData.update(manager.getDeltaRotation, manager.getDeltaLocation)
-        
-        renderSystem.update() 
-  
+        worldState.apply(changes);
 
-        
+        const networkSnapshot = this.networkSnapshotBuffer.poll();
+        worldState.reconcile(networkSnapshot)
+
+        gameGraphics.update(worldState);
+    }
+            
         // server housekeeping
 
         
@@ -198,21 +198,6 @@ export class Game {
         this.camera.updateProjectionMatrix();
     };
 }
-
-
-function mergeKeepingDuplicates(obj1, obj2) {
-        const result = { ...obj1 };
-    
-        for (const [key, value] of Object.entries(obj2)) {
-        if (key in result) {
-            result[key] = [result[key], value];
-        } else {
-            result[key] = value;
-        }
-        }
-    
-        return result;
-    }
 
 
 const serverToClientPacketDecoding = {
