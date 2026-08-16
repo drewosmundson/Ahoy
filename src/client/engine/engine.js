@@ -92,6 +92,8 @@ export class Game {
     // "howControlled" (ai / client / network) is derived, not stored — see
     // OWNERSHIP MODEL note below / VehicleCoordinator.
     start(lobbyData) {
+        this.handleWindowResize();
+        
         this.previousTime = performance.now();
         this.accumulator = 0;
 
@@ -106,10 +108,10 @@ export class Game {
 
         createSceneTerrain(this.scene, this.heightmap);
 
-
-        this.handleWindowResize();
-
-        this.renderer.setAnimationLoop((time) => {
+        this.renderer.setAnimationLoop(loop)
+    }
+    
+    loop = (time) => {
             let frameTime = (time - this.previousTime) / 1000;
             this.previousTime = time;
 
@@ -124,7 +126,6 @@ export class Game {
 
             this.renderer.render(this.scene, this.camera);
         });
-    }
 
 
     // BOAT AND MANAGERS AHOUKD NOT OWN LOCATION DATA 
