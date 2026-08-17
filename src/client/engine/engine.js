@@ -33,9 +33,8 @@ export class Game {
     constructor() {
         this.heightmap = createHeightmap();
 
-        this.simulationManagers = []
-        this.effectsManagers = [] 
-        this.systems = [];
+        this.simulationSystems = []
+        this.effectsSystems = [] 
 
         this.previousTime = 0;
         this.accumulator = 0;
@@ -50,37 +49,38 @@ export class Game {
         this.camera        = createCamera(canvas, THREE.PerspectiveCamera);
 
         const localBus  = new LocalEventBus(eventSchemas);    // Intra-process event bus for ansyc updates in the same process
-        const serverBus  = new NetworkEventBus(eventSchemas); // Inter-process event bus for asnyc communication to the server
-        const effectsBus  = new LocalEventBus(eventSchemas);   // Intra-process event bus for ansyc updates in the same process but can be fired and forgotton never to be reconciled by the server
+        const networkBus  = new NetworkEventBus(eventSchemas); // Inter-process event bus for asnyc communication to the server
 
         initalizeUserInput(localBus, CONSTANTS.KEYBINDS);
-        
         const keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
         const keyUpEventBuffer = new EventBuffer(localBus, eventSchemas.keyUp)
-        const networkEventBuffer = new EventBuffer(serverBus, eventSchemas.serverSnapshot)
+        const networkEventBuffer = new EventBuffer(networkBus, eventSchemas.serverSnapshot)
     
-        this.vehicleOwnershipCoordinator = new VehicleOwnershipCoordinator(effectsBus);
+        this.networkInterface = new NetworkInterface(networkBus)
+        this.vehicleOwnershipCoordinator = new VehicleOwnershipCoordinator();
 
         // ==== Simulated & Reconciled Systems  ===========================
-        const boatSimulator  = new BoatSimulator(effectsBus);
-        const planeSimulator = new PlaneSimulator(effectsBus);
-        const projectileSimulator = new ProjectileSimulator(effectsBus);
-        const collisionSystem =  new CollisionSystem(this.heightmap, effectsBus)
+        const boatSimulator  = new BoatSimulator(localBus);
+        const planeSimulator = new PlaneSimulator(localBus);
+        const projectileSimulator = new ProjectileSimulator(localBus);
+        const collisionSystem =  new CollisionSystem(this.heightmap, localBus)
 
         this.simulationSystems  = [boatSimulator, planeSimulator, projectileSimulator, collisionSystem];
-        // ====================================================================
+        // ===================================================================
 
 
         // ==== Reactionary managers  =======================================
-        const cameraManager = new CameraManager(this.camera, effectsBus);
-        const soundManager   = new SoundManager(effectsBus);
-        const vfxManager = new VFXManager(effectsBus);
-        const terrainManager = new TerrainManager(effectsBus)
+        const cameraManager = new CameraManager(this.camera, localBus);
+        const soundManager   = new SoundManager(localBus);
+        const vfxManager = new VFXManager(localBus);
+        const terrainManager = new TerrainManager(localBus)
 
         this.reactionaryManagers = [cameraManager, soundManager, effectManager];
         // ====================================================================
 
         window.addEventListener("resize", this.handleWindowResize);
+
+        networkBus.emit(eventSchemas.userSetup, true)
     }
 
     // starts when the host clicks start game
@@ -89,13 +89,11 @@ export class Game {
     //
     // Lobby Data Example:
     // [{ id, vehicle: "boat", ownerId, teamId, location, rotation, initiallyActive }]
-    // "howControlled" (ai / client / network) is derived, not stored — see
-    // OWNERSHIP MODEL note below / VehicleCoordinator.
+
     start(lobbyData) {
-        this.handleWindowResize();
-        
         this.previousTime = performance.now();
         this.accumulator = 0;
+        this.handleWindowResize();
 
         vehicleCoordinator.start(data)
 
@@ -112,10 +110,10 @@ export class Game {
     }
     
     loop = (time) => {
-        let frameTime = (time - this.previousTime) / 1000;
+        let frameTime = (time - this.previousTime) * 0.001;
         this.previousTime = time;
 
-        frameTime = Math.min(frameTime, 0.25); // clamp so tab-switch stalls don't cause a spiral of death
+        frameTime = Math.min(frameTime, 0.25); // clamp so tab switch does not spiral the system
 
         this.accumulator += frameTime;
 
@@ -131,21 +129,17 @@ export class Game {
     // cases when user switches boats 
     // boat manager contains the system that the boats use 
     gameRenderUpdate(dt) {
-        const userInputs = this.removeDuplicates(
-            this.userInputBuffer.poll()
-        )
-        const userIntents = vehicleCoordinator.getUserControlled(noDuplicatesInput);
+        const rawInputs = this.userInputs.pollSet()
+        const userInputs = this.removeDuplicates(rawInputs)
+        const userControlledActions = vehicleCoordinator.getUserControlled(userInputs);
 
         const worldState = world.getState();
         const aiControlledVehicles = vehicleCoordinator.getAiControlled();
-        const aiIntents = this.aiBrain.getChanges(
-            aiControlledVehicles,
-            worldState
-        );
+        const aiIntents = this.aiBrain.getChanges(aiControlledVehicles, worldState);
 
         const intents = utils.merge(userIntents, aiIntents);
 
-        this.sendIntentsToServer(intents);
+        this.networkInterface.send(intents);
 
         const changes = [];
 
@@ -161,12 +155,6 @@ export class Game {
         worldState.reconcile(networkSnapshot)
 
         gameGraphics.update(worldState);
-    }
-
-}
-    
-    sendIntentsToServer(intents) {
-
     }
 
 
