@@ -112,31 +112,29 @@ export class Game {
     }
     
     loop = (time) => {
-            let frameTime = (time - this.previousTime) / 1000;
-            this.previousTime = time;
+        let frameTime = (time - this.previousTime) / 1000;
+        this.previousTime = time;
 
-            frameTime = Math.min(frameTime, 0.25); // clamp so tab-switch stalls don't cause a spiral of death
+        frameTime = Math.min(frameTime, 0.25); // clamp so tab-switch stalls don't cause a spiral of death
 
-            this.accumulator += frameTime;
+        this.accumulator += frameTime;
 
-            while (this.accumulator >= FIXED_DT) {
-                this.fixedUpdate(FIXED_DT);
-                this.accumulator -= FIXED_DT;
-            }
-
-            this.renderer.render(this.scene, this.camera);
-        });
+        while (this.accumulator >= FIXED_DT) {
+            this.gameRenderUpdate(FIXED_DT);
+            this.accumulator -= FIXED_DT;
+        }
+        this.renderer.render(this.scene, this.camera);
+    };
 
 
     // BOAT AND MANAGERS AHOUKD NOT OWN LOCATION DATA 
     // cases when user switches boats 
     // boat manager contains the system that the boats use 
-    fixedUpdate(dt) {
-        const rawInputs = utils.removeDuplicatesInPlace(
+    gameRenderUpdate(dt) {
+        const userInputs = this.removeDuplicates(
             this.userInputBuffer.poll()
-        );
-
-        const userIntents = vehicleCoordinator.getUserControlled(rawInputs);
+        )
+        const userIntents = vehicleCoordinator.getUserControlled(noDuplicatesInput);
 
         const worldState = world.getState();
         const aiControlledVehicles = vehicleCoordinator.getAiControlled();
@@ -164,13 +162,8 @@ export class Game {
 
         gameGraphics.update(worldState);
     }
-            
-        // server housekeeping
 
-        
-    
-        }
-    }
+}
     
     sendIntentsToServer(intents) {
 
