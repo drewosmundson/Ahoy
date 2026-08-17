@@ -35,6 +35,8 @@ export class Game {
 
         this.simulationSystems = []
         this.effectsSystems = [] 
+    
+    
 
         this.previousTime = 0;
         this.accumulator = 0;
@@ -48,15 +50,14 @@ export class Game {
         this.scene         = createScene();
         this.camera        = createCamera(canvas, THREE.PerspectiveCamera);
 
-        const localBus  = new LocalEventBus(eventSchemas);    // Intra-process event bus for ansyc updates in the same process
-        const networkBus  = new NetworkEventBus(eventSchemas); // Inter-process event bus for asnyc communication to the server
+        this.localBus  = new LocalEventBus(eventSchemas);    // Intra-process event bus for ansyc updates in the same process
+        this.networkBus  = new NetworkEventBus(eventSchemas); // Inter-process event bus for asnyc communication to the server
 
         initalizeUserInput(localBus, CONSTANTS.KEYBINDS);
         const keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
         const keyUpEventBuffer = new EventBuffer(localBus, eventSchemas.keyUp)
         const networkEventBuffer = new EventBuffer(networkBus, eventSchemas.serverSnapshot)
     
-        this.networkInterface = new NetworkInterface(networkBus)
         this.vehicleOwnershipCoordinator = new VehicleOwnershipCoordinator();
 
         // ==== Simulated & Reconciled Systems  ===========================
@@ -80,7 +81,7 @@ export class Game {
 
         window.addEventListener("resize", this.handleWindowResize);
 
-        networkBus.emit(eventSchemas.userSetup, true)
+        this.networkBus.emit(eventSchemas.userSetup, true)
     }
 
     // starts when the host clicks start game
@@ -156,7 +157,6 @@ export class Game {
 
         gameGraphics.update(worldState);
     }
-
 
     stop() {
         this.renderer.setAnimationLoop(null);
