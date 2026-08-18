@@ -1,4 +1,4 @@
-wimport * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
 import { createHeightmap } from "./utils/Heightmap.js"
 import { createRenderer } from "./utils/Renderer.js"
