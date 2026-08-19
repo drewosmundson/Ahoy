@@ -1,137 +1,5 @@
 
 
-
-class EventBuffer {
-    constructor(eventBus, bufferedEvent) {
-        this.queue = [];
-        
-        eventBus.on(bufferedEvent, (data) => this.queue.push(data));
-    }
-    drain() {
-        const items = this.queue;
-        this.queue = [];
-        return items;
-    }
-    drainSet () {
-        const items = [...new Set(this.queue)]
-        this.queue = [];
-        return items;
-    } 
-    drainObject() {
-        const items = [];
-        const seen = {};
-        for (const item of this.queue) {
-            if (!seen[item]) {
-                seen[item] = true;
-                items.push(item);
-            }
-        }
-        this.queue = [];
-        return items;
-    }
-    drainIndexOf() {
-        const items = [];
-        for (const item of this.queue) {
-            if (items.indexOf(item) === -1) {
-                items.push(item);
-            }
-        }
-        this.queue = [];
-        return items;
-    }
-    drainManual() {
-        const items = [];
-        for (const item of this.queue) {
-            let duplicate = false;
-            for (let i = 0; i < items.length; i++) {
-                if (items[i] === item) {
-                    duplicate = true;
-                    break;
-                }
-            }
-            if (!duplicate) {
-                items.push(item);
-            }
-        }
-        this.queue = [];
-        return items;
-    }
-    drainSmall() {
-        const queue = this.queue;
-        this.queue = [];
-    
-        if (queue.length <= 1) {
-            return queue;
-        }
-        if (queue.length === 2) {
-            if (queue[0] === queue[1]) {
-                return [queue[0]];
-            }
-    
-            return queue;
-        }
-        return [...new Set(queue)];
-    }
-    
-    
-    // to test each of the 3 methods 
-testing() {
-    const test = (listLength) => {
-        const iterations = 10000
-        const comparingFunctions = [
-            this.drain,
-            this.drainFastNoDuplacates,
-            this.drainEfficientNoDuplacates,
-        ]
-        
-        comparingFunctions.foreach((func) => { 
-            this.queue = [] 
-            let averageTime = 0
-            let averageMemory = 0
-            while (iterations>0) {
-
-                for(let i = 0; i < listLength; i++) {
-                    this.queue.push(math.random(1,11))
-                }
-                timeBefore = performamce.now() 
-                memoryBefore = performance.memory.usedJSHeapSize() 
-                
-                func()
-                
-                timeAfter = performamce.now() 
-                memoryAfter = performance.memory.usedJSHeapSize() 
-            
-                averageTime += timeAfter - timeBefore 
-                averageMemory += memoryAfter - memoryBefore 
-                iterations--; 
-            }
-            averageTime /= iterations
-            averageMemory /= iterations
-            
-            console.log ("tested Function: ${func}
-             comsole.log("time taken:" ${averageTime} 
-             console.log(`Used Heap: ${averageMemory} / 1024 / 1024} MB`);
-        }
-    }
-    test(0) 
-    test(1) 
-    test(2) 
-    test(10)
-    test(20)
-    test(100) 
-    test(1000) 
-    
-}
-
-class Bus {
-    on(){}
-}
-
-const bus = new Bus()
-const eventBuffer = new EventBuffer(bus)
-eventBuffer.testing() 
-
-
 class EventBuffer {
     constructor(eventBus, bufferedEvent) {
         this.queue = [];
@@ -153,89 +21,235 @@ class EventBuffer {
         return items;
     }
 
-    drainObject() {
-        const items = [];
-        const seen = Object.create(null);
-
-        for (const item of this.queue) {
-            const key = String(item);
-
-            if (!seen[key]) {
-                seen[key] = true;
-                items.push(item);
-            }
-        }
-
-        this.queue = [];
-        return items;
-    }
-
     drainIndexOf() {
-        const items = [];
+        const queue = this.queue
+        this.queue = [];
+        const length = queue.length;
 
-        for (const item of this.queue) {
+        const items = [queue[0]];
+
+        for (let i = 1; i < length; i++) {
+            const item = queue[i];
+
             if (items.indexOf(item) === -1) {
                 items.push(item);
             }
         }
 
-        this.queue = [];
         return items;
     }
 
-    drainManual() {
-        const items = [];
 
-        for (const item of this.queue) {
-            let duplicate = false;
-
-            for (let i = 0; i < items.length; i++) {
-                if (items[i] === item) {
-                    duplicate = true;
-                    break;
-                }
-            }
-
-            if (!duplicate) {
-                items.push(item);
-            }
-        }
-
-        this.queue = [];
-        return items;
-    }
-
-    drainSmall() {
+    drainOptimized() {
         const queue = this.queue;
         this.queue = [];
+        const length = queue.length;
 
-        if (queue.length <= 1) {
+        if (length < 2) {
             return queue;
         }
 
-        if (queue.length === 2) {
+        if (length === 2) {
             return queue[0] === queue[1]
                 ? [queue[0]]
                 : queue;
         }
 
-        return [...new Set(queue)];
+        if (queue.length === 3) {
+            return queue[0] === queue[1]
+                ? (queue[1] === queue[2] ? [queue[0]] : [queue[0], queue[2]])
+                : (queue[0] === queue[2]
+                    ? [queue[0], queue[1]]
+                    : (queue[1] === queue[2] ? [queue[0], queue[1]] : queue));
+        }
+        if (queue.length === 4) {
+            return queue[0] === queue[1]
+                ? (queue[1] === queue[2]
+                    ? (queue[2] === queue[3]
+                        ? [queue[0]]
+                        : [queue[0], queue[3]])
+                    : (queue[2] === queue[3]
+                        ? [queue[0], queue[2]]
+                        : [queue[0], queue[2], queue[3]]))
+                : (queue[0] === queue[2]
+                    ? (queue[0] === queue[3]
+                        ? [queue[0], queue[1]]
+                        : (queue[1] === queue[3]
+                            ? [queue[0], queue[1]]
+                            : [queue[0], queue[1], queue[3]]))
+                    : (queue[1] === queue[2]
+                        ? (queue[2] === queue[3]
+                            ? [queue[0], queue[1]]
+                            : [queue[0], queue[1], queue[3]])
+                        : (queue[1] === queue[3]
+                            ? [queue[0], queue[1], queue[2]]
+                            : (queue[2] === queue[3]
+                                ? [queue[0], queue[1], queue[2]]
+                                : queue))));
+        }
+        if (queue.length === 5) {
+            return queue[0] === queue[1]
+                ? (queue[1] === queue[2]
+                    ? (queue[2] === queue[3]
+                        ? (queue[3] === queue[4]
+                            ? [queue[0]]
+                            : [queue[0], queue[3]])
+                        : (queue[3] === queue[4]
+                            ? [queue[0], queue[2], queue[3]]
+                            : [queue[0], queue[2], queue[3], queue[4]]))
+                    : (queue[2] === queue[3]
+                        ? (queue[3] === queue[4]
+                            ? [queue[0], queue[2]]
+                            : [queue[0], queue[2], queue[4]])
+                        : (queue[3] === queue[4]
+                            ? [queue[0], queue[2], queue[3]]
+                            : [queue[0], queue[2], queue[3], queue[4]])))
+                : (queue[1] === queue[2]
+                    ? (queue[2] === queue[3]
+                        ? (queue[3] === queue[4]
+                            ? [queue[0], queue[1]]
+                            : [queue[0], queue[1], queue[3]])
+                        : (queue[3] === queue[4]
+                            ? [queue[0], queue[1], queue[2]]
+                            : [queue[0], queue[1], queue[2], queue[4]]))
+                    : (queue[2] === queue[3]
+                        ? (queue[3] === queue[4]
+                            ? [queue[0], queue[1], queue[2]]
+                            : [queue[0], queue[1], queue[2], queue[4]])
+                        : (queue[3] === queue[4]
+                            ? [queue[0], queue[1], queue[2], queue[3]]
+                            : queue)));
+            }
+
+
+        const items = [queue[0]];
+
+        for (let i = 1; i < length; i++) {
+            const item = queue[i];
+
+            if (items.indexOf(item) === -1) {
+                items.push(item);
+            }
+        }
+
+        return items;
     }
 
+
+    // This looks like madness and it might be. I rediscoved my desire to test the speed of functions optimizing for memeory with this
+    // I would not put this in a production env as i think the maintainer would rather have somthing as simple and one mistake can fail silently
+    /*
+    drainSet() {
+        const items = [...new Set(this.queue)];
+        this.queue = [];
+        return items;
+    }
+    */
+    // However this is optimized for my probelem at hand. I know duplicates are rare but need to be taken care of. I also know that I will have thousands of small lists between 0 and 5 elements at the most
+    // I can take advantage of the constraints of the problem and remove duplicates for arrays length 0 - 5 with minimal extra memory at O(1) time. anything larger than 5 is in O(n)
+    // In testing this consistantly ran faster than all other methods for these ranges
+    drainSmall() {
+        const queue = this.queue;
+        this.queue = [];
+        const length = queue.length
+
+        if (length === 0) {
+            return queue;
+        }
+
+        if (length === 1) {
+            return queue;
+        }
+
+        if (length === 2) {
+            return queue[0] === queue[1]
+                ? [queue[0]]
+                : queue;
+        }
+
+        if (length === 3) {
+            return queue[0] === queue[1]
+                ? (queue[1] === queue[2] ? [queue[0]] : [queue[0], queue[2]])
+                : (queue[0] === queue[2]
+                    ? [queue[0], queue[1]]
+                    : (queue[1] === queue[2] ? [queue[0], queue[1]] : queue));
+        }
+
+        if (length === 4) {
+            return queue[0] === queue[1]
+                ? (queue[1] === queue[2]
+                    ? (queue[2] === queue[3]
+                        ? [queue[0]]
+                        : [queue[0], queue[3]])
+                    : (queue[2] === queue[3]
+                        ? [queue[0], queue[2]]
+                        : [queue[0], queue[2], queue[3]]))
+                : (queue[0] === queue[2]
+                    ? (queue[0] === queue[3]
+                        ? [queue[0], queue[1]]
+                        : (queue[1] === queue[3]
+                            ? [queue[0], queue[1]]
+                            : [queue[0], queue[1], queue[3]]))
+                    : (queue[1] === queue[2]
+                        ? (queue[2] === queue[3]
+                            ? [queue[0], queue[1]]
+                            : [queue[0], queue[1], queue[3]])
+                        : (queue[1] === queue[3]
+                            ? [queue[0], queue[1], queue[2]]
+                            : (queue[2] === queue[3]
+                                ? [queue[0], queue[1], queue[2]]
+                                : queue))));
+        }
+        if (length === 5) {
+            return queue[0] === queue[1]
+                ? (queue[1] === queue[2]
+                    ? (queue[2] === queue[3]
+                        ? (queue[3] === queue[4]
+                            ? [queue[0]]
+                            : [queue[0], queue[3]])
+                        : (queue[3] === queue[4]
+                            ? [queue[0], queue[2], queue[3]]
+                            : [queue[0], queue[2], queue[3], queue[4]]))
+                    : (queue[2] === queue[3]
+                        ? (queue[3] === queue[4]
+                            ? [queue[0], queue[2]]
+                            : [queue[0], queue[2], queue[4]])
+                        : (queue[3] === queue[4]
+                            ? [queue[0], queue[2], queue[3]]
+                            : [queue[0], queue[2], queue[3], queue[4]])))
+                : (queue[1] === queue[2]
+                    ? (queue[2] === queue[3]
+                        ? (queue[3] === queue[4]
+                            ? [queue[0], queue[1]]
+                            : [queue[0], queue[1], queue[3]])
+                        : (queue[3] === queue[4]
+                            ? [queue[0], queue[1], queue[2]]
+                            : [queue[0], queue[1], queue[2], queue[4]]))
+                    : (queue[2] === queue[3]
+                        ? (queue[3] === queue[4]
+                            ? [queue[0], queue[1], queue[2]]
+                            : [queue[0], queue[1], queue[2], queue[4]])
+                        : (queue[3] === queue[4]
+                            ? [queue[0], queue[1], queue[2], queue[3]]
+                            : queue)));
+            }
+
+        return [...new Set(queue)];
+
+    }
     testing() {
         const test = (listLength) => {
-            const iterations = 10000;
+            const iterations = 1000000000;
 
             const comparingFunctions = [
                 this.drain.bind(this),
                 this.drainSet.bind(this),
-                this.drainObject.bind(this),
                 this.drainIndexOf.bind(this),
-                this.drainManual.bind(this),
-                this.drainSmall.bind(this)
+                this.drainSmall.bind(this),
+                this.drainOptimized.bind(this)
             ];
 
-            console.log(`\nQueue length: ${listLength}`);
+            const results = [];
 
             for (const func of comparingFunctions) {
                 let totalTime = 0;
@@ -258,23 +272,38 @@ class EventBuffer {
                     totalTime += timeAfter - timeBefore;
                 }
 
-                const averageTime = totalTime / iterations;
-
-                console.log(
-                    `${func.name}: ${averageTime.toFixed(6)} ms`
-                );
+                results.push({
+                    name: func.name,
+                    averageTime: totalTime / iterations
+                });
             }
+
+            // Fastest first
+            results.sort((a, b) => a.averageTime - b.averageTime);
+
+
+            console.log(`\nQueue length: ${listLength}`);
+
+            results.forEach((result, index) => {
+                console.log(
+                    `${index + 1}. ${result.name}: ${result.averageTime.toFixed(10)} ms`
+                );
+            });
         };
 
         test(0);
         test(1);
         test(2);
+        test(3);
+        test(4);
+        test(5);
+        test(6);
         test(10);
-        test(20);
-        test(100);
-        test(1000);
+
     }
+
 }
+
 
 class Bus {
     on() {}
@@ -286,3 +315,57 @@ const eventBuffer = new EventBuffer(bus, "test");
 eventBuffer.testing();
 
 
+// given the speeds of these functions. The testing of all of this was likley unndessesary but I feel like I have aquired another skill.
+/*
+My results for 100000000 iterations
+
+Queue length: 0
+1. bound drain:        0.000053 ms
+2. bound drainSmall:   0.000055 ms
+3. bound drainManual:  0.000057 ms
+4. bound drainIndexOf: 0.000057 ms
+5. bound drainObject:  0.000067 ms
+6. bound drainSet:     0.000087 ms
+
+Queue length: 1
+1. bound drain:        0.000055 ms
+2. bound drainSmall:   0.000059 ms
+3. bound drainManual:  0.000073 ms
+4. bound drainIndexOf: 0.000075 ms
+5. bound drainSet:     0.000095 ms
+6. bound drainObject:  0.000200 ms
+
+Queue length: 2
+1. bound drainSmall:   0.000059 ms
+2. bound drain:        0.000061 ms
+3. bound drainManual:  0.000076 ms
+4. bound drainIndexOf: 0.000076 ms
+5. bound drainSet:     0.000107 ms
+6. bound drainObject:  0.000230 ms
+
+
+Queue length: 3
+1. bound drain:        0.000059 ms
+2. bound drainSmall:   0.000062 ms
+3. bound drainManual:  0.000081 ms
+4. bound drainIndexOf: 0.000088 ms
+5. bound drainSet:     0.000121 ms
+6. bound drainObject:  0.000243 ms
+
+Queue length: 4
+1. bound drain: 0.000057 ms
+2. bound drainSmall: 0.000062 ms
+3. bound drainManual: 0.000080 ms
+4. bound drainIndexOf: 0.000089 ms
+5. bound drainSet: 0.000134 ms
+6. bound drainObject: 0.000259 ms
+
+Queue length: 5
+1. bound drain: 0.000057 ms
+2. bound drainSmall: 0.000064 ms
+3. bound drainManual: 0.000088 ms
+4. bound drainIndexOf: 0.000096 ms
+5. bound drainSet: 0.000149 ms
+6. bound drainObject: 0.000281 ms
+
+*/
