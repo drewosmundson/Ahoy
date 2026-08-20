@@ -317,55 +317,60 @@ eventBuffer.testing();
 
 // given the speeds of these functions. The testing of all of this was likley unndessesary but I feel like I have aquired another skill.
 /*
-My results for 100000000 iterations
-
+My results for 1,000,000,000 iterations
 Queue length: 0
-1. bound drain:        0.000053 ms
-2. bound drainSmall:   0.000055 ms
-3. bound drainManual:  0.000057 ms
-4. bound drainIndexOf: 0.000057 ms
-5. bound drainObject:  0.000067 ms
-6. bound drainSet:     0.000087 ms
-
+1. bound drain:          0.0000510413 ms
+2. bound drainOptimized: 0.0000556708 ms
+3. bound drainSmall:     0.0000563390 ms
+4. bound drainIndexOf:   0.0000564019 ms
+5. bound drainSet:       0.0000810036 ms
+ 
 Queue length: 1
-1. bound drain:        0.000055 ms
-2. bound drainSmall:   0.000059 ms
-3. bound drainManual:  0.000073 ms
-4. bound drainIndexOf: 0.000075 ms
-5. bound drainSet:     0.000095 ms
-6. bound drainObject:  0.000200 ms
+1. bound drainOptimized: 0.0000560124 ms
+2. bound drainIndexOf:   0.0000563233 ms
+3. bound drainSmall:     0.0000564960 ms
+4. bound drain:          0.0000571784 ms
+5. bound drainSet:       0.0000883492 ms
 
 Queue length: 2
-1. bound drainSmall:   0.000059 ms
-2. bound drain:        0.000061 ms
-3. bound drainManual:  0.000076 ms
-4. bound drainIndexOf: 0.000076 ms
-5. bound drainSet:     0.000107 ms
-6. bound drainObject:  0.000230 ms
-
+1. bound drainSmall:     0.0000578731 ms
+2. bound drainOptimized: 0.0000579925 ms
+3. bound drain:          0.0000580843 ms
+4. bound drainIndexOf:   0.0000684727 ms
+5. bound drainSet:       0.0001002679 ms
 
 Queue length: 3
-1. bound drain:        0.000059 ms
-2. bound drainSmall:   0.000062 ms
-3. bound drainManual:  0.000081 ms
-4. bound drainIndexOf: 0.000088 ms
-5. bound drainSet:     0.000121 ms
-6. bound drainObject:  0.000243 ms
+1. bound drain:          0.0000576126 ms
+2. bound drainOptimized: 0.0000590544 ms
+3. bound drainSmall:     0.0000593760 ms
+4. bound drainIndexOf:   0.0000759166 ms
+5. bound drainSet:       0.0001183956 ms
 
 Queue length: 4
-1. bound drain: 0.000057 ms
-2. bound drainSmall: 0.000062 ms
-3. bound drainManual: 0.000080 ms
-4. bound drainIndexOf: 0.000089 ms
-5. bound drainSet: 0.000134 ms
-6. bound drainObject: 0.000259 ms
+1. bound drain: 0.0000565348 ms
+2. bound drainSmall: 0.0000612906 ms
+3. bound drainOptimized: 0.0000613071 ms
+4. bound drainIndexOf: 0.0000845168 ms
+5. bound drainSet: 0.0001268111 ms
 
 Queue length: 5
-1. bound drain: 0.000057 ms
-2. bound drainSmall: 0.000064 ms
-3. bound drainManual: 0.000088 ms
-4. bound drainIndexOf: 0.000096 ms
-5. bound drainSet: 0.000149 ms
-6. bound drainObject: 0.000281 ms
+1. bound drain: 0.0000588405 ms
+2. bound drainOptimized: 0.0000603982 ms
+3. bound drainSmall: 0.0000605523 ms
+4. bound drainIndexOf: 0.0000932298 ms
+5. bound drainSet: 0.0001410384 ms
 
+Queue length: 6
+1. bound drain: 0.0000565802 ms
+2. bound drainIndexOf: 0.0001040483 ms
+3. bound drainOptimized: 0.0001045400 ms
+4. bound drainSet: 0.0001555071 ms
+5. bound drainSmall: 0.0001563585 ms
+
+Queue length: 10
+1. bound drain:         0.0000566370 ms
+2. bound drainIndexOf: 0.0001537056 ms
+3. bound drainOptimized: 0.0001559096 ms
+4. bound drainSmall:   0.0002283642 ms
+5. bound drainSet:       0.0002330692 ms
 */
