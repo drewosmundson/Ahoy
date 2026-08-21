@@ -21,6 +21,35 @@ class EventBuffer {
         return items;
     }
 
+}
+
+
+
+
+/*
+
+
+class EventBuffer {
+    constructor(eventBus, bufferedEvent) {
+        this.queue = [];
+
+        eventBus.on(bufferedEvent, (data) => {
+            this.queue.push(data);
+        });
+    }
+
+    drain() {
+        const items = this.queue;
+        this.queue = [];
+        return items;
+    }
+
+    drainSet() {
+        const items = [...new Set(this.queue)];
+        this.queue = [];
+        return items;
+    }
+
     drainIndexOf() {
         const queue = this.queue
         this.queue = [];
@@ -138,13 +167,13 @@ class EventBuffer {
 
     // This looks like madness and it might be. I rediscoved my desire to test the speed of functions optimizing for memeory with this
     // I would not put this in a production env as i think the maintainer would rather have somthing as simple and one mistake can fail silently
-    /*
+    
     drainSet() {
         const items = [...new Set(this.queue)];
         this.queue = [];
         return items;
     }
-    */
+    
     // However this is optimized for my probelem at hand. I know duplicates are rare but need to be taken care of. I also know that I will have thousands of small lists between 0 and 5 elements at the most
     // I can take advantage of the constraints of the problem and remove duplicates for arrays length 0 - 5 with minimal extra memory at O(1) time. anything larger than 5 is in O(n)
     // In testing this consistantly ran faster than all other methods for these ranges
@@ -373,4 +402,5 @@ Queue length: 10
 3. bound drainOptimized: 0.0001559096 ms
 4. bound drainSmall:   0.0002283642 ms
 5. bound drainSet:       0.0002330692 ms
+
 */
