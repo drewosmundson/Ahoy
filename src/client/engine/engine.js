@@ -35,8 +35,6 @@ export class Game {
 
         this.simulationSystems = []
         this.effectsSystems = [] 
-    
-    
 
         this.previousTime = 0;
         this.accumulator = 0;
@@ -45,10 +43,10 @@ export class Game {
     setup(canvas, localPlayerId, confirmedHeightmap) {
         this.localPlayerId = localPlayerId;
         this.canvas        = canvas;
+         this.renderer      = createRenderer(canvas, THREE.WebGLRenderer);
         this.heightmap     = confirmedHeightmap ?? this.heightmap;
-        this.renderer      = createRenderer(canvas, THREE.WebGLRenderer);
+
         this.scene         = createScene();
-        this.camera        = createCamera(canvas, THREE.PerspectiveCamera);
 
         this.localBus  = new LocalEventBus(eventSchemas);    // Intra-process event bus for ansyc updates in the same process
         this.networkBus  = new NetworkEventBus(eventSchemas); // Inter-process event bus for asnyc communication to the server
@@ -71,7 +69,7 @@ export class Game {
 
 
         // ==== Reactionary managers  =======================================
-        const cameraManager = new CameraManager(this.camera, localBus);
+        const cameraManager = new CameraManager(canvas, THREE.PerspectiveCamera, localBus);
         const soundManager   = new SoundManager(localBus);
         const vfxManager = new VFXManager(localBus);
         const terrainManager = new TerrainManager(localBus)
@@ -96,14 +94,14 @@ export class Game {
         this.accumulator = 0;
         this.handleWindowResize();
 
-        vehicleCoordinator.start(data)
+        for (const simulationSystem of this.simulationSystems) {
+            simulationSystem.start?.(lobbyData);
+        }
+        for (const effectSystem of this.reactionaryManagers) {
+            effectSystem.start?.(lobbyData);
+        }
 
-        for (const system of this.simulationSystems) {
-            system.start?.(lobbyData);
-        }
-        for (const manager of this.reactionaryManagers) {
-            manager.start?.(lobbyData);
-        }
+        vehicleCoordinator.start(data)
 
         createSceneTerrain(this.scene, this.heightmap);
 
@@ -111,25 +109,20 @@ export class Game {
     }
     
     loop = (time) => {
-        let frameTime = (time - this.previousTime) * 0.001;
+        const frameTime = Math.min(((time - this.previousTime) * 0.001), 0.25)  // clamp so tab switch does not spiral the system
+        
         this.previousTime = time;
-
-        frameTime = Math.min(frameTime, 0.25); // clamp so tab switch does not spiral the system
-
         this.accumulator += frameTime;
 
         while (this.accumulator >= FIXED_DT) {
-            this.gameRenderUpdate(FIXED_DT);
+            this.tick(FIXED_DT);
             this.accumulator -= FIXED_DT;
         }
-        this.renderer.render(this.scene, this.camera);
+        this.render()
     };
 
 
-    // BOAT AND MANAGERS AHOUKD NOT OWN LOCATION DATA 
-    // cases when user switches boats 
-    // boat manager contains the system that the boats use 
-    gameRenderUpdate(dt) {
+    tick(dt) {
         const rawInputs = this.userInputs.pollSet()
         const userInputs = this.removeDuplicates(rawInputs)
         const userControlledActions = vehicleCoordinator.getUserControlled(userInputs);
@@ -156,6 +149,12 @@ export class Game {
         worldState.reconcile(networkSnapshot)
 
         gameGraphics.update(worldState);
+    }
+    
+    //TODO FIX THIS NAMEINg 
+    render() {
+        this.graphics.update(this.world.getState()) 
+        this.renderer.render(this.scene, this.camera);
     }
 
     stop() {
