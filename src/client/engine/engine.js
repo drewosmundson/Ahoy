@@ -123,15 +123,14 @@ export class Game {
 
 
     tick(dt) {
-        const rawInputs = this.userInputs.pollSet()
-        const userInputs = this.removeDuplicates(rawInputs)
-        const userControlledActions = vehicleCoordinator.getUserControlled(userInputs);
-
         const worldState = world.getState();
-        const aiControlledVehicles = vehicleCoordinator.getAiControlled();
+    
+        const vehiclesHowControlled = vehicleCoordinator.getControlType(worldData)
+
+        const rawInputs = this.userInputs.pollSet()
         const aiIntents = this.aiBrain.getChanges(aiControlledVehicles, worldState);
 
-        const intents = utils.merge(userIntents, aiIntents);
+        const intents = this.intentPipline.getIntentss()(
 
         this.networkInterface.send(intents);
 
@@ -179,6 +178,18 @@ export class Game {
         this.camera.updateProjectionMatrix();
     };
 }
+
+
+function getIntents({ inputs, worldState, dt }) {
+        const userIntents = this.inputIntents.create(inputs, worldState);
+
+        const aiIntents = this.aiIntents.create(worldState, dt);
+
+        return {...userIntents, ...aiIntents}
+        );
+    }
+}
+
 
 
 const serverToClientPacketDecoding = {
