@@ -124,13 +124,10 @@ export class Game {
 
     tick(dt) {
         const worldState = world.getState();
-    
-        const vehiclesHowControlled = vehicleCoordinator.getControlType(worldData)
+        const vehiclesHowControlled = vehicleCoordinator.getControlType()
+        const inputs = this.userInputs.pollSet()
 
-        const rawInputs = this.userInputs.pollSet()
-        const aiIntents = this.aiBrain.getChanges(aiControlledVehicles, worldState);
-
-        const intents = this.intentPipline.getIntentss()(
+        const intents = this.intentPipline.getIntentss(inputs, worldState, dt)(
 
         this.networkInterface.send(intents);
 
@@ -145,9 +142,8 @@ export class Game {
         worldState.apply(changes);
 
         const networkSnapshot = this.networkSnapshotBuffer.poll();
+        
         worldState.reconcile(networkSnapshot)
-
-        gameGraphics.update(worldState);
     }
     
     //TODO FIX THIS NAMEINg 
@@ -214,6 +210,7 @@ const serverToClientPacketDecoding = {
             "PROJECTILE",
         ],
     },
+    
     X_LOCATION: {
        offset: 32,
        bits: 32,
@@ -234,6 +231,12 @@ const serverToClientPacketDecoding = {
        offset: 132,
        bits: 16,
     },
+    HOW_CONTROLLED: {
+        offset: 148,
+        bits: 8,
+        values: [
+            
+        ]
 }
 
 // dataPacketExample = [
@@ -250,8 +253,16 @@ function readField(value, offset, bits) {
 
 class WorldData {
     constructor(initalData) {
-        this.data = initalData
+        this.data = this.update(initalData)
     }
+    
+    
+    dataTemplate = {
+    
+    
+    } 
+    
+
 
     decodeData(dataPacket) {
 
@@ -280,8 +291,9 @@ class WorldData {
     }
 }
 
+// reading / updating from world data 
 
-class vehiclCoordinator {
+class vehiclCoordinator{
     constructor() {
     
         
