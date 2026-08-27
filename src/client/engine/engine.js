@@ -258,10 +258,49 @@ class WorldData {
     
     
     dataTemplate = {
-    
-    
+        0: {
+            Team: 0,
+            Group: 0,
+            userControl: true,
+            pitch: 0 ,
+            yaw: 0,
+            xLocation: 0,
+            yLocation: 0,
+            zLocation: 0,
+        }
     } 
     
+
+/* 
+// 1. The larger user lookup table
+const usersTable = {
+  100: { name: "Alex Smith", contact: { email: "alex@example.com" } }
+};
+
+// 2. The new user to add
+const newUser = {
+  id: 101,
+  name: "Sarah Jones",
+  contact: {
+    email: "sarah@example.com",
+    phone: "555-0199"
+  }
+};
+
+// 3. Add the user using their ID as the key
+usersTable[newUser.id] = newUser;
+
+console.log(usersTable);
+output:
+{
+  '100': { name: 'Alex Smith', contact: { email: 'alex@example.com' } },
+  '101': { id: 101, name: 'Sarah Jones', contact: { email: 'sarah@example.com', phone: '555-0199' } }
+}
+*/
+
+
+
+
 
 
     decodeData(dataPacket) {
