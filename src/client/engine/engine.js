@@ -256,18 +256,34 @@ class WorldData {
         this.data = this.update(initalData)
     }
     
-    
     dataTemplate = {
         0: {
             Team: 0,
             Group: 0,
-            userControl: true,
+            controller, "user" // user, ai, server
             pitch: 0 ,
             yaw: 0,
             xLocation: 0,
             yLocation: 0,
             zLocation: 0,
         }
+    }
+    update() {
+        
+    } 
+    
+    getIdsByController(snapshot, controllers) {
+        return Object.entries(snapshot)
+            .filter(([id, entity]) => controllers.includes(entity.controller))
+            .map(([id]) => Number(id))
+    }
+    
+    getIdsByTeam(snapshot, teams){
+        return Object.entries(snapshot)
+            .filter(([id, entity]) => teams.includes(entity.teams))
+            .map(([id]) => Number(id))
+    }
+        
     } 
     
 
@@ -331,7 +347,7 @@ output:
 }
 
 // reading / updating from world data 
-
+// TURING THIS INTO FILTER CLASS IN AN ECS will be merged with world data
 class vehiclCoordinator{
     constructor() {
     
