@@ -21,7 +21,6 @@ import { EffectsManager } from './EffectsManager.js';
 import { CollisionSystem } from './CollisionSystem.js';
 import { AISystem } from './AISystem.js';
 
-
 // ----------------------------------------------------------------------------
 // Game: top-level wiring. Fixed-timestep loop; managers simulate, systems
 // react across managers (collision, AI, etc).
@@ -43,7 +42,7 @@ export class Game {
     setup(canvas, localPlayerId, confirmedHeightmap) {
         this.localPlayerId = localPlayerId;
         this.canvas        = canvas;
-         this.renderer      = createRenderer(canvas, THREE.WebGLRenderer);
+        this.renderer      = createRenderer(canvas, THREE.WebGLRenderer);
         this.heightmap     = confirmedHeightmap ?? this.heightmap;
 
         this.scene         = createScene();
@@ -52,11 +51,11 @@ export class Game {
         this.networkBus  = new NetworkEventBus(eventSchemas); // Inter-process event bus for asnyc communication to the server
 
         initalizeUserInput(localBus, CONSTANTS.KEYBINDS);
+
         const keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
         const keyUpEventBuffer = new EventBuffer(localBus, eventSchemas.keyUp)
         const networkEventBuffer = new EventBuffer(networkBus, eventSchemas.serverSnapshot)
     
-        this.vehicleOwnershipCoordinator = new VehicleOwnershipCoordinator();
 
         // ==== Simulated & Reconciled Systems  ===========================
         const boatSimulator  = new BoatSimulator(localBus);
@@ -94,14 +93,16 @@ export class Game {
         this.accumulator = 0;
         this.handleWindowResize();
 
+        world.apply(lobbyData)
+
+        const worldStateSnapshot = world.getState();
+
         for (const simulationSystem of this.simulationSystems) {
-            simulationSystem.start?.(lobbyData);
+            simulationSystem.start?.(worldStateSnapshot);
         }
         for (const effectSystem of this.reactionaryManagers) {
-            effectSystem.start?.(lobbyData);
+            effectSystem.start?.(worldStateSnapshot);
         }
-
-        vehicleCoordinator.start(data)
 
         createSceneTerrain(this.scene, this.heightmap);
 
@@ -123,25 +124,23 @@ export class Game {
 
 
     tick(dt) {
-        const worldState = world.getState();
-        const vehiclesHowControlled = vehicleCoordinator.getControlType()
+        const worldStateSnapshot = world.getState();
+
         const inputs = this.userInputs.pollSet()
 
-        const intents = this.intentPipline.getIntentss(inputs, worldState, dt)(
+        const intents = this.intentPipline.getIntents(inputs, worldStateSnapshot, dt)
 
         this.networkInterface.send(intents);
 
         const changes = [];
 
-        for (const system of simulationSystems) {
-            changes.push(
-                system.simulate(dt, worldState, intents)
-            );
+        for (const system of this.simulationSystems) {
+            changes.push(system.simulate(dt, worldState, intents));
         }
 
         worldState.apply(changes);
 
-        const networkSnapshot = this.networkSnapshotBuffer.poll();
+        const networkSnapshot = this.networkInterface.poll();
         
         worldState.reconcile(networkSnapshot)
     }
@@ -177,16 +176,20 @@ export class Game {
 
 
 function getIntents({ inputs, worldState, dt }) {
-        const userIntents = this.inputIntents.create(inputs, worldState);
-
-        const aiIntents = this.aiIntents.create(worldState, dt);
-
-        return {...userIntents, ...aiIntents}
-        );
-    }
+    const userIntents = this.inputIntents.create(inputs, worldState);
+    const aiIntents = this.aiIntents.create(worldState, dt);
+    return {...userIntents, ...aiIntents}
 }
 
+function userIntents(inputs, worldState);
 
+
+
+function aiIntents() {
+
+
+
+}
 
 const serverToClientPacketDecoding = {
     ENTITY_ID: { 
@@ -250,69 +253,6 @@ function readField(value, offset, bits) {
     return Number((value >> BigInt(offset)) & mask);
 }
 
-
-class WorldData {
-    constructor(initalData) {
-        this.data = this.update(initalData)
-    }
-    
-    dataTemplate = {
-        0: {
-            Team: 0,
-            Group: 0,
-            controller, "user" // user, ai, server
-            pitch: 0 ,
-            yaw: 0,
-            xLocation: 0,
-            yLocation: 0,
-            zLocation: 0,
-        }
-    }
-    update() {
-        
-    } 
-    
-    getIdsByController(snapshot, controllers) {
-        return Object.entries(snapshot)
-            .filter(([id, entity]) => controllers.includes(entity.controller))
-            .map(([id]) => Number(id))
-    }
-    
-    getIdsByTeam(snapshot, teams){
-        return Object.entries(snapshot)
-            .filter(([id, entity]) => teams.includes(entity.teams))
-            .map(([id]) => Number(id))
-    }
-        
-    } 
-    
-
-/* 
-// 1. The larger user lookup table
-const usersTable = {
-  100: { name: "Alex Smith", contact: { email: "alex@example.com" } }
-};
-
-// 2. The new user to add
-const newUser = {
-  id: 101,
-  name: "Sarah Jones",
-  contact: {
-    email: "sarah@example.com",
-    phone: "555-0199"
-  }
-};
-
-// 3. Add the user using their ID as the key
-usersTable[newUser.id] = newUser;
-
-console.log(usersTable);
-output:
-{
-  '100': { name: 'Alex Smith', contact: { email: 'alex@example.com' } },
-  '101': { id: 101, name: 'Sarah Jones', contact: { email: 'sarah@example.com', phone: '555-0199' } }
-}
-*/
 
 
 
