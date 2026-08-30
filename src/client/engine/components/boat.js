@@ -22,6 +22,7 @@ export class Boat {
         // boat catches up to the authoritative snapshot per second.
         this.reconcileLerpRate = 8;
     }
+    
  
     getDeltaLocation(loc) {
         this.location = { ...loc };
