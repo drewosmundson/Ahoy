@@ -125,9 +125,7 @@ export class Game {
 
     tick(dt) {
         const worldStateSnapshot = world.getState();
-
         const inputs = this.userInputs.pollSet()
-
         const intents = this.intentPipline.getIntents(inputs, worldStateSnapshot, dt)
 
         this.networkInterface.send(intents);
