@@ -47,33 +47,31 @@ export class Game {
 
         this.scene         = createScene();
 
-        this.localBus  = new LocalEventBus(eventSchemas);    // Intra-process event bus for ansyc updates in the same process
-        this.networkBus  = new NetworkEventBus(eventSchemas); // Inter-process event bus for asnyc communication to the server
+        const localBus  = new LocalEventBus(eventSchemas);    // Intra-process event bus for ansyc updates in the same process
+        const networkBus  = new NetworkEventBus(eventSchemas); // Inter-process event bus for asnyc communication to the server
 
-        initalizeUserInput(localBus, CONSTANTS.KEYBINDS);
+        this.initalizeUserInput(localBus, CONSTANTS.KEYBINDS);
 
-        const keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
-        const keyUpEventBuffer = new EventBuffer(localBus, eventSchemas.keyUp)
-        const networkEventBuffer = new EventBuffer(networkBus, eventSchemas.serverSnapshot)
+        this.keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
+        this.keyUpEventBuffer = new EventBuffer(localBus, eventSchemas.keyUp)
+        this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.serverSnapshot)
     
-
         // ==== Simulated & Reconciled Systems  ===========================
-        const boatSimulator  = new BoatSimulator(localBus);
-        const planeSimulator = new PlaneSimulator(localBus);
-        const projectileSimulator = new ProjectileSimulator(localBus);
-        const collisionSystem =  new CollisionSystem(this.heightmap, localBus)
-
-        this.simulationSystems  = [boatSimulator, planeSimulator, projectileSimulator, collisionSystem];
+        this.simulationSystems  = [
+            new BoatSystem(localBus),
+            new PlaneSystem(localBus),
+            new ProjectileSystem(localBus),
+            new CollisionSystem(this.heightmap, localBus),
+        ]
         // ===================================================================
 
-
         // ==== Reactionary managers  =======================================
-        const cameraManager = new CameraManager(canvas, THREE.PerspectiveCamera, localBus);
-        const soundManager   = new SoundManager(localBus);
-        const vfxManager = new VFXManager(localBus);
-        const terrainManager = new TerrainManager(localBus)
-
-        this.reactionaryManagers = [cameraManager, soundManager, effectManager];
+        this.reactionarySystems = [
+            new CameraManager(canvas, THREE.PerspectiveCamera, localBus),
+            new SoundManager(localBus),
+            new VFXManager(localBus),
+            new TerrainManager(localBus),
+        ] 
         // ====================================================================
 
         window.addEventListener("resize", this.handleWindowResize);
@@ -94,18 +92,17 @@ export class Game {
         this.handleWindowResize();
 
         world.apply(lobbyData)
-
         const worldStateSnapshot = world.getState();
-
+        
+        createSceneTerrain(this.scene, this.heightmap);
+        
         for (const simulationSystem of this.simulationSystems) {
             simulationSystem.start?.(worldStateSnapshot);
         }
-        for (const effectSystem of this.reactionaryManagers) {
+        for (const effectSystem of this.reactionarySystems) {
             effectSystem.start?.(worldStateSnapshot);
         }
-
-        createSceneTerrain(this.scene, this.heightmap);
-
+        
         this.renderer.setAnimationLoop(loop)
     }
     
