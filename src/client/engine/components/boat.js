@@ -6,21 +6,17 @@
 // ----------------------------------------------------------------------------
 
 export class Boat {
-    constructor(id) {
-        this.id = id;
-        this.teamId = null;
-        this.ownerId = null; // fixed at lobby start, never changes for the match
- 
-        this.location = { x: 0, y: 0 };
+    constructor(movment, location, collison) {
+        location.
         this.rotation = 0;
         this.velocity = { x: 0, y: 0 };
         this.throttle = 0;
  
         // Collision-system metadata. Kept here (not on CollisionSystem)
         // since it's a per-vehicle-type property, same reasoning as inputMap.
-        this.layer = "vessel";
-        this.hitboxSphereSize = 5;
-        this.collidesWithTerrain = true;
+        collison.layer = "vessel";
+        collison.hitboxSphereSize = 5;
+        collison.collidesWithTerrain = true;
  
         // Tuning for reconcile() blending — how fast a network-controlled
         // boat catches up to the authoritative snapshot per second.
