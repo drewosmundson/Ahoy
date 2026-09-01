@@ -8,20 +8,20 @@ class VehicleComponent {
 }
 
 
-class VehicleSystem {
+class BoatSystem {
     comstructor(VehicleComponent,) {
         
     
     }
     
 
-    start(snapshotData) {
-        for (const entity of snapshotData){
+    start(initialData) {
+        const boatEntities 
+        for (const entity of initialData){
             
 
             
         }
-            
     } 
     
     update() {
