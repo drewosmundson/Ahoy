@@ -87,9 +87,6 @@ export class Game {
     // [{ id, vehicle: "boat", ownerId, teamId, location, rotation, initiallyActive }]
 
     start(lobbyData) {
-        this.previousTime = performance.now();
-        this.accumulator = 0;
-        this.handleWindowResize();
 
         world.apply(lobbyData)
         const worldStateSnapshot = world.getState();
@@ -105,6 +102,8 @@ export class Game {
         
         this.renderer.setAnimationLoop(loop)
     }
+
+
     
     loop = (time) => {
         const frameTime = Math.min(((time - this.previousTime) * 0.001), 0.25)  // clamp so tab switch does not spiral the system
@@ -160,7 +159,7 @@ export class Game {
             height = windowHeight;
             width = (height * 16) / 9;
         }
-
+ 
         this.canvas.style.width = `${width}px`;
         this.canvas.style.height = `${height}px`;
         this.renderer.setSize(width, height, false);

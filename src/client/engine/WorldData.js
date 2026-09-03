@@ -99,10 +99,6 @@ for (const [entity, position] of world.position) {
     position.z += velocity.z;
 }
 
-
-
-
-
 world.hasVelocity = new Set();
 
 world.hasVelocity.add(42);
