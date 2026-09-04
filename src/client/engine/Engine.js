@@ -44,8 +44,22 @@ export class Game {
         this.canvas        = canvas;
         this.renderer      = createRenderer(canvas, THREE.WebGLRenderer);
         this.heightmap     = confirmedHeightmap ?? this.heightmap;
-
         this.scene         = createScene();
+
+
+        // Components and entity initalization
+        const world = new WorldData();
+
+        const components = [
+            Position,
+            Rotation,
+            Velocity,
+            Controller,
+            Health
+        ]
+
+        components.forEach((component) => this.world.register(component))
+
 
         const localBus  = new LocalEventBus(eventSchemas);    // Intra-process event bus for ansyc updates in the same process
         const networkBus  = new NetworkEventBus(eventSchemas); // Inter-process event bus for asnyc communication to the server
@@ -55,13 +69,14 @@ export class Game {
         this.keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
         this.keyUpEventBuffer = new EventBuffer(localBus, eventSchemas.keyUp)
         this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.serverSnapshot)
+
     
         // ==== Simulated & Reconciled Systems  ===========================
         this.simulationSystems  = [
-            new BoatSystem(localBus),
-            new PlaneSystem(localBus),
-            new ProjectileSystem(localBus),
-            new CollisionSystem(this.heightmap, localBus),
+            new BoatSystem(world, localBus),
+            new PlaneSystem(world, localBus),
+            new ProjectileSystem(world, localBus),
+            new CollisionSystem(world, this.heightmap, localBus),
         ]
         // ===================================================================
 

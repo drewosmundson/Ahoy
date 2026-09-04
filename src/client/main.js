@@ -4,13 +4,13 @@
 // start navigation
 // start socket layer
 
-// dependancy singleton factories
+// Dependancy singleton factories
 import { createNavigation } from "./app/navigation.js";
 import { createDom } from "./app/dom.js";
 import { createUi } from "./app/ui.js"
 import { createEmitter } from "./app/emitter.js"
 
-// page/feature module archetecture. 
+// Page/feature module archetecture. 
 import { singleplayer } from "./features/singleplayer.js"
 import { host } from "./features/host.js"
 import { participant } from "./features/participant.js";
@@ -30,6 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const simulationBus = new LocalEventBus(eventSchemas.simulation);
     const effectsBus = new LocalEventBus(eventSchemas.effects)
 
+    // This creates a shared context and passes it to each feature
+    // to create their instances, then initializes each feature's event listeners.
     const context = {
         dom,
         navigate,
@@ -39,8 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
         effectsBus,
         Game,
     };
-    // As this becomes large it would be good practice to inialize only the nessesary event listeners
-    // For now this is fine as there are only about 3 event listeners for each feature
+    // As this grows, it may be worth initializing only the
+    // event listeners required by for the active features.
+    // For now this is fine since each feature only has about 3 listeners.
     [singleplayer, host, participant, mmo]
         .map(feature => feature(context))
         .forEach(feature => { 
