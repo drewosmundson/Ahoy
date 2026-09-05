@@ -45,22 +45,8 @@ export class Game {
         this.renderer      = createRenderer(canvas, THREE.WebGLRenderer);
         this.heightmap     = confirmedHeightmap ?? this.heightmap;
         this.scene         = createScene();
-
-
-        // Components and entity initalization
-        const world = new WorldData();
-
-        const components = [
-            Position,
-            Rotation,
-            Velocity,
-            Controller,
-            Health
-        ]
-
-        components.forEach((component) => this.world.register(component))
-
-
+        
+        // ==== Simulated & Reconciled Systems  ===========================
         const localBus  = new LocalEventBus(eventSchemas);    // Intra-process event bus for ansyc updates in the same process
         const networkBus  = new NetworkEventBus(eventSchemas); // Inter-process event bus for asnyc communication to the server
 
@@ -69,25 +55,41 @@ export class Game {
         this.keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
         this.keyUpEventBuffer = new EventBuffer(localBus, eventSchemas.keyUp)
         this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.serverSnapshot)
+        // ====================================================================
 
-    
-        // ==== Simulated & Reconciled Systems  ===========================
-        this.simulationSystems  = [
+
+        // ============ Components and entity initalization ==============
+        const world = new WorldData();
+        const components = [ 
+            Position,
+            Rotation,
+            Velocity,
+            Controller,
+            Health 
+        ]
+        components.forEach((component) => {
+            this.world.register(component)
+        });
+        // ================================================================
+
+
+        // ==== Simulated & Reconciled Systems  ===============================
+        this.simulationSystems  = [                       // Data changes sent to the server 
             new BoatSystem(world, localBus),
             new PlaneSystem(world, localBus),
             new ProjectileSystem(world, localBus),
             new CollisionSystem(world, this.heightmap, localBus),
         ]
-        // ===================================================================
 
-        // ==== Reactionary managers  =======================================
-        this.reactionarySystems = [
+
+        this.reactionarySystems = [                       // Data changes local NOT sent to the server
             new CameraManager(canvas, THREE.PerspectiveCamera, localBus),
             new SoundManager(localBus),
             new VFXManager(localBus),
             new TerrainManager(localBus),
         ] 
         // ====================================================================
+
 
         window.addEventListener("resize", this.handleWindowResize);
 
@@ -97,12 +99,10 @@ export class Game {
     // starts when the host clicks start game
     // lobby data populates the managers with the quantity of components they need to create
     // and which internal systems they need to be assigned to
-    //
     // Lobby Data Example:
     // [{ id, vehicle: "boat", ownerId, teamId, location, rotation, initiallyActive }]
 
     start(lobbyData) {
-
         world.apply(lobbyData)
         const worldStateSnapshot = world.getState();
         
@@ -114,12 +114,10 @@ export class Game {
         for (const effectSystem of this.reactionarySystems) {
             effectSystem.start?.(worldStateSnapshot);
         }
-        
         this.renderer.setAnimationLoop(loop)
     }
 
 
-    
     loop = (time) => {
         const frameTime = Math.min(((time - this.previousTime) * 0.001), 0.25)  // clamp so tab switch does not spiral the system
         
