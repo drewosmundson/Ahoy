@@ -2,6 +2,42 @@
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.176.0/examples/jsm/controls/OrbitControls.js';
 
 
+class CameraComponent {
+
+
+
+}
+
+
+class CameraSystem {
+    constructor(bus) {
+        this.cameraEntityId = null;
+        this.subscriptions = [
+            bus.on("mousemove", (updates) => this.mouseMove(updates)),
+            bus.on("cameraChange", (updates) => this.cameraChange(updates))
+        ]
+    }
+    start(lobbyData) {
+        // set target
+    }
+
+    mouseMove(updates) {
+
+    }
+
+    cameraChange(updates) {
+
+    }
+
+    destroy() {
+        this.subscriptions.forEach(sub => sub.unsubscribe());
+    }
+
+    update() {
+
+    }
+}
+
 export class CameraManager {
     constructor(PerspectiveCamera, canvas) {
         const aspect = canvas.clientWidth / canvas.clientHeight;
@@ -33,7 +69,7 @@ export class CameraManager {
     
 
     start(worldSnapshot) {
-        const playerId = worldSnapshot.getEntityKeys(Player)[0] // hack if there are multiple entities with player components. this be checked before this
+        // hack if there are multiple entities with player components. this be checked/prevented before this
 
         if(!playerId[0]) {
             console.log("no player id to attach to camera")
@@ -44,17 +80,10 @@ export class CameraManager {
     }
 
 
+    asyncUpdate() {
+        const playerId = worldSnapshot.getEntityKeys(ControlablePlayer)[0] 
 
-
-
-
-
-
-
-
-
-
-
+    }
 
 
 

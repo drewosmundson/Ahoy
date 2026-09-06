@@ -61,11 +61,11 @@ export class Game {
         const networkBus  = new NetworkEventBus(socket, eventSchemas); // Inter-process event bus for communication to the server
  
         this.initalizeUserInput(localBus, CONSTANTS.KEYBINDS);
+        this.initalizeAiBrain()
 
         this.keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
         this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.serverSnapshot) 
         // ===================================================================
-
 
 
         // ============ Components and entity initalization ==============
@@ -82,14 +82,19 @@ export class Game {
 
         // ==== Simulated & Reconciled Systems  ===============================
         this.simulationSystems  = [                       // Data changes sent to the server 
-            new BoatSystem(world, localBus),
-            new PlaneSystem(world, localBus),
-            new ProjectileSystem(world, localBus),
+            new BoatSystem(localBus),
+            new PlaneSystem(localBus),
+            new ProjectileSystem(localBus),
             new CollisionSystem(world, this.heightmap, localBus),
+        ]
+
+        this.coordinators = [           // the emitters to managers Bus.on
+            new VehicleCoordinator(world),
+            new SoundCoordinator(world), 
         ]
         
         this.effectsManagers = [         // Local data changes NOT sent to the server
-            new CameraManager(canvas, THREE.PerspectiveCamera, localBus), 
+            new CameraManager(, localBus), 
             new SoundManager(localBus),
             new VFXManager(localBus),
             new TerrainManager(localBus),
@@ -138,20 +143,19 @@ export class Game {
     };
 
     tick(dt) {
-        const worldStateSnapshot = world.getState();
-        const inputs = this.userInputs.pollSet()
-        const intents = this.intentPipline.getIntents(inputs, worldStateSnapshot, dt)
+        const inputs = this.userInputs.pollSet();
+        const intents = this.intentPipeline.getIntents(inputs, world, dt); // read directly, nothing has mutated yet
 
         this.networkInterface.send(intents);
 
         const changes = [];
         for (const system of this.simulationSystems) {
-            changes.push(system.simulate(dt, worldState, intents));
+            changes.push(system.simulate(dt, world, intents)); // reads world, doesn't write it
         }
-        worldState.apply(changes);
+        world.apply(changes); // single mutation point
 
         const networkSnapshot = this.networkInterface.poll();
-        worldState.reconcile(networkSnapshot)
+        world.reconcile(networkSnapshot);
     }
 
     render() {
@@ -183,57 +187,35 @@ export class Game {
 }
 
 
+// these are the systems equivilent to coordinators for the managers
+
+//=================
 
 
+// systems need data in and then data out the data comes from these buffer reads and then outputs to intents that are then passed in through update(intents) intents group local and ai changes
+// also receives a reconcile from the network buffer. there are two buffers that send data to each the systems. 
 
-export function createRenderer(canvas, WebGLRenderer){
 
+// the managers also need data in and data out but their data comes from the buses.emit() and received by busses.on()
+// the managers can have many bus reader classes that emit to a specific mamanger this happens async of the game loop that is why this has to be done this way.
+// these systems do do not need to be reconciled nore do the updates that they operate on and compare to components need to be sent to the server
+
+//=====================
+
+
+// directors read from buffer "emit" to systems the data "emitted" here
+
+// coordinators read from emit update
+
+function getIntents({ inputs, worldState, dt }) {
+    const userIntents = this.inputCoordinator.create(inputs, worldState);
+    const aiIntents = this.aiCoordinator.create(worldState, dt);
+    return {...userIntents, ...aiIntents}
 }
 
+function userIntents(inputs, worldState){}
 
 
 
+function aiIntents() {}
 
-
-// ============================================================================
-// OWNERSHIP MODEL
-// ----------------------------------------------------------------------------
-// - Ownership is FIXED at lobby start and never changes for the match. Each
-//   player is assigned a set of vehicles up front; that assignment is final.
-// - A player actively controls exactly ONE of their own vehicles at a time,
-//   tracked centrally by VehicleCoordinator (not per-manager). All their
-//   OTHER owned vehicles run on AI. Switching which one is active is pure
-//   local client state — no ownership check against other players is ever
-//   needed, since a client can only switch among vehicles it already owns.
-// - Every client is authoritative for ALL of its own vehicles (active or AI)
-//   and is responsible for simulating + broadcasting their state. A client
-//   never simulates another player's vehicle — it only blends toward that
-//   player's broadcast snapshots (controllers.network / Boat.reconcile).
-// - So "controlSource" is NOT a stored fact — it's derived every tick from
-//   (vehicle.ownerId, coordinator.activeVehicleId). See
-//   BoatManager.controllerFor / VehicleCoordinator.isActive.
-// - Controllers themselves are STATELESS strategies: update(vehicle, data, dt).
-//   See controllers.js.
-//
-// BUS WIRING
-// ----------------------------------------------------------------------------
-// ClientInput emits onto TWO separate buses, and they are handled completely
-// differently:
-//
-// - "mouseMove" -> the EFFECTS bus. Consumed immediately, every render
-//   frame, at monitor refresh rate. Drives camera look / aim reticle only.
-//   NEVER buffered, NEVER sent to the server, and NEVER touches any vehicle
-//   manager or the coordinator.
-// - "snapshot" (button/toggle actions) -> the SIMULATION bus. InputTranslator
-//   turns this into { throttleDelta, steer } for whichever vehicle the
-//   coordinator says is active, and emits "intent". Each vehicle manager's
-//   intentBuffer drains that on its own fixed tick. This IS what eventually
-//   gets broadcast to other clients (via the vehicle's simulated state), just
-//   not per-mouse-move.
-//
-// Network snapshots arrive as ONE event per tick containing the WHOLE
-// lobby's vehicle states ("worldSnapshot"), since the server doesn't know or
-// care which client owns which vehicle — it just broadcasts everyone's
-// state. Each manager's authorityBuffer drains those and flattens+indexes
-// them by id.
-// ============================================================================
