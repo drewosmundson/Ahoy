@@ -48,6 +48,8 @@ export class Game {
 
         this.previousTime = 0;
         this.accumulator = 0;
+
+        this.camera = null;
     }
 
     setup(canvas, serverHeightmap, socket) {
@@ -55,19 +57,18 @@ export class Game {
         this.heightmap     = serverHeightmap ?? this.heightmap;
         this.renderer      = createRenderer(canvas, THREE.WebGLRenderer);
         this.scene         = createScene();
-    
-    
-        this.initalizeUserInput(localBus, CONFIG.KEYBINDS);
-        this.initalizeAiBrain(localBus, CONFIG.AiTemperature)
-        this.initalizeNetworkInterface(localBus, )
-    
-    
+        this.camera        = createCamera()
+
         // ==== Async update handling  ===========================
         const localBus  = new LocalEventBus(eventSchemas);    // Intra-process event bus for updates in the same process that are not in sync with the game loop like mouse and keyboard
         const networkBus  = new NetworkEventBus(socket, eventSchemas); // Inter-process event bus for communication to the server
- 
+
+        initalizeUserInput(localBus, CONFIG.KEYBINDS);
+        initalizeAiBrain(localBus, CONFIG.AiTemperature)
+        initalizeNetworkInterface(localBus, networkBus) 
+    
         this.keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
-        this.aiUpdateEventBuffer = new EventBuffer(localBus, eventSchemas.aiBrainIntent) 
+        this.aiThoughtsEventBuffer = new EventBuffer(localBus, eventSchemas.aiBrainIntent) 
         this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.serverSnapshot) 
         // ===================================================================
 
@@ -80,7 +81,7 @@ export class Game {
             Controller,
             Health 
         ]
-        const world = new WorldData(components);
+        this.world = new WorldData(components);
         // ================================================================
 
 
@@ -89,19 +90,19 @@ export class Game {
             new BoatSystem(localBus),
             new PlaneSystem(localBus),
             new ProjectileSystem(localBus),
-            new CollisionSystem(world, this.heightmap, localBus),
+            new CollisionSystem(localBus, this.heightmap),
         ]
 
         this.coordinators = [           // the emitters to managers Bus.on
-            new VehicleCoordinator(world),
-            new SoundCoordinator(world), 
+            new VehicleCoordinator(),
+            new SoundCoordinator(), 
         ]
         
         this.effectsManagers = [         // Local data changes NOT sent to the server 
-            new CameraManager(, localBus), 
-            new SoundManager(localBus),
-            new VFXManager(localBus),
-            new TerrainManager(localBus),
+            new CameraManager(), 
+            new SoundManager(),
+            new VFXManager(),
+            new TerrainManager(),
         ] 
         // ====================================================================
 
