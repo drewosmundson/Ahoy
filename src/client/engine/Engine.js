@@ -56,14 +56,18 @@ export class Game {
         this.renderer      = createRenderer(canvas, THREE.WebGLRenderer);
         this.scene         = createScene();
     
+    
+        this.initalizeUserInput(localBus, CONFIG.KEYBINDS);
+        this.initalizeAiBrain(localBus, CONFIG.AiTemperature)
+        this.initalizeNetworkInterface(localBus, )
+    
+    
         // ==== Async update handling  ===========================
         const localBus  = new LocalEventBus(eventSchemas);    // Intra-process event bus for updates in the same process that are not in sync with the game loop like mouse and keyboard
         const networkBus  = new NetworkEventBus(socket, eventSchemas); // Inter-process event bus for communication to the server
  
-        this.initalizeUserInput(localBus, CONSTANTS.KEYBINDS);
-        this.initalizeAiBrain()
-
         this.keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
+        this.aiUpdateEventBuffer = new EventBuffer(localBus, eventSchemas.aiBrainIntent) 
         this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.serverSnapshot) 
         // ===================================================================
 
@@ -93,7 +97,7 @@ export class Game {
             new SoundCoordinator(world), 
         ]
         
-        this.effectsManagers = [         // Local data changes NOT sent to the server
+        this.effectsManagers = [         // Local data changes NOT sent to the server 
             new CameraManager(, localBus), 
             new SoundManager(localBus),
             new VFXManager(localBus),
