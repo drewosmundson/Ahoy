@@ -88,6 +88,7 @@ function createReceiver(socket, eventSchemas) {
 }
 
 
+
 // IPC bus usage
 // const networkBus = new events.NetworkEventBus(socket, eventSchemas)
 // networkBus.publish(event, data) // events going from client->server or server -> client
@@ -97,7 +98,6 @@ class NetworkEventBus extends LocalEventBus {
     constructor(socket, eventSchemas) {
         super();
         this.socket = socket;
-
 
         // publish('message', { text: 'hello' });    // passes checks, calls socket.emit
         // publish('badEvent', { text: 'hi' });      // throws "Unknown event: bogusEvent"
@@ -114,6 +114,7 @@ class NetworkEventBus extends LocalEventBus {
         this.detach = createReceiver(socket, eventSchemas)((event, data) => {
             this.emit(event, data);
         }).unsubscribe;
+
 
         this.connected = true;
     }
@@ -138,18 +139,16 @@ class NetworkEventBus extends LocalEventBus {
     }
 }
 
-// Namespace object 
+
 export const events = {
-    EventBuffer,
     LocalEventBus,
     NetworkEventBus,
 };
 
 
-export { EventBuffer, LocalEventBus, NetworkEventBus };
+export {  LocalEventBus, NetworkEventBus };
 
 export default events;
-
 
 
 // const networkEvents = new events.NetworkEventBus(socket, schemas);  // network lane - to and from the server
@@ -177,7 +176,6 @@ export default events;
 /*
 ----- Usage -----
 import events from './events.js';
-// or: import { events } from './events.js';
 
 const buffer = new events.EventBuffer(someBus, 'someEvent');
 const localBus = new events.LocalEventBus();

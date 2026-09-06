@@ -25,10 +25,7 @@ class EventBuffer {
 
 
 
-
 /*
-
-
 class EventBuffer {
     constructor(eventBus, bufferedEvent) {
         this.queue = [];

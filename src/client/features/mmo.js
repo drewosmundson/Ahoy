@@ -19,10 +19,8 @@ export function mmo({ dom, navigate, createGame }) {
   }
 
   function start() {
-    
     game.generateTerrain();
     game.start();
     navigate.toScreen(dom.screens.game);
-
   }
 }

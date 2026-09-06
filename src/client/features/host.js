@@ -2,7 +2,7 @@
 
 
 
-export function host({ dom, navigate, emitter, Game, CONSTANTS }) {
+export function host({ dom, navigate, emitter, Game }) {
   return {
     initEventListeners,
     toMenuScreen,

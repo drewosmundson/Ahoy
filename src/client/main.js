@@ -8,7 +8,6 @@
 import { createNavigation } from "./app/navigation.js";
 import { createDom } from "./app/dom.js";
 import { createUi } from "./app/ui.js"
-import { createEmitter } from "./app/emitter.js"
 
 // Page/feature module archetecture. 
 import { singleplayer } from "./features/singleplayer.js"
@@ -16,19 +15,15 @@ import { host } from "./features/host.js"
 import { participant } from "./features/participant.js";
 import { mmo } from "./features/mmo.js"
 
-import { eventSchemas } from "../shared/schemas.js";
+// Game Engine
 import { Game } from "./game/Game.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     const dom = createDom();
     const navigate = createNavigation(dom);
     const ui = createUi(dom);
-    
     const socket = io();
 
-    const networkBus = new NetworkEventBus(eventSchemas.network, socket);
-    const simulationBus = new LocalEventBus(eventSchemas.simulation);
-    const effectsBus = new LocalEventBus(eventSchemas.effects)
 
     // This creates a shared context and passes it to each feature
     // to create their instances, then initializes each feature's event listeners.
@@ -36,11 +31,16 @@ document.addEventListener('DOMContentLoaded', () => {
         dom,
         navigate,
         ui,
-        networkBus,
-        simulationBus,
-        effectsBus,
+        socket,
         Game,
     };
+    
+    // catch if page reloaded with no internet 
+    if (!socket.connected) {
+        navigate.toScreen(dom.screens.offline)
+        singleplayer(context).initEventListeners();
+    }
+
     // As this grows, it may be worth initializing only the
     // event listeners required by for the active features.
     // For now this is fine since each feature only has about 3 listeners.
@@ -50,6 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
             feature.initEventListeners();
             // feature.otherFunction(); 
         });
+    
+
+
 });
 
 
