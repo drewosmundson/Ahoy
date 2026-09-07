@@ -1,18 +1,15 @@
 
 // Utils
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
-import { CONSTANTS } from "../../shared/constants.js";
+import { CONSTANTS } from "../../shared/CONSTANTS.js";
+import { CONFIG } from "../../shared/config.js"
 
-
-// Factory's for static functions needed for setup
-import { createRenderer } from "./utils/Renderer.js"
-import { createScene } from "./"
-import { createHeightmap } from "./utils/Heightmap.js"
-import { createTerrain } from "./landscape/Terrain.js"
-import { createCamera } from "./utils/Camera.js"
+import WorldData from "WorldData.js"
+import NetworkInterface from "NetworkInterface.js"
 
 // Components
-
+import components from "./ComponentModule.js"
+import systems from "./SystemModule.js"
 
 // Simulation Systems
 import { BoatSystem } from './BoatSystem.js';
@@ -29,7 +26,13 @@ import { EffectsSystem } from './EffectsManager.js';
 import { LocalEventBus } from '../../shared/eventBus.js';
 import { NetworkEventBus } from '../../shared/eventBus.js';
 import { EventBuffer } from '../../shared/eventBuffer.js';
-import { eventSchemas } from './utils/schemas.js';
+import { eventSchemas } from './Utils/schemas.js';
+
+
+
+// Factory's for static functions needed for setup
+import { createHeightmap } from "./Utils/Heightmap.js"
+import { createTerrain } from "./Terrain/Terrain.js"
 
 
 // ---------------------------------------------------------------------------
@@ -60,52 +63,39 @@ export class Game {
         this.camera        = createCamera()
 
         // ==== Async update handling  ===========================
-        const localBus  = new LocalEventBus(eventSchemas);    // Intra-process event bus for updates in the same process that are not in sync with the game loop like mouse and keyboard
+        const localBus  = new LocalEventBus(eventSchemas);// Intra-process event bus for updates in the same process that are not in sync with the game loop like mouse and keyboard
         const networkBus  = new NetworkEventBus(socket, eventSchemas); // Inter-process event bus for communication to the server
 
-        initalizeUserInput(localBus, CONFIG.KEYBINDS);
-        initalizeAiBrain(localBus, CONFIG.AiTemperature)
-        initalizeNetworkInterface(localBus, networkBus) 
-    
         this.keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
         this.aiThoughtsEventBuffer = new EventBuffer(localBus, eventSchemas.aiBrainIntent) 
         this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.serverSnapshot) 
         // ===================================================================
 
+        // ================ Input Sources ======================================
+        initalizeUserInput(localBus, CONFIG.KEYBINDS);
+        initalizeAiBrain(localBus, CONFIG.AI)
+        initalizeNetworkInterface(localBus, networkBus) 
+        // ==================================================================
 
         // ============ Components and entity initalization ==============
-        const components = [ 
-            Position,
-            Rotation,
-            Velocity,
-            Controller,
-            Health 
-        ]
         this.world = new WorldData(components);
         // ================================================================
 
-
         // ==== Simulated & Reconciled Systems  ===============================
-        this.simulationSystems  = [                       // Data changes sent to the server 
+        this.simulationSystems  = [         // Data changes sent to and validated the servers
             new BoatSystem(localBus),
             new PlaneSystem(localBus),
             new ProjectileSystem(localBus),
             new CollisionSystem(localBus, this.heightmap),
         ]
 
-        this.coordinators = [           // the emitters to managers Bus.on
+        this.directSystems = [           // Systems that run on 
             new VehicleCoordinator(),
-            new SoundCoordinator(), 
-        ]
-        
-        this.effectsManagers = [         // Local data changes NOT sent to the server 
+            new SoundCoordinator(),
             new CameraManager(), 
             new SoundManager(),
-            new VFXManager(),
-            new TerrainManager(),
-        ] 
+        ]
         // ====================================================================
-
         window.addEventListener("resize", this.handleWindowResize); 
         this.handleWindowResize(); // immidiately fire this once to fix if already mutated before listener was added
         networkBus.emit(eventSchemas.userSetup, true)
@@ -141,32 +131,37 @@ export class Game {
         this.previousTime = time;
         this.accumulator += frameTime;
         while (this.accumulator >= FIXED_DT) {
-            this.tick(FIXED_DT);
+            this.tick(this.world, FIXED_DT);
             this.accumulator -= FIXED_DT;
         }
         this.render()
     };
 
-    tick(dt) {
-        const inputs = this.userInputs.pollSet();
-        const intents = this.intentPipeline.getIntents(inputs, world, dt); // read directly, nothing has mutated yet
+    tick(world, dt) {
+        this.aiBrain.update(world, dt)
+
+        const intents = {
+            ...this.keyDownEventBuffer.pollSet(),
+            ...this.aiThoughtsEventBuffer.pollSet()
+        }
 
         this.networkInterface.send(intents);
 
         const changes = [];
         for (const system of this.simulationSystems) {
-            changes.push(system.simulate(dt, world, intents)); // reads world, doesn't write it
+            changes.push(system.simulate(dt, world, intents)); 
         }
-        world.apply(changes); // single mutation point
+        world.apply(changes); 
 
         const networkSnapshot = this.networkInterface.poll();
-        world.reconcile(networkSnapshot);
+        this.world.reconcile(networkSnapshot);
     }
 
     render() {
         this.graphics.update(this.world.getState()) 
         this.renderer.render(this.scene, this.camera);
     }
+
 
     stop() {
         this.renderer.setAnimationLoop(null);
@@ -211,16 +206,3 @@ export class Game {
 // directors read from buffer "emit" to systems the data "emitted" here
 
 // coordinators read from emit update
-
-function getIntents({ inputs, worldState, dt }) {
-    const userIntents = this.inputCoordinator.create(inputs, worldState);
-    const aiIntents = this.aiCoordinator.create(worldState, dt);
-    return {...userIntents, ...aiIntents}
-}
-
-function userIntents(inputs, worldState){}
-
-
-
-function aiIntents() {}
-
