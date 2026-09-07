@@ -7,20 +7,10 @@ import { CONFIG } from "../../shared/config.js"
 import WorldData from "WorldData.js"
 import NetworkInterface from "NetworkInterface.js"
 
-// Components
-import components from "./ComponentModule.js"
-import systems from "./SystemModule.js"
 
-// Simulation Systems
-import { BoatSystem } from './BoatSystem.js';
-import { PlaneSystem } from './PlaneSystem.js';
-import { ProjectileSystem } from './ProjectileSystem.js';
-import { CollisionSystem } from './CollisionSystem.js';
 
-// Effect Systems
-import { CameraSystem } from './CameraManager.js';
-import { SoundSystem } from './SoundManager.js';
-import { EffectsSystem } from './EffectsManager.js';
+// Systems
+import { createTerrain } from "./Terrain.js"
 
 // Async and networking events and buffers
 import { LocalEventBus } from '../../shared/eventBus.js';
@@ -28,57 +18,49 @@ import { NetworkEventBus } from '../../shared/eventBus.js';
 import { EventBuffer } from '../../shared/eventBuffer.js';
 import { eventSchemas } from './Utils/schemas.js';
 
-
-
 // Factory's for static functions needed for setup
 import { createHeightmap } from "./Utils/Heightmap.js"
-import { createTerrain } from "./Terrain/Terrain.js"
-
 
 // ---------------------------------------------------------------------------
 // Game: top-level wiring. Fixed-timestep loop; managers simulate, systems
 // react across managers (collision, AI, etc).
 // ----------------------------------------------------------------------------
-export class Game {
-    // socket: an already-connected transport (e.g. a socket.io client
-    // instance) implementing on/off/emit/close — handed straight to
-    // NetworkEventBus, which owns validating traffic against eventSchemas.
-    constructor() {
-        this.heightmap = createHeightmap();
-
-        this.simulationSystems = []
-        this.effectsSystems = [] 
-
-        this.previousTime = 0;
-        this.accumulator = 0;
-
-        this.camera = null;
+export class Engine {
+    
+    constructor(Game) {
+        this.Components = Game?.components;
+        this.AsyncSystems = Game?.asyncSystems;
+        this.InSyncSystems = Game?.inSyncSystems;
+        this.Terrain = Game?.Terrain;
+        this.NetworkEvents
+        this.InputEvents 
+        this.cameraManager = Game?.cameraManager
     }
 
     setup(canvas, serverHeightmap, socket) {
         this.canvas        = canvas;
-        this.heightmap     = serverHeightmap ?? this.heightmap;
+        this.heightmap     = serverHeightmap ?? Terrain.createHeightmap()
         this.renderer      = createRenderer(canvas, THREE.WebGLRenderer);
         this.scene         = createScene();
         this.camera        = createCamera()
+        
+        
 
         // ==== Async update handling  ===========================
         const localBus  = new LocalEventBus(eventSchemas);// Intra-process event bus for updates in the same process that are not in sync with the game loop like mouse and keyboard
         const networkBus  = new NetworkEventBus(socket, eventSchemas); // Inter-process event bus for communication to the server
 
         this.keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
-        this.aiThoughtsEventBuffer = new EventBuffer(localBus, eventSchemas.aiBrainIntent) 
         this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.serverSnapshot) 
         // ===================================================================
 
         // ================ Input Sources ======================================
-        initalizeUserInput(localBus, CONFIG.KEYBINDS);
-        initalizeAiBrain(localBus, CONFIG.AI)
-        initalizeNetworkInterface(localBus, networkBus) 
+        initalizeUserInput(localBus, this.keyboardEvents);
+        initalizeNetworkInterface(localBus, networkBus, this.networkEvents) 
         // ==================================================================
 
         // ============ Components and entity initalization ==============
-        this.world = new WorldData(components);
+        this.world = new WorldData(this.components);
         // ================================================================
 
         // ==== Simulated & Reconciled Systems  ===============================
@@ -96,6 +78,8 @@ export class Game {
             new SoundManager(),
         ]
         // ====================================================================
+        this.cameraManager = new CameraManager(localBus, this.Camera)
+        
         window.addEventListener("resize", this.handleWindowResize); 
         this.handleWindowResize(); // immidiately fire this once to fix if already mutated before listener was added
         networkBus.emit(eventSchemas.userSetup, true)
