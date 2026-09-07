@@ -23,7 +23,7 @@ import { eventSchemas } from './Utils/schemas.js';
 // react across managers (collision, AI, etc).
 // ----------------------------------------------------------------------------
 export class Engine {
-    constructor(Game, canvas) {
+    constructor(Game) {
         // create changes that the systems will read and react to and compare to the data in components
         this.UserInput      = Game?.UserEvents;
         this.AiBrain        = Game?.AiBrain
@@ -40,24 +40,13 @@ export class Engine {
 
         // Authorative updates from the server does not need to be passed into systems these updates go straight into world data after reconcile
         this.NetworkEvents  = Game?.NetworkEvents
-
-        this.canvas         = canvas;
     }
 
-    setup(camvas, socket = null) {
-        this.canvas        = canvas
-
-        //this.renderer      = createRenderer(THREE.WebGLRenderer, canvas);
-
-        this.renderer = new WebGLRenderer({
-            canvas: this.canvas,
-            antialias: true
-        });
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.setAnimationLoop(loop)
+    setup(canvas, socket = null) {
+        this.renderer      = createRenderer(THREE.WebGLRenderer, canvas);
         this.camera        = createCamera(THREE.PerspecitveCamera)
         this.scene         = createScene(THREE.Scene);
-
+        
         const localBus  = new LocalEventBus(eventSchemas);// Intra-process event bus for updates in the same process that are not in sync with the game loop like mouse and keyboard
         const networkBus  = new NetworkEventBus(socket, eventSchemas); // Inter-process event bus for communication to the server
 
@@ -83,7 +72,6 @@ export class Engine {
 
         this.NetworkInterface = initalizeNetworkInterface(localBus, networkBus, this.networkEvents) 
 
-        
         window.addEventListener("resize", this.handleWindowResize); 
         this.handleWindowResize(); // immidiately fire this once to fix if already mutated before listener was added
         networkBus.emit(eventSchemas.userSetup, true)
@@ -105,6 +93,9 @@ export class Engine {
         for (const reactionarySystems of this.reactionarySystems) {
             reactionarySystems.start?.(decodedLobbyData);
         }
+        
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setAnimationLoop(loop)
     }
 
     loop = (time) => {
@@ -163,7 +154,13 @@ export class Engine {
         this.camera.updateProjectionMatrix();
     };
 }
-
+function createRenderer(canvas, WebRenderer) {
+    const renderer = new WebGLRenderer({
+        canvas: this.canvas,
+        antialias: true
+    });
+    return renderer 
+}
 
 // these are the systems equivilent to coordinators for the managers
 
