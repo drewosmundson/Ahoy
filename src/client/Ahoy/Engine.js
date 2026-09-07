@@ -8,7 +8,6 @@ import WorldData from "WorldData.js"
 import NetworkInterface from "NetworkInterface.js"
 
 
-
 // Systems
 import { createTerrain } from "./Terrain.js"
 
@@ -18,67 +17,72 @@ import { NetworkEventBus } from '../../shared/eventBus.js';
 import { EventBuffer } from '../../shared/eventBuffer.js';
 import { eventSchemas } from './Utils/schemas.js';
 
-// Factory's for static functions needed for setup
-import { createHeightmap } from "./Utils/Heightmap.js"
 
 // ---------------------------------------------------------------------------
 // Game: top-level wiring. Fixed-timestep loop; managers simulate, systems
 // react across managers (collision, AI, etc).
 // ----------------------------------------------------------------------------
 export class Engine {
-    
-    constructor(Game) {
-        this.Components = Game?.components;
-        this.AsyncSystems = Game?.asyncSystems;
-        this.InSyncSystems = Game?.inSyncSystems;
-        this.Terrain = Game?.Terrain;
-        this.NetworkEvents
-        this.InputEvents 
-        this.cameraManager = Game?.cameraManager
+    constructor(Game, canvas) {
+        // create changes that the systems will read and react to and compare to the data in components
+        this.UserInput      = Game?.UserEvents;
+        this.AiBrain        = Game?.AiBrain
+
+        // Assined to entities and organized in world data. 
+        this.Components     = Game?.Components;
+
+        // Systems read from components in world data and act given the new information passed down from the user or ai inputs
+        this.AsyncSystems   = Game?.AsyncSystems;
+        this.InSyncSystems  = Game?.InSyncSystems;
+
+        // Does not fit in neatly with other systems or components because the camera is always needed.
+        this.CameraManager  = Game?.CameraManager
+
+        // Authorative updates from the server does not need to be passed into systems these updates go straight into world data after reconcile
+        this.NetworkEvents  = Game?.NetworkEvents
+
+        this.canvas         = canvas;
     }
 
-    setup(canvas, serverHeightmap, socket) {
-        this.canvas        = canvas;
-        this.heightmap     = serverHeightmap ?? Terrain.createHeightmap()
-        this.renderer      = createRenderer(canvas, THREE.WebGLRenderer);
-        this.scene         = createScene();
-        this.camera        = createCamera()
-        
-        
+    setup(camvas, socket = null) {
+        this.canvas        = canvas
 
-        // ==== Async update handling  ===========================
+        //this.renderer      = createRenderer(THREE.WebGLRenderer, canvas);
+
+        this.renderer = new WebGLRenderer({
+            canvas: this.canvas,
+            antialias: true
+        });
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setAnimationLoop(loop)
+        this.camera        = createCamera(THREE.PerspecitveCamera)
+        this.scene         = createScene(THREE.Scene);
+
         const localBus  = new LocalEventBus(eventSchemas);// Intra-process event bus for updates in the same process that are not in sync with the game loop like mouse and keyboard
         const networkBus  = new NetworkEventBus(socket, eventSchemas); // Inter-process event bus for communication to the server
 
         this.keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
+        this.AiBrainEventBuffer = new EventBuffer(localBus, eventSchemas.serverSnapshot) 
         this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.serverSnapshot) 
-        // ===================================================================
 
         // ================ Input Sources ======================================
         initalizeUserInput(localBus, this.keyboardEvents);
-        initalizeNetworkInterface(localBus, networkBus, this.networkEvents) 
+        initalizeAiBrain(localBus, this.aiBrain)
         // ==================================================================
 
         // ============ Components and entity initalization ==============
-        this.world = new WorldData(this.components);
+        this.world = new WorldData(this.Components);
         // ================================================================
 
-        // ==== Simulated & Reconciled Systems  ===============================
-        this.simulationSystems  = [         // Data changes sent to and validated the servers
-            new BoatSystem(localBus),
-            new PlaneSystem(localBus),
-            new ProjectileSystem(localBus),
-            new CollisionSystem(localBus, this.heightmap),
-        ]
+        // ====  Systems  ============================================
+        this.InSyncSystems = this.InSyncSystems.map(System => new System(localBus));
+        this.AsyncSystems = this.AsyncSystems.map(System => new System(localBus));
+        // =======================================================
 
-        this.directSystems = [           // Systems that run on 
-            new VehicleCoordinator(),
-            new SoundCoordinator(),
-            new CameraManager(), 
-            new SoundManager(),
-        ]
-        // ====================================================================
-        this.cameraManager = new CameraManager(localBus, this.Camera)
+        this.CameraManager = new CameraManager(localBus)
+
+        this.NetworkInterface = initalizeNetworkInterface(localBus, networkBus, this.networkEvents) 
+
         
         window.addEventListener("resize", this.handleWindowResize); 
         this.handleWindowResize(); // immidiately fire this once to fix if already mutated before listener was added
@@ -90,8 +94,10 @@ export class Engine {
     // and which internal systems they need to be assigned to
     // decoded Lobby Data Example:
     // [{ id, vehicle: "boat", ownerId, teamId, location, rotation, initiallyActive }]
+    // lobby data contains the the heightmap if is one if not it is created on the spot
+    // the host just needs to have started before all of the others so this step can finish and the others can get their heightmap externally
     start(lobbyData) {
-        world.apply(lobbyData)
+        this.world.apply(lobbyData)
 
         for (const simulationSystem of this.simulationSystems) {
             simulationSystem.start?.(decodedLobbyData);
@@ -99,15 +105,6 @@ export class Engine {
         for (const reactionarySystems of this.reactionarySystems) {
             reactionarySystems.start?.(decodedLobbyData);
         }
-
-        createTerrain(this.scene, this.heightmap);
-
-        this.renderer = new WebGLRenderer({
-            canvas: this.canvas,
-            antialias: true
-        });
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.setAnimationLoop(loop)
     }
 
     loop = (time) => {
@@ -122,12 +119,10 @@ export class Engine {
     };
 
     tick(world, dt) {
-        this.aiBrain.update(world, dt)
+        const userInputs = this.keyDownEventBuffer.poll()
+        const aiInputs = this.aiBrainBuffer.poll()
 
-        const intents = {
-            ...this.keyDownEventBuffer.pollSet(),
-            ...this.aiThoughtsEventBuffer.pollSet()
-        }
+        const intents = [...userInputs, ...aiInputs]
 
         this.networkInterface.send(intents);
 
@@ -135,9 +130,8 @@ export class Engine {
         for (const system of this.simulationSystems) {
             changes.push(system.simulate(dt, world, intents)); 
         }
-        world.apply(changes); 
 
-        const networkSnapshot = this.networkInterface.poll();
+        this.world.apply(changes); 
         this.world.reconcile(networkSnapshot);
     }
 
