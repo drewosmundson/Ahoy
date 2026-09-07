@@ -1,5 +1,5 @@
 
-import CONSTANTS from "./Utils/Constants.js"
+import CONSTANTS from "../../Engine/Utils/Constants.js"
 
 
 class NetworkInterface {

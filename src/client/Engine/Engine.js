@@ -1,79 +1,73 @@
 
 // Utils
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
-import { CONSTANTS } from "../../shared/CONSTANTS.js";
-import { CONFIG } from "../../shared/config.js"
 
 import WorldData from "WorldData.js"
 import NetworkInterface from "NetworkInterface.js"
-
-
-// Systems
-import { createTerrain } from "./Terrain.js"
 
 // Async and networking events and buffers
 import { LocalEventBus } from '../../shared/eventBus.js';
 import { NetworkEventBus } from '../../shared/eventBus.js';
 import { EventBuffer } from '../../shared/eventBuffer.js';
+
 import { eventSchemas } from './Utils/schemas.js';
-
-
 // ---------------------------------------------------------------------------
 // Game: top-level wiring. Fixed-timestep loop; managers simulate, systems
 // react across managers (collision, AI, etc).
 // ----------------------------------------------------------------------------
 export class Engine {
-    constructor(Game) {
-        // create changes that the systems will read and react to and compare to the data in components
-        this.UserInput      = Game?.UserEvents;
-        this.AiBrain        = Game?.AiBrain
 
+    constructor(Game) {
         // Assined to entities and organized in world data. 
-        this.Components     = Game?.Components;
+        this.Components       = Game?.Components;
 
         // Systems read from components in world data and act given the new information passed down from the user or ai inputs
-        this.AsyncSystems   = Game?.AsyncSystems;
-        this.InSyncSystems  = Game?.InSyncSystems;
+        this.OnTickSystems  = Game?.OnTickSystems;
+        this.RealtimeSystems    = Game?.RealtimeSystems;
 
-        // Does not fit in neatly with other systems or components because the camera is always needed.
-        this.CameraManager  = Game?.CameraManager
+        // creates intended changes that the systems will read and react to and compare to the data in components
+        this.UserInput        = Game?.UserEvents;
+        this.AiBrain          = Game?.AiBrain
 
         // Authorative updates from the server does not need to be passed into systems these updates go straight into world data after reconcile
-        this.NetworkEvents  = Game?.NetworkEvents
+        this.NetworkInterface = Game?.NetworkEvents
+
+        // Does not fit in neatly with other systems or components because the camera is always needed.
+        this.CameraManager    = Game?.CameraManager
     }
 
     setup(canvas, socket = null) {
+        this.canvas        = canvas;
         this.renderer      = createRenderer(THREE.WebGLRenderer, canvas);
         this.camera        = createCamera(THREE.PerspecitveCamera)
         this.scene         = createScene(THREE.Scene);
         
+        // ============ Components and entity initalization ==============
+        this.world = new WorldData();
+        this.world.register(this.Components)
+        // ================================================================
+
         const localBus  = new LocalEventBus(eventSchemas);// Intra-process event bus for updates in the same process that are not in sync with the game loop like mouse and keyboard
         const networkBus  = new NetworkEventBus(socket, eventSchemas); // Inter-process event bus for communication to the server
 
-        this.keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.keydown) // array of keydowns 
-        this.AiBrainEventBuffer = new EventBuffer(localBus, eventSchemas.serverSnapshot) 
-        this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.serverSnapshot) 
-
-        // ================ Input Sources ======================================
-        initalizeUserInput(localBus, this.keyboardEvents);
-        initalizeAiBrain(localBus, this.aiBrain)
-        // ==================================================================
-
-        // ============ Components and entity initalization ==============
-        this.world = new WorldData(this.Components);
-        // ================================================================
 
         // ====  Systems  ============================================
-        this.InSyncSystems = this.InSyncSystems.map(System => new System(localBus));
-        this.AsyncSystems = this.AsyncSystems.map(System => new System(localBus));
+        this.onTickSystems = this.OnTickSystems.map(System => new System());
+        this.realtimeSystems = this.RealtimeSystems.map(System => new System(localBus));
         // =======================================================
 
-        this.CameraManager = new CameraManager(localBus)
+        // Unique Systems that create the changes that all other systems react to
+        this.userInput        = new this.UserInput()
+        this.aiBrain          = new this.AiBrain()
+        this.networkInterface = new this.NetworkInterface(localBus, networkBus)
 
-        this.NetworkInterface = initalizeNetworkInterface(localBus, networkBus, this.networkEvents) 
+        // Event buffers take an event bus and stores a history of events with timestamps. can be polled to read and clear the buffer
+        this.keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.localEventBuffer)       // keydowns buffer
+        this.aiBrainEventBuffer = new EventBuffer(localBus, eventSchemas.aiBrainEventBuffer)   // slow thinking ai so that the game does not need to wait for it
+        this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.networkEventBuffer)   // server updates buffer
 
-        window.addEventListener("resize", this.handleWindowResize); 
-        this.handleWindowResize(); // immidiately fire this once to fix if already mutated before listener was added
+        this.cameraManager = new CameraManager(localBus, camera)
+
         networkBus.emit(eventSchemas.userSetup, true)
     }
 
@@ -94,7 +88,26 @@ export class Engine {
             reactionarySystems.start?.(decodedLobbyData);
         }
         
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        window.addEventListener("resize", () => {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            let width = windowWidth;
+            let height = (width * 9) / 16;
+
+            if (height > windowHeight) {
+                height = windowHeight;
+                width = (height * 16) / 9;
+            }
+    
+            this.canvas.style.width = `${width}px`;
+            this.canvas.style.height = `${height}px`;
+            this.renderer.setSize(width, height, false);
+            this.renderer.setPixelRatio(window.devicePixelRatio);
+            this.camera.aspect = width / height;
+            this.camera.updateProjectionMatrix();
+        });
+
+        window.dispatchEvent(new Event("resize"));
         this.renderer.setAnimationLoop(loop)
     }
 
@@ -110,20 +123,22 @@ export class Engine {
     };
 
     tick(world, dt) {
-        const userInputs = this.keyDownEventBuffer.poll()
-        const aiInputs = this.aiBrainBuffer.poll()
+        this.aiBrain.update(world)
+        const userIntents  = this.keyDownEventBuffer.poll()
+        const aiIntents    = this.aiEventBuffer.poll()
+        const networkUpdates = this.networkEventBuffer.poll();
 
-        const intents = [...userInputs, ...aiInputs]
 
-        this.networkInterface.send(intents);
+        this.networkInterface.send(userIntents, aiIntents);
 
         const changes = [];
         for (const system of this.simulationSystems) {
             changes.push(system.simulate(dt, world, intents)); 
         }
 
-        this.world.apply(changes); 
-        this.world.reconcile(networkSnapshot);
+        world.apply(changes); 
+
+        world.reconcile(networkUpdates);
     }
 
     render() {
@@ -135,24 +150,6 @@ export class Engine {
     stop() {
         this.renderer.setAnimationLoop(null);
     }
-
-    handleWindowResize = () => {
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
-        let width = windowWidth;
-        let height = (width * 9) / 16;
-
-        if (height > windowHeight) {
-            height = windowHeight;
-            width = (height * 16) / 9;
-        }
- 
-        this.canvas.style.width = `${width}px`;
-        this.canvas.style.height = `${height}px`;
-        this.renderer.setSize(width, height, false);
-        this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
-    };
 }
 function createRenderer(canvas, WebRenderer) {
     const renderer = new WebGLRenderer({
@@ -178,6 +175,43 @@ function createRenderer(canvas, WebRenderer) {
 //=====================
 
 
+
 // directors read from buffer "emit" to systems the data "emitted" here
 
 // coordinators read from emit update
+
+
+
+
+// for the AI Brain this is why it needs a buffer the promise will result in feeding the buffer
+
+//  1. Define the heavy or slow asynchronous calculation
+// async function heavyCalculation() {
+//   console.log(" Calculation started in the background...");
+  
+//    Simulating a 3-second delay (like a fetch or heavy crypto calculation)
+//   await new Promise(resolve => setTimeout(resolve, 3000)); 
+  
+//   const result = 42; 
+//   console.log(` Calculation finished! Result is: ${result}`);
+//   return result;
+// }
+
+// 2. Main execution flow
+// function main() {
+//   console.log(" Main program starting...");
+
+//    Call the function WITHOUT 'await'. It runs in the background.
+//   heavyCalculation(); 
+
+//    The engine immediately moves to these lines without waiting 3 seconds
+//   console.log(" Moving onto other things immediately...");
+//   console.log(" User interface remains responsive!");
+  
+//    You can run any other code here
+//   doOtherWork();
+// }
+
+// function doOtherWork() {
+//   console.log("" Doing other important work...");
+// }

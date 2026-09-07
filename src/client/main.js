@@ -16,7 +16,10 @@ import { participant } from "./features/participant.js";
 import { mmo } from "./features/mmo.js"
 
 // Game Engine
-import { Game } from "./game/Game.js";
+import { Engine } from "./Engine/Engine.js";
+
+// playable Games 
+import { Games } from "./"
 
 document.addEventListener('DOMContentLoaded', () => {
     const dom = createDom();
@@ -24,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ui = createUi(dom);
     const socket = io();
 
+    const games = { Template, Ahoy }
 
     // This creates a shared context and passes it to each feature
     // to create their instances, then initializes each feature's event listeners.
@@ -32,7 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
         navigate,
         ui,
         socket,
-        Game,
+        games,
+        Engine,
     };
     
     // catch if page reloaded with no internet 
@@ -50,9 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
             feature.initEventListeners();
             // feature.otherFunction(); 
         });
-    
-
-
 });
 
 
