@@ -16,14 +16,13 @@ import { eventSchemas } from './Utils/schemas.js';
 // react across managers (collision, AI, etc).
 // ----------------------------------------------------------------------------
 export class Engine {
-
     constructor(Game) {
         // Assined to entities and organized in world data. 
         this.Components       = Game?.Components;
 
         // Systems read from components in world data and act given the new information passed down from the user or ai inputs
-        this.OnTickSystems  = Game?.OnTickSystems;
-        this.RealtimeSystems    = Game?.RealtimeSystems;
+        this.OnTickSystems    = Game?.OnTickSystems;
+        this.RealtimeSystems  = Game?.RealtimeSystems;
 
         // creates intended changes that the systems will read and react to and compare to the data in components
         this.UserInput        = Game?.UserEvents;
@@ -37,10 +36,10 @@ export class Engine {
     }
 
     setup(canvas, socket = null) {
-        this.canvas        = canvas;
-        this.renderer      = createRenderer(THREE.WebGLRenderer, canvas);
-        this.camera        = createCamera(THREE.PerspecitveCamera)
-        this.scene         = createScene(THREE.Scene);
+        this.renderer   = new WebGLRenderer({canvas: canvas, antialias: true});
+        this.scene      = new THREE.Scene()
+        this.camera     = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+        this.canvas     = canvas;
         
         // ============ Components and entity initalization ==============
         this.world = new WorldData();
@@ -103,8 +102,14 @@ export class Engine {
             this.canvas.style.height = `${height}px`;
             this.renderer.setSize(width, height, false);
             this.renderer.setPixelRatio(window.devicePixelRatio);
-            this.camera.aspect = width / height;
-            this.camera.updateProjectionMatrix();
+
+
+            const data = {
+                width,
+                height,
+            }
+
+            bus.emit("windowResize", data);
         });
 
         window.dispatchEvent(new Event("resize"));
@@ -119,7 +124,8 @@ export class Engine {
             this.tick(this.world, FIXED_DT);
             this.accumulator -= FIXED_DT;
         }
-        this.render()
+        this.graphics.update(this.world.getState()) 
+        this.renderer.render(this.scene, this.cameraManager.camera);
     };
 
     tick(world, dt) {
@@ -141,77 +147,47 @@ export class Engine {
         world.reconcile(networkUpdates);
     }
 
-    render() {
-        this.graphics.update(this.world.getState()) 
-        this.renderer.render(this.scene, this.camera);
-    }
-
 
     stop() {
         this.renderer.setAnimationLoop(null);
     }
 }
-function createRenderer(canvas, WebRenderer) {
-    const renderer = new WebGLRenderer({
-        canvas: this.canvas,
-        antialias: true
-    });
-    return renderer 
+
+
+
+class CameraManager {
+    constructor(camera, bus) {
+        this.camera = camera
+        this.subscriptions = [
+            bus.on("windowResize", (data) => this.changeAspect(data)),
+            bus.on("mouseMove", (data) =>
+        ]
+    }
+    changeAspect(width, height) {
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
+    }
+
+
+
 }
 
-// these are the systems equivilent to coordinators for the managers
 
-//=================
-
-
-// systems need data in and then data out the data comes from these buffer reads and then outputs to intents that are then passed in through update(intents) intents group local and ai changes
-// also receives a reconcile from the network buffer. there are two buffers that send data to each the systems. 
-
-
-// the managers also need data in and data out but their data comes from the buses.emit() and received by busses.on()
-// the managers can have many bus reader classes that emit to a specific mamanger this happens async of the game loop that is why this has to be done this way.
-// these systems do do not need to be reconciled nore do the updates that they operate on and compare to components need to be sent to the server
-
-//=====================
+class RenderManager {
+    constructor(bus) {
 
 
 
-// directors read from buffer "emit" to systems the data "emitted" here
-
-// coordinators read from emit update
-
+    }
+}
 
 
+class CanvasManager {
+    constructor(bus) {
 
-// for the AI Brain this is why it needs a buffer the promise will result in feeding the buffer
 
-//  1. Define the heavy or slow asynchronous calculation
-// async function heavyCalculation() {
-//   console.log(" Calculation started in the background...");
-  
-//    Simulating a 3-second delay (like a fetch or heavy crypto calculation)
-//   await new Promise(resolve => setTimeout(resolve, 3000)); 
-  
-//   const result = 42; 
-//   console.log(` Calculation finished! Result is: ${result}`);
-//   return result;
-// }
 
-// 2. Main execution flow
-// function main() {
-//   console.log(" Main program starting...");
+    }
+}
 
-//    Call the function WITHOUT 'await'. It runs in the background.
-//   heavyCalculation(); 
 
-//    The engine immediately moves to these lines without waiting 3 seconds
-//   console.log(" Moving onto other things immediately...");
-//   console.log(" User interface remains responsive!");
-  
-//    You can run any other code here
-//   doOtherWork();
-// }
-
-// function doOtherWork() {
-//   console.log("" Doing other important work...");
-// }
