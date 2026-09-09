@@ -37,8 +37,8 @@ export class Engine {
 
     setup(canvas, socket = null) {
         this.renderer   = new WebGLRenderer({canvas: canvas, antialias: true});
-        this.scene      = new THREE.Scene()
-        this.camera     = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+        this.scene      = new Three.scene() 
+        this.camera     = new Three.Perspectivecamera() 
         this.canvas     = canvas;
         
         // ============ Components and entity initalization ==============
@@ -100,9 +100,6 @@ export class Engine {
     
             this.canvas.style.width = `${width}px`;
             this.canvas.style.height = `${height}px`;
-            this.renderer.setSize(width, height, false);
-            this.renderer.setPixelRatio(window.devicePixelRatio);
-
 
             const data = {
                 width,
@@ -117,33 +114,40 @@ export class Engine {
     }
 
     loop = (time) => {
+        const world = this.world
         const frameTime = Math.min(((time - this.previousTime) * 0.001), 0.25)  // clamp so tab switch does not spiral the system
         this.previousTime = time;
         this.accumulator += frameTime;
         while (this.accumulator >= FIXED_DT) {
-            this.tick(this.world, FIXED_DT);
+            this.tick(world, FIXED_DT);
             this.accumulator -= FIXED_DT;
         }
-        this.graphics.update(this.world.getState()) 
+        this.graphics.update(world) 
         this.renderer.render(this.scene, this.cameraManager.camera);
     };
 
     tick(world, dt) {
-        this.aiBrain.update(world)
-        const userIntents  = this.keyDownEventBuffer.poll()
-        const aiIntents    = this.aiEventBuffer.poll()
-        const networkUpdates = this.networkEventBuffer.poll();
+        const intents  = this.keyDownEventBuffer.poll()
 
-
-        this.networkInterface.send(userIntents, aiIntents);
+        this.networkInterface.send(userIntents, dt);
 
         const changes = [];
         for (const system of this.simulationSystems) {
             changes.push(system.simulate(dt, world, intents)); 
         }
 
-        world.apply(changes); 
-
+        for (const system of this.reactionSystems) {
+            changes.push(system.react(dt, world, changes)); 
+        }
+        
+        world.apply(changes)
+        
+        const intents  = this.networkEventBuffer.poll()
+        
+        for (const system of this.networkSystems) {
+            changes.push(system.react(dt, world, changes)); 
+        }
+        
         world.reconcile(networkUpdates);
     }
 
@@ -157,7 +161,7 @@ export class Engine {
 
 class CameraManager {
     constructor(camera, bus) {
-        this.camera = camera
+        this.camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
         this.subscriptions = [
             bus.on("windowResize", (data) => this.changeAspect(data)),
             bus.on("mouseMove", (data) =>
@@ -167,18 +171,22 @@ class CameraManager {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
     }
-
-
-
 }
 
 
-class RenderManager {
+class RendererManager {
     constructor(bus) {
-
-
-
+        this.renderer = 
     }
+    changeAspect(width, height) {
+        this.renderer.setSize(width, height, false);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+}
+}
+
+class sceneManager { 
+    
+
 }
 
 
@@ -189,5 +197,7 @@ class CanvasManager {
 
     }
 }
+
+
 
 
