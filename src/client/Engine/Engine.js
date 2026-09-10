@@ -5,9 +5,9 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.m
 import WorldData from "WorldData.js"
 
 // Async and networking events and buffers
-import { LocalEventBus } from '../../shared/eventBus.js';
-import { NetworkEventBus } from '../../shared/eventBus.js';
-import { EventBuffer } from '../../shared/eventBuffer.js';
+import { LocalEventBus } from './Utils/eventBus.js';
+import { NetworkEventBus } from './Utils/eventBus.js';
+import { EventBuffer } from './Utils/eventBuffer.js';
 
 import { eventSchemas } from './Utils/schemas.js';
 // ---------------------------------------------------------------------------
@@ -31,20 +31,17 @@ export class Engine {
         this.UserEvents        = Game?.UserEvents;
         this.NetworkEvents     = Game?.NetworkEvents
 
-
-
-
     }
 
 
     setup(canvas, socket = null) {
 
         // Engine Services
-        this.renderer   = new WebGLRenderer({canvas: canvas, antialias: true});
-        this.audio
-        this.camera
-        this.scene      = new THREE.scene() 
-        this.canvas     = canvas;
+        // this.renderer   = new WebGLRenderer({canvas: canvas, antialias: true});
+        // this.audio
+        // this.camera
+        // this.scene      = new THREE.scene() 
+        // this.canvas     = canvas;
         
         // Engine ECS
         // ============ Components and entity initalization ==============
@@ -141,47 +138,3 @@ export class Engine {
         this.renderer.setAnimationLoop(null);
     }
 }
-
-
-class CameraManager {
-    constructor(camera, bus) {
-        this.camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
-        this.subscriptions = [
-            bus.on("windowResize", (data) => this.changeAspect(data)),
-            bus.on("mouseMove", (data) =>
-        ]
-    }
-    changeAspect(width, height) {
-        this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
-    }
-}
-
-
-class RendererManager {
-    constructor(bus) {
-        this.renderer = 
-    }
-    changeAspect(width, height) {
-        this.renderer.setSize(width, height, false);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-}
-}
-
-class sceneManager { 
-    
-
-}
-
-
-class CanvasManager {
-    constructor(bus) {
-
-
-
-    }
-}
-
-
-
-
