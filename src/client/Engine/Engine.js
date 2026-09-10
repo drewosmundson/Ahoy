@@ -3,7 +3,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
 import WorldData from "WorldData.js"
-import NetworkInterface from "NetworkInterface.js"
 
 // Async and networking events and buffers
 import { LocalEventBus } from '../../shared/eventBus.js';
@@ -17,55 +16,58 @@ import { eventSchemas } from './Utils/schemas.js';
 // ----------------------------------------------------------------------------
 export class Engine {
     constructor(Game) {
-        // Assined to entities and organized in world data. 
-        this.Components       = Game?.Components;
 
-        // Systems read from components in world data and act given the new information passed down from the user or ai inputs
-        this.OnTickSystems    = Game?.OnTickSystems;
-        this.RealtimeSystems  = Game?.RealtimeSystems;
+
+        // Assined to entities and organized in world data. 
+        this.Components        = Game?.Components;
+
+        // Systems read from components in world data and act given the new information passed from the user or network
+        this.SimulationSystems = Game?.SimulationSystems;
+        this.EventSystems      = Game?.EventSystems
+        this.NetworkSystems    = Game?.NetWorkSystems;
 
         // creates intended changes that the systems will read and react to and compare to the data in components
-        this.UserInput        = Game?.UserEvents;
-        this.AiBrain          = Game?.AiBrain
-
         // Authorative updates from the server does not need to be passed into systems these updates go straight into world data after reconcile
-        this.NetworkInterface = Game?.NetworkEvents
+        this.UserEvents        = Game?.UserEvents;
+        this.NetworkEvents     = Game?.NetworkEvents
 
-        // Does not fit in neatly with other systems or components because the camera is always needed.
-        this.CameraManager    = Game?.CameraManager
+
+
+
     }
 
+
     setup(canvas, socket = null) {
+
+        // Engine Services
         this.renderer   = new WebGLRenderer({canvas: canvas, antialias: true});
-        this.scene      = new Three.scene() 
-        this.camera     = new Three.Perspectivecamera() 
+        this.audio
+        this.camera
+        this.scene      = new THREE.scene() 
         this.canvas     = canvas;
         
+        // Engine ECS
         // ============ Components and entity initalization ==============
         this.world = new WorldData();
         this.world.register(this.Components)
         // ================================================================
 
-        const localBus  = new LocalEventBus(eventSchemas);// Intra-process event bus for updates in the same process that are not in sync with the game loop like mouse and keyboard
-        const networkBus  = new NetworkEventBus(socket, eventSchemas); // Inter-process event bus for communication to the server
-
+        const localBus    = new LocalEventBus(eventSchemas);             // Intra-process bus for events in the same process like mouse and keyboard
+        const networkBus  = new NetworkEventBus(socket, eventSchemas);   // Inter-process bus for events to and from the server
 
         // ====  Systems  ============================================
-        this.onTickSystems = this.OnTickSystems.map(System => new System());
-        this.realtimeSystems = this.RealtimeSystems.map(System => new System(localBus));
+        this.simulationSystems  = this.SimulationSystems.map(System => new System());
+        this.eventSystems       = this.EventSystems.map(System => new System(localBus));
+        this.networkSystems     = this.NetworkSystems.map(System => new System(localBus, networkBus));
         // =======================================================
 
         // Unique Systems that create the changes that all other systems react to
-        this.userInput        = new this.UserInput()
-        this.aiBrain          = new this.AiBrain()
-        this.networkInterface = new this.NetworkInterface(localBus, networkBus)
+        this.userEvents      = new this.UserEvents(localBus)
+        this.networkEvents   = new this.NetworkEvents(localBus, networkBus)
 
         // Event buffers take an event bus and stores a history of events with timestamps. can be polled to read and clear the buffer
         this.keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.localEventBuffer)       // keydowns buffer
-        this.aiBrainEventBuffer = new EventBuffer(localBus, eventSchemas.aiBrainEventBuffer)   // slow thinking ai so that the game does not need to wait for it
         this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.networkEventBuffer)   // server updates buffer
-
-        this.cameraManager = new CameraManager(localBus, camera)
 
         networkBus.emit(eventSchemas.userSetup, true)
     }
@@ -77,39 +79,15 @@ export class Engine {
     // [{ id, vehicle: "boat", ownerId, teamId, location, rotation, initiallyActive }]
     // lobby data contains the the heightmap if is one if not it is created on the spot
     // the host just needs to have started before all of the others so this step can finish and the others can get their heightmap externally
+
+
     start(lobbyData) {
-        this.world.apply(lobbyData)
+        this.world.start(lobbyData)
 
-        for (const simulationSystem of this.simulationSystems) {
-            simulationSystem.start?.(decodedLobbyData);
-        }
-        for (const reactionarySystems of this.reactionarySystems) {
-            reactionarySystems.start?.(decodedLobbyData);
-        }
-        
-        window.addEventListener("resize", () => {
-            const windowWidth = window.innerWidth;
-            const windowHeight = window.innerHeight;
-            let width = windowWidth;
-            let height = (width * 9) / 16;
-
-            if (height > windowHeight) {
-                height = windowHeight;
-                width = (height * 16) / 9;
-            }
-    
-            this.canvas.style.width = `${width}px`;
-            this.canvas.style.height = `${height}px`;
-
-            const data = {
-                width,
-                height,
-            }
-
-            bus.emit("windowResize", data);
-        });
+        this.RegisterWindowEventListeners();
 
         window.dispatchEvent(new Event("resize"));
+
         this.renderer.setAnimationLoop(loop)
     }
 
@@ -118,45 +96,51 @@ export class Engine {
         const frameTime = Math.min(((time - this.previousTime) * 0.001), 0.25)  // clamp so tab switch does not spiral the system
         this.previousTime = time;
         this.accumulator += frameTime;
+
+        // Simulation
         while (this.accumulator >= FIXED_DT) {
             this.tick(world, FIXED_DT);
             this.accumulator -= FIXED_DT;
         }
-        this.graphics.update(world) 
-        this.renderer.render(this.scene, this.cameraManager.camera);
+
+        // Presentation
+        this.camera.update(this.world);
+        this.graphics.update(this.world) 
+        this.renderSystem.update(this.world, this.cameraManager.camera);
+
+        this.renderer.render(this.scene, );
     };
 
     tick(world, dt) {
-        const intents  = this.keyDownEventBuffer.poll()
-
-        this.networkInterface.send(userIntents, dt);
-
         const changes = [];
+
+        const userUpdates  = this.keyDownEventBuffer.poll()
         for (const system of this.simulationSystems) {
-            changes.push(system.simulate(dt, world, intents)); 
+            changes.push(system?.simulate(dt, world, userUpdates)); 
         }
-
-        for (const system of this.reactionSystems) {
-            changes.push(system.react(dt, world, changes)); 
-        }
-        
         world.apply(changes)
-        
-        const intents  = this.networkEventBuffer.poll()
-        
-        for (const system of this.networkSystems) {
-            changes.push(system.react(dt, world, changes)); 
-        }
-        
-        world.reconcile(networkUpdates);
-    }
+ 
 
+        this.networkInterface.send(changes, dt);
+
+
+        const networkUpdates = this.networkEventBuffer.poll()
+        for (const system of this.networkSystems) {
+            changes.push(system?.networkUpdate(dt, world, networkUpdates)); 
+        }
+        world.reconcile(changes);
+
+
+        // These systems listen for specific changes and trigger events to happen like sound effects on collision detection
+        for (const system of this.eventSystems) {
+            system?.update(dt, world, changes);
+        }
+    }
 
     stop() {
         this.renderer.setAnimationLoop(null);
     }
 }
-
 
 
 class CameraManager {
