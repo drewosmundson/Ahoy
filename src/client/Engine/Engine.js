@@ -51,6 +51,7 @@ export class Engine {
 
         const localBus    = new LocalEventBus(eventSchemas);             // Intra-process bus for events in the same process like mouse and keyboard
         const networkBus  = new NetworkEventBus(socket, eventSchemas);   // Inter-process bus for events to and from the server
+        const effectsBus  = new LocalEventBus(eventSchemas)
 
         // ====  Systems  ============================================
         this.simulationSystems  = this.SimulationSystems.map(System => new System());
@@ -94,18 +95,19 @@ export class Engine {
         this.previousTime = time;
         this.accumulator += frameTime;
 
-        // Simulation
+        // Simulation of state
         while (this.accumulator >= FIXED_DT) {
             this.tick(world, FIXED_DT);
             this.accumulator -= FIXED_DT;
         }
 
-        // Presentation
-        this.camera.update(this.world);
-        this.graphics.update(this.world) 
-        this.renderSystem.update(this.world, this.cameraManager.camera);
+        // Presentation Render Frame
+        // this.camera.update(this.world);
+        // this.audio.update(this.world)
+        // this.graphics.update(this.world) 
+        // this.renderSystem.update(this.world, this.cameraManager.camera);
 
-        this.renderer.render(this.scene, );
+        // this.renderer.render(this.scene, );
     };
 
     tick(world, dt) {
@@ -127,8 +129,7 @@ export class Engine {
         }
         world.reconcile(changes);
 
-
-        // These systems listen for specific changes and trigger events to happen like sound effects on collision detection
+        // These systems listen for specific changes and trigger events to happen on the presentation layer like sound effects on collision detection
         for (const system of this.eventSystems) {
             system?.update(dt, world, changes);
         }
