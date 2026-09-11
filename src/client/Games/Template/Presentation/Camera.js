@@ -1,8 +1,9 @@
 
 
-// outside of the ECS Services own the 
+// outside of the ECS. Services own the actual THREE.js objects
 
-
+// cameraState Component
+// cameraSystem Event
 
 class CameraManager {
     constructor() {
@@ -16,8 +17,8 @@ class CameraManager {
         );
 
         // Translate ECS state → THREE.Camera
-        this.camera.position.set(...);
-        this.camera.lookAt(...);
+        // this.camera.position.set(...);
+        // this.camera.lookAt(...);
     }
 
     resize(width, height) {

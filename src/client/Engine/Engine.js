@@ -5,9 +5,9 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.m
 import WorldData from "WorldData.js"
 
 // Async and networking events and buffers
-import { LocalEventBus } from './Utils/eventBus.js';
-import { NetworkEventBus } from './Utils/eventBus.js';
-import { EventBuffer } from './Utils/eventBuffer.js';
+import { LocalEventBus } from './Context/eventBus.js';
+import { NetworkEventBus } from './Context/eventBus.js';
+import { EventBuffer } from './Context/eventBuffer.js';
 
 import { eventSchemas } from './Utils/schemas.js';
 // ---------------------------------------------------------------------------
@@ -16,7 +16,6 @@ import { eventSchemas } from './Utils/schemas.js';
 // ----------------------------------------------------------------------------
 export class Engine {
     constructor(Game) {
-
 
         // Assined to entities and organized in world data. 
         this.Components        = Game?.Components;
@@ -30,13 +29,10 @@ export class Engine {
         // Authorative updates from the server does not need to be passed into systems these updates go straight into world data after reconcile
         this.UserEvents        = Game?.UserEvents;
         this.NetworkEvents     = Game?.NetworkEvents
-
     }
-
 
     setup(canvas, socket = null) {
 
-        // Engine Services
         // this.renderer   = new WebGLRenderer({canvas: canvas, antialias: true});
         // this.audio
         // this.camera
@@ -51,7 +47,6 @@ export class Engine {
 
         const localBus    = new LocalEventBus(eventSchemas);             // Intra-process bus for events in the same process like mouse and keyboard
         const networkBus  = new NetworkEventBus(socket, eventSchemas);   // Inter-process bus for events to and from the server
-        const effectsBus  = new LocalEventBus(eventSchemas)
 
         // ====  Systems  ============================================
         this.simulationSystems  = this.SimulationSystems.map(System => new System());

@@ -1,12 +1,17 @@
 
 
+import { Engine } from "../../Engine/Engine";
+import {} from "./Components";
+import {} from "./Systems";
 
-
-import * as components from "./Components"
-import * as systems from "./Systems"
-
-
+// Ordering of items here affects execution
 export const Template = {
     components,
-    systems,
+    eventSystems,
+    networkSystems,
+    simulationSystems,
+
+    engineServices,
+    presentationServices
+    interfaceServices
 }
