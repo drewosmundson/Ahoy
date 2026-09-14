@@ -7,11 +7,12 @@ import {} from "./Systems";
 // Ordering of items here affects execution
 export const Template = {
     components,
+
     eventSystems,
     networkSystems,
     simulationSystems,
 
+    interfaceServices,
     engineServices,
-    presentationServices
-    interfaceServices
+    presentationServices,
 }
