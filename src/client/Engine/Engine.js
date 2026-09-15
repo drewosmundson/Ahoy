@@ -1,6 +1,4 @@
 
-// Utils
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
 import WorldData from "WorldData.js"
 
@@ -10,57 +8,56 @@ import { NetworkEventBus } from './Context/eventBus.js';
 import { EventBuffer } from './Context/eventBuffer.js';
 
 import { eventSchemas } from './Utils/schemas.js';
+
+import { } from "./Context"
+
 // ---------------------------------------------------------------------------
 // Game: top-level wiring. Fixed-timestep loop; managers simulate, systems
 // react across managers (collision, AI, etc).
 // ----------------------------------------------------------------------------
 export class Engine {
     constructor(Game) {
-
-        // Assined to entities and organized in world data. 
-        this.Components        = Game?.Components;
-
-        // Systems read from components in world data and act given the new information passed from the user or network
-        this.SimulationSystems = Game?.SimulationSystems;
-        this.EventSystems      = Game?.EventSystems
-        this.NetworkSystems    = Game?.NetWorkSystems;
-
-        // creates intended changes that the systems will read and react to and compare to the data in components
-        // Authorative updates from the server does not need to be passed into systems these updates go straight into world data after reconcile
-        this.UserEvents        = Game?.UserEvents;
-        this.NetworkEvents     = Game?.NetworkEvents
+        this.Game = Game;
     }
 
     setup(canvas, socket = null) {
-
-        // this.renderer   = new WebGLRenderer({canvas: canvas, antialias: true});
-        // this.audio
-        // this.camera
-        // this.scene      = new THREE.scene() 
-        // this.canvas     = canvas;
-        
-        // Engine ECS
-        // ============ Components and entity initalization ==============
-        this.world = new WorldData();
-        this.world.register(this.Components)
-        // ================================================================
+        const canvas = canvas
+        const socket = socket; 
 
         const localBus    = new LocalEventBus(eventSchemas);             // Intra-process bus for events in the same process like mouse and keyboard
         const networkBus  = new NetworkEventBus(socket, eventSchemas);   // Inter-process bus for events to and from the server
+        const presentationBus  = new LocalEventBus(eventSchemas);   // Presentation/effects events between ECS event systems and client-side services
+
+
+        const context = {
+            canvas,
+            localBus,
+            networkBus,
+            presentationBus,
+        }
+
+        this.services = this.Game.Services.map(
+            Service => new Service(context)
+        );
+
+        // Engine ECS
+        // ============ Components and entity initalization ==============
+        this.world = new WorldData();
+        this.world.register(this.Game.Components)
+        // ================================================================
+
 
         // ====  Systems  ============================================
-        this.simulationSystems  = this.SimulationSystems.map(System => new System());
-        this.eventSystems       = this.EventSystems.map(System => new System(localBus));
-        this.networkSystems     = this.NetworkSystems.map(System => new System(localBus, networkBus));
+        this.simulationSystems  = this.Game.SimulationSystems.map(System => new System());
+        this.eventSystems       = this.Game.EventSystems.map(System => new System(localBus));
+        this.networkSystems     = this.Game.NetworkSystems.map(System => new System(localBus, networkBus));
         // =======================================================
 
-        // Unique Systems that create the changes that all other systems react to
-        this.userEvents      = new this.UserEvents(localBus)
-        this.networkEvents   = new this.NetworkEvents(localBus, networkBus)
 
         // Event buffers take an event bus and stores a history of events with timestamps. can be polled to read and clear the buffer
         this.keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.localEventBuffer)       // keydowns buffer
         this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.networkEventBuffer)   // server updates buffer
+
 
         networkBus.emit(eventSchemas.userSetup, true)
     }
@@ -84,28 +81,26 @@ export class Engine {
         this.renderer.setAnimationLoop(loop)
     }
 
+
     loop = (time) => {
-        const world = this.world
-        const frameTime = Math.min(((time - this.previousTime) * 0.001), 0.25)  // clamp so tab switch does not spiral the system
+        const frameTime = Math.min(
+            (time - this.previousTime) * 0.001,
+            0.25
+        );
+
         this.previousTime = time;
         this.accumulator += frameTime;
 
-        // Simulation of state
         while (this.accumulator >= FIXED_DT) {
-            this.tick(world, FIXED_DT);
+            this.simulateGameTick(this.world, FIXED_DT);
             this.accumulator -= FIXED_DT;
         }
 
-        // Presentation Render Frame
-        // this.camera.update(this.world);
-        // this.audio.update(this.world)
-        // this.graphics.update(this.world) 
-        // this.renderSystem.update(this.world, this.cameraManager.camera);
-
-        // this.renderer.render(this.scene, );
+        this.updatePresentation();
     };
 
-    tick(world, dt) {
+
+    simulateGameTick(world, dt) {
         const changes = [];
 
         const userUpdates  = this.keyDownEventBuffer.poll()
@@ -113,10 +108,8 @@ export class Engine {
             changes.push(system?.simulate(dt, world, userUpdates)); 
         }
         world.apply(changes)
- 
 
         this.networkInterface.send(changes, dt);
-
 
         const networkUpdates = this.networkEventBuffer.poll()
         for (const system of this.networkSystems) {
@@ -127,6 +120,13 @@ export class Engine {
         // These systems listen for specific changes and trigger events to happen on the presentation layer like sound effects on collision detection
         for (const system of this.eventSystems) {
             system?.update(dt, world, changes);
+        }
+    }
+
+
+    updatePresentation() {
+        for (const service of this.services) {
+            service.update?.();
         }
     }
 
