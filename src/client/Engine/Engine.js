@@ -7,8 +7,6 @@ import { LocalEventBus } from './Context/eventBus.js';
 import { NetworkEventBus } from './Context/eventBus.js';
 import { EventBuffer } from './Context/eventBuffer.js';
 
-import { eventSchemas } from './Utils/schemas.js';
-
 import { } from "./Context"
 
 // ---------------------------------------------------------------------------
@@ -27,14 +25,16 @@ export class Engine {
         const localBus    = new LocalEventBus(eventSchemas);             // Intra-process bus for events in the same process like mouse and keyboard
         const networkBus  = new NetworkEventBus(socket, eventSchemas);   // Inter-process bus for events to and from the server
         const presentationBus  = new LocalEventBus(eventSchemas);   // Presentation/effects events between ECS event systems and client-side services
-        
 
-        const context = {
+        const engineContext  = {
+            world
             canvas,
             localBus,
             networkBus,
             presentationBus,
         }
+        
+
 
         this.services = this.Game.Services.map(
             Service => new Service(context)
@@ -134,5 +134,46 @@ export class Engine {
 
     stop() {
         this.renderer.setAnimationLoop(null);
+        
+        if (!this.running) {
+
+            return;
+
+        }
+
+        this.running = false;
+
+        this.previousTime = null;
+
+        this.accumulator = 0;
+
+        for (const service of this.services) {
+
+            service.stop?.(this.context);
+
+        }
+
+        for (const system of this.simulationSystems) {
+
+            system.stop?.();
+
+        }
+
+        for (const system of this.eventSystems) {
+
+            system.stop?.();
+
+        }
+
+        for (const system of this.networkSystems) {
+
+            system.stop?.();
+
+        }
+
+    }
+
+    /
+        
     }
 }
