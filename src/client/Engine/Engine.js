@@ -3,83 +3,92 @@
 import WorldData from "WorldData.js"
 
 // Async and networking events and buffers
-import { LocalEventBus } from './Context/eventBus.js';
-import { NetworkEventBus } from './Context/eventBus.js';
-import { EventBuffer } from './Context/eventBuffer.js';
+import { LocalEventBus } from './Utils/eventBus.js';
+import { NetworkEventBus } from './Utils/eventBus.js';
+import { EventBuffer } from './Utils/eventBuffer.js';
+import { FIXED_DT } from './Utils/CONSTANTS.js'
 
-import { } from "./Context"
 
-// ---------------------------------------------------------------------------
-// Game: top-level wiring. Fixed-timestep loop; managers simulate, systems
-// react across managers (collision, AI, etc).
-// ----------------------------------------------------------------------------
 export class Engine {
     constructor(Game) {
         this.Game = Game;
     }
 
     setup(canvas, socket = null) {
-        const canvas = canvas
-        const socket = socket; 
+        const eventSchemas  = this.Game.eventSchemas; 
+        const localBus      = new LocalEventBus(eventSchemas);             // Intra-process bus for events in the same process like mouse and keyboard
+        const networkBus    = new NetworkEventBus(socket, eventSchemas);   // Inter-process bus for events to and from the server
 
-        const localBus    = new LocalEventBus(eventSchemas);             // Intra-process bus for events in the same process like mouse and keyboard
-        const networkBus  = new NetworkEventBus(socket, eventSchemas);   // Inter-process bus for events to and from the server
-        const presentationBus  = new LocalEventBus(eventSchemas);   // Presentation/effects events between ECS event systems and client-side services
-
-        const engineContext  = {
-            world
-            canvas,
-            localBus,
-            networkBus,
-            presentationBus,
-        }
-        
+        // ============ Event Buffers ==============================
+        //  Event buffers take an event bus and store a history of events with timestamps to be polled each game tick.
+        //  LocalBuffer's purpose is when event triggered and its result must wait for the game loop to reach its next tick 
+        //  NetworkBuffers's purpose is when events arrive from the server out of sync with the game loop or out of order.
+        this.localEventBuffer   = new EventBuffer(localBus, eventSchemas.localEventBuffer)       // keydowns buffer
+        this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.networkEventBuffer)   // server updates buffer
+        // ==========================================================
 
 
+        // ============ Components and Entity initalization =========
+        //  Components are where they can be filtered by the system that require them. 
+        //  WorldData is updated on each game tick by systems
+        this.worldData = new WorldData();
+        this.worldData.register(this.Game.Components)
+        // ===========================================================
+
+
+        // ============ Components and Entity initalization =========
+        //  keyboard, network, touch, gamepad, browser etc.
+        this.interfaces = this.Game.Interfaces.map(
+            Interface => new Interface(localBus, networkBus, eventSchemas)
+        );
+        // ==========================================================
+
+
+        // ====  Buffered Systems  ============================================
+        //  Systems act on the new information polled from buffers sent by interfaces and current world data
+        //  They calculate and return the delta change for world data to apply
+        this.simulationSystems = this.Game.SimulationSystems.map(System => new System());
+        this.reconciledSystems = this.Game.ReconciledSystems.map(System => new System());
+        // ===========================================================
+
+
+        // ============ Event Systems =========
+        //  Event Systems are different from buffered systems in that they can directly manipulate world data as it does not need to be reconciled later.
+        //  These events are the
+        this.localEventSystems = this.Game.EventSystems.map(System => new System(localBus, eventSchemas)); // event systems apply changes from events to world data
+        this.networkEventSystems = this.Game.NetworkSystems.map(System => new System(localBus, eventSchemas))
+        // ====================================
+
+
+        // ======= Engine Services ===================================
+        //  Services hold the actual rendering and graphics libray.
+        //  They read from world data and actually display the data on the screen.
+        //  They should not directly manipulate world data. These are read only
         this.services = this.Game.Services.map(
-            Service => new Service(context)
-        );
-
-        // Engine ECS
-        // network, keyboard, gamepad, browser etc. 
-        this.interfaces = this.Game.Interfaces.map( 
-            Interface => new Interface(context) 
-        );
-        
-        // Event buffers take an event bus and stores a history of events with timestamps. can be polled to read and clear the buffer
-        this.localEventBuffer = new EventBuffer(context, eventSchemas.localEventBuffer)       // keydowns buffer
-        this.networkEventBuffer = new EventBuffer(context, eventSchemas.networkEventBuffer)   // server updates buffer
-
-        // ============ Components and entity initalization ==============
-        this.world = new WorldData();
-        this.world.register(this.Game.Components)
-        // ================================================================
-  
-        // ====  Systems  ============================================
-        this.simulationSystems  = this.Game.SimulationSystems.map(System => new System());
-        this.eventSystems       = this.Game.EventSystems.map(System => new System(localBus));
-        this.networkSystems     = this.Game.NetworkSystems.map(System => new System(localBus, networkBus));
-        // =======================================================
+            Service => new Service(canvas, localBus, networkBus, eventSchemas)
+        );  
+        // ===========================================================
 
         networkBus.emit(eventSchemas.userSetup, true)
-    }
-
-    // starts when the host clicks start game
-    // lobby data populates the managers with the quantity of components they need to create
-    // and which internal systems they need to be assigned to
-    // decoded Lobby Data Example:
-    // [{ id, vehicle: "boat", ownerId, teamId, location, rotation, initiallyActive }]
-    // lobby data contains the the heightmap if is one if not it is created on the spot
-    // the host just needs to have started before all of the others so this step can finish and the others can get their heightmap externally
+    }   
 
 
-    start(lobbyData) {
-        this.world.start(lobbyData)
+    start(lobbyData = null) {
+        this.worldData.start(lobbyData)
 
-        this.RegisterWindowEventListeners();
+        this.interfaces.forEach(interface => interface.start(lobbyData)); // inits event listeners like keyboard presses and window resize
 
+        this.simulationSystems.forEach(system => system.start(lobbyData)); 
+        this.eventSystems.forEach(system => system.start(lobbyData)); 
+        this.networkSystems.forEach(system => system.start(lobbyData)); 
+
+        this.services.forEach(service => service.start(lobbyData))
+
+        // One off event to resize the screen to cover case if screen resized while loading
         window.dispatchEvent(new Event("resize"));
 
+        this.previousTime = 0;
+        this.accumulator = 0;
         this.renderer.setAnimationLoop(loop)
     }
 
@@ -94,86 +103,47 @@ export class Engine {
         this.accumulator += frameTime;
 
         while (this.accumulator >= FIXED_DT) {
-            this.simulateGameTick(this.world, FIXED_DT);
+            this.simulateGameTick(this.worldData, FIXED_DT);
             this.accumulator -= FIXED_DT;
         }
 
-        this.updatePresentation();
+        this.updatePresentation(this.worldData);
     };
 
 
     simulateGameTick(world, dt) {
-        const changes = [];
-
-        const userUpdates  = this.keyDownEventBuffer.poll()
+        const localChanges = [];
+        const userUpdates  = this.localEventBuffer.poll()
         for (const system of this.simulationSystems) {
             changes.push(system?.simulate(dt, world, userUpdates)); 
         }
-        world.apply(changes)
+        world.apply(localChanges)
 
-        this.networkInterface.send(changes, dt);
 
+        for (const interface of this.interfaces) { // for sending information to another process the emit to eventSystems.on() and buffers Poll()
+            interface?.send(dt, localChanges);
+        }
+
+        const networkChanges = [];
         const networkUpdates = this.networkEventBuffer.poll()
         for (const system of this.networkSystems) {
             changes.push(system?.networkUpdate(dt, world, networkUpdates)); 
         }
-        world.reconcile(changes);
+        world.reconcile(networkChanges);
 
-        // These systems listen for specific changes and trigger events to happen on the presentation layer like sound effects on collision detection
-        for (const system of this.eventSystems) {
-            system?.update(dt, world, changes);
+        for (const event of this.events) {
+            event?.update(dt, localChanges, networkChanges); 
         }
     }
 
 
-    updatePresentation() {
+    updatePresentation(world) {
         for (const service of this.services) {
-            service.update?.();
+            service?.update(world);
         }
     }
 
     stop() {
         this.renderer.setAnimationLoop(null);
-        
-        if (!this.running) {
-
-            return;
-
-        }
-
-        this.running = false;
-
-        this.previousTime = null;
-
-        this.accumulator = 0;
-
-        for (const service of this.services) {
-
-            service.stop?.(this.context);
-
-        }
-
-        for (const system of this.simulationSystems) {
-
-            system.stop?.();
-
-        }
-
-        for (const system of this.eventSystems) {
-
-            system.stop?.();
-
-        }
-
-        for (const system of this.networkSystems) {
-
-            system.stop?.();
-
-        }
-
-    }
-
-    /
-        
     }
 }

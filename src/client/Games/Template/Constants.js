@@ -1,15 +1,11 @@
 
 
-export const FIXED_DT = CONSTANTS.FIXED_DT ?? 1 / 60;
-
-
 export const GAME_CONFIG = {
   HEIGHTMAP,
   SOUNDS,
   COLORS,
   WATER,
   ANIMATION,
-  FIXED_DT,
   HITBOX_SIZE,
 }
 

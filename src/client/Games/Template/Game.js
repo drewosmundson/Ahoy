@@ -1,11 +1,13 @@
 
 
-import { Engine } from "../../Engine/Engine";
 import {} from "./Components";
 import {} from "./Systems";
+import { GAME_CONFIG } from 'Constants.js'
 
 // Ordering of items here affects execution
 export const Game = {
+    GAME_CONFIG, 
+
     Components: [
 
 
@@ -29,12 +31,5 @@ export const Game = {
         CameraManager,
         RenderManager,
         AudioManager,
-    ],
-
-
-    Presentation: [
-
-
-
     ],
 };
