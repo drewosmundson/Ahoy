@@ -27,7 +27,7 @@ export class Engine {
         const localBus    = new LocalEventBus(eventSchemas);             // Intra-process bus for events in the same process like mouse and keyboard
         const networkBus  = new NetworkEventBus(socket, eventSchemas);   // Inter-process bus for events to and from the server
         const presentationBus  = new LocalEventBus(eventSchemas);   // Presentation/effects events between ECS event systems and client-side services
-
+        
 
         const context = {
             canvas,
@@ -41,23 +41,25 @@ export class Engine {
         );
 
         // Engine ECS
+        // network, keyboard, gamepad, browser etc. 
+        this.interfaces = this.Game.Interfaces.map( 
+            Interface => new Interface(context) 
+        );
+        
+        // Event buffers take an event bus and stores a history of events with timestamps. can be polled to read and clear the buffer
+        this.localEventBuffer = new EventBuffer(context, eventSchemas.localEventBuffer)       // keydowns buffer
+        this.networkEventBuffer = new EventBuffer(context, eventSchemas.networkEventBuffer)   // server updates buffer
+
         // ============ Components and entity initalization ==============
         this.world = new WorldData();
         this.world.register(this.Game.Components)
         // ================================================================
-
-
+  
         // ====  Systems  ============================================
         this.simulationSystems  = this.Game.SimulationSystems.map(System => new System());
         this.eventSystems       = this.Game.EventSystems.map(System => new System(localBus));
         this.networkSystems     = this.Game.NetworkSystems.map(System => new System(localBus, networkBus));
         // =======================================================
-
-
-        // Event buffers take an event bus and stores a history of events with timestamps. can be polled to read and clear the buffer
-        this.keyDownEventBuffer = new EventBuffer(localBus, eventSchemas.localEventBuffer)       // keydowns buffer
-        this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.networkEventBuffer)   // server updates buffer
-
 
         networkBus.emit(eventSchemas.userSetup, true)
     }
