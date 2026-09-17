@@ -119,7 +119,6 @@ export class Engine {
         }
         world.apply(localChanges)
 
-
         for (const interface of this.interfaces) { // for sending information to another process the emit to eventSystems.on() and buffers Poll()
             interface?.send(dt, localChanges);
         }
@@ -131,9 +130,6 @@ export class Engine {
         }
         world.reconcile(networkChanges);
 
-        for (const event of this.events) {
-            event?.update(dt, localChanges, networkChanges); 
-        }
     }
 
 
