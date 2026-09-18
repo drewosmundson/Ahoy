@@ -17,7 +17,12 @@ export class Engine {
     setup(canvas, socket = null) {
         const eventSchemas  = this.Game.eventSchemas; 
         const localBus      = new LocalEventBus(eventSchemas);             // Intra-process bus for events in the same process like mouse and keyboard
+        const engineBus     = new LocalEventBus(eventSchemas);
+        const presentationBus = new LocalEventBus(eventSchemas);
         const networkBus    = new NetworkEventBus(socket, eventSchemas);   // Inter-process bus for events to and from the server
+
+        this.engineSubscriptions = this.registerEngineSubscriptions(engineBus);
+
 
         // ============ Event Buffers ==============================
         //  Event buffers take an event bus and store a history of events with timestamps to be polled each game tick.
@@ -37,27 +42,21 @@ export class Engine {
 
 
         // ============ Components and Entity initalization =========
-        //  keyboard, network, touch, gamepad, browser etc.
+        //  keyboard, mouse, network, touch, gamepad, browser etc.
         this.interfaces = this.Game.Interfaces.map(
             Interface => new Interface(localBus, networkBus, eventSchemas)
         );
         // ==========================================================
 
 
-        // ====  Buffered Systems  ============================================
+        // ====  Systems  ============================================
         //  Systems act on the new information polled from buffers sent by interfaces and current world data
         //  They calculate and return the delta change for world data to apply
         this.simulationSystems = this.Game.SimulationSystems.map(System => new System());
-        this.reconciledSystems = this.Game.ReconciledSystems.map(System => new System());
-        // ===========================================================
-
-
-        // ============ Event Systems =========
-        //  Event Systems are different from buffered systems in that they can directly manipulate world data as it does not need to be reconciled later.
-        //  These events are the
-        this.localEventSystems = this.Game.EventSystems.map(System => new System(localBus, eventSchemas)); // event systems apply changes from events to world data
-        this.networkEventSystems = this.Game.NetworkSystems.map(System => new System(localBus, eventSchemas))
-        // ====================================
+        this.simulationEffectSystems = this.Game.SimulationEventSystems.map(System => new System());                // need the outputs from 
+        this.effectsEventSystems = this.Game.EventSystems.map(System => new System(localBus, eventSchemas)); // event systems apply changes from events to world data
+        this.networkEventSystems = this.Game.NetworkSystems.map(System => new System(localBus, networkBus, eventSchemas))
+        // ==========================================================
 
 
         // ======= Engine Services ===================================
@@ -66,34 +65,15 @@ export class Engine {
         //  They should not directly manipulate world data. These are read only
         this.services = this.Game.Services.map(
             Service => new Service(canvas, localBus, networkBus, eventSchemas)
-        );  
+        );
         // ===========================================================
 
         networkBus.emit(eventSchemas.userSetup, true)
     }   
 
 
-    start(lobbyData = null) {
-        this.worldData.start(lobbyData)
 
-        this.interfaces.forEach(interface => interface.start(lobbyData)); // inits event listeners like keyboard presses and window resize
-
-        this.simulationSystems.forEach(system => system.start(lobbyData)); 
-        this.eventSystems.forEach(system => system.start(lobbyData)); 
-        this.networkSystems.forEach(system => system.start(lobbyData)); 
-
-        this.services.forEach(service => service.start(lobbyData))
-
-        // One off event to resize the screen to cover case if screen resized while loading
-        window.dispatchEvent(new Event("resize"));
-
-        this.previousTime = 0;
-        this.accumulator = 0;
-        this.renderer.setAnimationLoop(loop)
-    }
-
-
-    loop = (time) => {
+    animationLoop = (time) => {
         const frameTime = Math.min(
             (time - this.previousTime) * 0.001,
             0.25
@@ -103,43 +83,96 @@ export class Engine {
         this.accumulator += frameTime;
 
         while (this.accumulator >= FIXED_DT) {
-            this.simulateGameTick(this.worldData, FIXED_DT);
+            this.simulation(this.worldData, FIXED_DT);
             this.accumulator -= FIXED_DT;
         }
 
-        this.updatePresentation(this.worldData);
+        this.presentation(this.worldData);
     };
 
 
-    simulateGameTick(world, dt) {
-        const localChanges = [];
-        const userUpdates  = this.localEventBuffer.poll()
+    simulation(world, dt) {
+        const changes = [];
+
+        const localEvents  = this.localEventBuffer.poll()
         for (const system of this.simulationSystems) {
-            changes.push(system?.simulate(dt, world, userUpdates)); 
-        }
-        world.apply(localChanges)
-
-        for (const interface of this.interfaces) { // for sending information to another process the emit to eventSystems.on() and buffers Poll()
-            interface?.send(dt, localChanges);
+            changes.push(...system?.simulate(dt, world, localEvents)); 
         }
 
-        const networkChanges = [];
-        const networkUpdates = this.networkEventBuffer.poll()
+        for (const iface of this.interfaces) {
+            iface.send(localChanges)
+        }
+
+        const networkEvents = this.networkEventBuffer.poll()
         for (const system of this.networkSystems) {
-            changes.push(system?.networkUpdate(dt, world, networkUpdates)); 
+            changes.push(...system?.simulate(dt, world, networkEvents)); 
         }
-        world.reconcile(networkChanges);
 
+        world.apply(changes);
     }
 
 
-    updatePresentation(world) {
+    presentation(world) {
         for (const service of this.services) {
             service?.update(world);
         }
     }
 
+
+    start(lobbyData = null) {
+        this.worldData.start(lobbyData)
+
+
+        // One off event to resize the screen to cover case if screen resized while loading
+        window.dispatchEvent(new Event("resize"));
+
+        this.previousTime = 0;
+        this.accumulator = 0;
+        this.renderer.setAnimationLoop(this.animationLoop)
+    }
+
     stop() {
         this.renderer.setAnimationLoop(null);
+        this.engineSubscriptions.destroy()
     }
+
+    pause() {
+
+
+    }
+
+    resume() {
+
+
+        
+    }
+
+    registerEngineSubscriptions(engineBus, eventSchemas) {
+        const subscriptions = [];
+
+        subscriptions.push(
+            engineBus.on(eventSchemas.start, () => this.start()),
+            engineBus.on(eventSchemas.stop, () => this.stop()),
+            engineBus.on(eventSchemas.pause, () => this.pause()),
+            engineBus.on(eventSchemas.resume, () => this.resume()),
+        );
+
+        return {
+            destroy() {
+                for (const subscription of subscriptions) {
+                    subscription.unsubscribe();
+                }
+            }
+        };
+    }
+
+
+
+
+
+
+
+
+
+
 }
