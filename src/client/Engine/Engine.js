@@ -2,11 +2,14 @@
 
 import WorldData from "WorldData.js"
 
+import Renderer from "Renderer.js"
+
 // Async and networking events and buffers
 import { LocalEventBus } from './Utils/eventBus.js';
 import { NetworkEventBus } from './Utils/eventBus.js';
 import { EventBuffer } from './Utils/eventBuffer.js';
 import { FIXED_DT } from './Utils/CONSTANTS.js'
+
 
 
 export class Engine {
@@ -15,13 +18,11 @@ export class Engine {
     }
 
     setup(canvas, socket = null) {
-        const eventSchemas  = this.Game.eventSchemas; 
+        const eventSchemas  = this.Game.eventSchemas;
         const localBus      = new LocalEventBus(eventSchemas);             // Intra-process bus for events in the same process like mouse and keyboard
         const engineBus     = new LocalEventBus(eventSchemas);
         const presentationBus = new LocalEventBus(eventSchemas);
         const networkBus    = new NetworkEventBus(socket, eventSchemas);   // Inter-process bus for events to and from the server
-
-        this.engineSubscriptions = this.registerEngineSubscriptions(engineBus);
 
 
         // ============ Event Buffers ==============================
@@ -31,6 +32,8 @@ export class Engine {
         this.localEventBuffer   = new EventBuffer(localBus, eventSchemas.localEventBuffer)       // keydowns buffer
         this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.networkEventBuffer)   // server updates buffer
         // ==========================================================
+
+        this.engineSubscriptions = this.registerEngineSubscriptions(engineBus);
 
 
         // ============ Components and Entity initalization =========
@@ -99,8 +102,12 @@ export class Engine {
             changes.push(...system?.simulate(dt, world, localEvents)); 
         }
 
+        for (const system of this.effectSystems) {
+            changes.push(...system?.simulate(dt, world, changes)); 
+        }
+
         for (const iface of this.interfaces) {
-            iface.send(localChanges)
+            iface.send(changes)
         }
 
         const networkEvents = this.networkEventBuffer.poll()
@@ -121,7 +128,6 @@ export class Engine {
 
     start(lobbyData = null) {
         this.worldData.start(lobbyData)
-
 
         // One off event to resize the screen to cover case if screen resized while loading
         window.dispatchEvent(new Event("resize"));
@@ -144,7 +150,6 @@ export class Engine {
     resume() {
 
 
-        
     }
 
     registerEngineSubscriptions(engineBus, eventSchemas) {
