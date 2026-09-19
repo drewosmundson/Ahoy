@@ -1,28 +1,27 @@
 
 
 
+export function host({ dom, navigate, socket, subscriptions }) {
+    return {
+        initEventListeners,
+    };
 
-export function host({ dom, navigate, emitter, Game }) {
-  return {
-    initEventListeners,
-    toMenuScreen,
-    start,
-  };
+    function initEventListeners() {
+        dom.buttons.host?.addEventListener('click', toMenuScreen);
+        dom.buttons.hostStart?.addEventListener('click', start);
+        dom.buttons.hostStart?.addEventListener('click', startHosting);
+    }
+    function toMenuScreen() {
+        navigate.toScreen(dom.screens.host);
+    }
+    function startHosting() {
+        subscriptions.add('player-joined', handlePlayerJoined);
+        navigate.toScreen(dom.screens.lobby);
+    }
 
-  function initEventListeners() {
-    dom.buttons.host?.addEventListener('click', toMenuScreen);
-    dom.buttons.hostStart?.addEventListener('click', start);
-  }
+    function handlePlayerJoined(player) {
 
-  function toMenuScreen() {
-    navigate.toScreen(dom.screens.host)
-  }
-
-  function start() {
-    const canvas = dom.canvas.game;
-    const game = new Game();
-    game.setup(canvas, heightmap);
-    navigate.toScreen(dom.screens.game);
-    game.start();
-  }
+    }
 }
+
+

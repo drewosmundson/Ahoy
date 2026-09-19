@@ -1,11 +1,5 @@
 
-export function singleplayer({ dom, navigate, socket, games, Engine, }) {
-    return {
-        initEventListeners,
-        toMenuScreen,
-        start,
-    };
-
+export function singleplayer({ dom, navigate, games, engine }) {
     function initEventListeners() {
         dom.buttons.mainToSingleplayer?.addEventListener('click', toMenuScreen);
         dom.buttons.templateStart?.addEventListener('click', template);
@@ -17,18 +11,23 @@ export function singleplayer({ dom, navigate, socket, games, Engine, }) {
     }
 
     function ahoy(){
-        start(games.ahoy)
+        startEngine(games.ahoy)
     }
 
     function template() {
-        start(games.template)
+        startEngine(games.template)
     }
 
-    function start(selectedGame) {
+    function startEngine(selectedGame) {
         const canvas = dom.canvas.game;
-        const game = new Engine(selectedGame);
-        game.setup(canvas);
+        engine.setup(selectedGame, canvas);
         navigate.toScreen(dom.screens.game);
-        game.start();
+        engine.start();
     }
+
+    return {
+        initEventListeners,
+        toMenuScreen,
+        startEngine,
+    };
 }

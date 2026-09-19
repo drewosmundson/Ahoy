@@ -2,25 +2,20 @@
 
 import WorldData from "WorldData.js"
 
-import Renderer from "Renderer.js"
-
 // Async and networking events and buffers
-import { LocalEventBus } from './Utils/eventBus.js';
-import { NetworkEventBus } from './Utils/eventBus.js';
-import { EventBuffer } from './Utils/eventBuffer.js';
-import { FIXED_DT } from './Utils/CONSTANTS.js'
-
+import { LocalEventBus, NetworkEventBus } from '../../shared/eventBus.js';
+import { EventBuffer } from '../../shared/eventBuffer.js';
+import { FIXED_DT } from '../../shared/CONSTANTS.js'
 
 
 export class Engine {
-    constructor(Game) {
-        this.Game = Game;
+    constructor() {
+
     }
 
-    setup(canvas, socket = null) {
-        const eventSchemas  = this.Game.eventSchemas;
+    setup(Game, canvas, socket = null) {
+        const eventSchemas  = Game.eventSchemas;
         const localBus      = new LocalEventBus(eventSchemas);             // Intra-process bus for events in the same process like mouse and keyboard
-        const engineBus     = new LocalEventBus(eventSchemas);
         const presentationBus = new LocalEventBus(eventSchemas);
         const networkBus    = new NetworkEventBus(socket, eventSchemas);   // Inter-process bus for events to and from the server
 
@@ -33,20 +28,18 @@ export class Engine {
         this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.networkEventBuffer)   // server updates buffer
         // ==========================================================
 
-        this.engineSubscriptions = this.registerEngineSubscriptions(engineBus);
-
 
         // ============ Components and Entity initalization =========
         //  Components are where they can be filtered by the system that require them. 
         //  WorldData is updated on each game tick by systems
         this.worldData = new WorldData();
-        this.worldData.register(this.Game.Components)
+        this.worldData.register(Game.Components)
         // ===========================================================
 
 
         // ============ Components and Entity initalization =========
         //  keyboard, mouse, network, touch, gamepad, browser etc.
-        this.interfaces = this.Game.Interfaces.map(
+        this.interfaces = Game.Interfaces.map(
             Interface => new Interface(localBus, networkBus, eventSchemas)
         );
         // ==========================================================
@@ -55,10 +48,9 @@ export class Engine {
         // ====  Systems  ============================================
         //  Systems act on the new information polled from buffers sent by interfaces and current world data
         //  They calculate and return the delta change for world data to apply
-        this.simulationSystems = this.Game.SimulationSystems.map(System => new System());
-        this.simulationEffectSystems = this.Game.SimulationEventSystems.map(System => new System());                // need the outputs from 
-        this.effectsEventSystems = this.Game.EventSystems.map(System => new System(localBus, eventSchemas)); // event systems apply changes from events to world data
-        this.networkEventSystems = this.Game.NetworkSystems.map(System => new System(localBus, networkBus, eventSchemas))
+        this.simulationSystems = Game.SimulationSystems.map(System => new System());
+        this.networkSystems = Game.NetworkSystems.map(System => new System(networkBus, localBus, eventSchemas))
+        this.effectSystems = Game.EventSystems.map(System => new System(localBus, presentationBus, eventSchemas)); // event systems apply changes from events to world data
         // ==========================================================
 
 
@@ -66,15 +58,13 @@ export class Engine {
         //  Services hold the actual rendering and graphics libray.
         //  They read from world data and actually display the data on the screen.
         //  They should not directly manipulate world data. These are read only
-        this.services = this.Game.Services.map(
+        this.services = Game.Services.map(
             Service => new Service(canvas, localBus, networkBus, eventSchemas)
         );
         // ===========================================================
 
         networkBus.emit(eventSchemas.userSetup, true)
     }   
-
-
 
     animationLoop = (time) => {
         const frameTime = Math.min(
@@ -102,10 +92,6 @@ export class Engine {
             changes.push(...system?.simulate(dt, world, localEvents)); 
         }
 
-        for (const system of this.effectSystems) {
-            changes.push(...system?.simulate(dt, world, changes)); 
-        }
-
         for (const iface of this.interfaces) {
             iface.send(changes)
         }
@@ -115,6 +101,9 @@ export class Engine {
             changes.push(...system?.simulate(dt, world, networkEvents)); 
         }
 
+        for (const system of this.effectSystems) {
+            changes.push(...system?.simulate(dt, world, changes)); 
+        }        
         world.apply(changes);
     }
 
@@ -134,50 +123,23 @@ export class Engine {
 
         this.previousTime = 0;
         this.accumulator = 0;
-        this.renderer.setAnimationLoop(this.animationLoop)
+        for (const service of this.services) {
+            service?.start(this.animationLoop);
+        }
     }
 
     stop() {
-        this.renderer.setAnimationLoop(null);
-        this.engineSubscriptions.destroy()
+        for (const service of this.services) {
+            service?.start(this.animationLoop);
+        }    
     }
 
     pause() {
-
-
+        this.renderer.setAnimationLoop(null);
     }
 
     resume() {
-
-
+        this.renderer.setAnimationLoop(this.animationLoop);
     }
-
-    registerEngineSubscriptions(engineBus, eventSchemas) {
-        const subscriptions = [];
-
-        subscriptions.push(
-            engineBus.on(eventSchemas.start, () => this.start()),
-            engineBus.on(eventSchemas.stop, () => this.stop()),
-            engineBus.on(eventSchemas.pause, () => this.pause()),
-            engineBus.on(eventSchemas.resume, () => this.resume()),
-        );
-
-        return {
-            destroy() {
-                for (const subscription of subscriptions) {
-                    subscription.unsubscribe();
-                }
-            }
-        };
-    }
-
-
-
-
-
-
-
-
-
 
 }

@@ -8,6 +8,7 @@
 import { createNavigation } from "./app/navigation.js";
 import { createDom } from "./app/dom.js";
 import { createUi } from "./app/ui.js"
+import { registerSubscriptions } from "./app/subscriptions.js";
 
 // Page/feature module archetecture. 
 import { singleplayer } from "./features/singleplayer.js"
@@ -15,28 +16,37 @@ import { host } from "./features/host.js"
 import { participant } from "./features/participant.js";
 import { mmo } from "./features/mmo.js"
 
+
+import { lobbyEventSchemas } from "../shared/lobbyEventSchemas.js";
+
+
 // Game Engine
 import { Engine } from "./Engine/Engine.js";
 
 // playable Games 
-import { Games } from "./Games"
+import { games } from "./Games"
 
 document.addEventListener('DOMContentLoaded', () => {
+    const engine = new Engine()
+
     const dom = createDom();
     const navigate = createNavigation(dom);
     const ui = createUi(dom);
     const socket = io();
+    const subscriptions = registerSubscriptions(engine, socket, lobbyEventSchemas)
 
 
     // This creates a shared context and passes it to each feature
     // to create their instances, then initializes each feature's event listeners.
     const context = {
+        games,
+
+        engine,
         dom,
         navigate,
         ui,
         socket,
-        Games,
-        Engine,
+        subscriptions,
     };
     
     // catch if page reloaded with no internet 
