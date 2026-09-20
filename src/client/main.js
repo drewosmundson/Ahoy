@@ -1,4 +1,5 @@
 
+
 // grab DOM
 // wire modules together
 // start navigation
@@ -16,37 +17,34 @@ import { host } from "./features/host.js"
 import { participant } from "./features/participant.js";
 import { mmo } from "./features/mmo.js"
 
-
-import { lobbyEventSchemas } from "../shared/lobbyEventSchemas.js";
-
+// Events
+import { NetworkEventBus } from "../shared/eventBus.js";
+import { lobbyEventSchemas } from "../shared/lobbyEventSchemas.js"
 
 // Game Engine
 import { Engine } from "./Engine/Engine.js";
 
-// playable Games 
+// Playable Games 
 import { games } from "./Games"
 
 document.addEventListener('DOMContentLoaded', () => {
-    const engine = new Engine()
+    const socket = io();
+    const lobbyBus = new NetworkEventBus(socket, lobbyEventSchemas)
+    const lobbySubscriptions = registerSubscriptions(lobbyBus)
 
     const dom = createDom();
     const navigate = createNavigation(dom);
     const ui = createUi(dom);
-    const socket = io();
-    const subscriptions = registerSubscriptions(engine, socket, lobbyEventSchemas)
-
-
+  
     // This creates a shared context and passes it to each feature
     // to create their instances, then initializes each feature's event listeners.
     const context = {
-        games,
-
-        engine,
+        lobbySubscriptions,
         dom,
         navigate,
         ui,
-        socket,
-        subscriptions,
+        Engine,
+        games,
     };
     
     // catch if page reloaded with no internet 
