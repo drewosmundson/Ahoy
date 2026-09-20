@@ -25,7 +25,7 @@ import { lobbyEventSchemas } from "../shared/lobbyEventSchemas.js"
 import { Engine } from "./Engine/Engine.js";
 
 // Playable Games 
-import { games } from "./Games"
+import { games } from "./Games/gamesIndex.js"
 
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();

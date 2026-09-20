@@ -1,20 +1,60 @@
 class WorldData {
     #components = new Map();
+    #componentsByName = new Map();
     #nextEntityId = 0;
 
-    constructor(componentTypes = []) {
-        for (const Component of componentTypes) {
-            this.register(Component);
+    constructor(components = []) {
+        this.register(components)
+    }
+
+    register(components) {
+        for (const Component of components) {
+            this.registerComponent(Component);
         }
     }
 
     // adds new component that entiies in this world data can be assined to
-    register(Component) {
+    registerComponent(Component) {
         if (this.#components.has(Component)) {
             throw new Error(`Component already registered: ${Component.name}`);
         }
         this.#components.set(Component, new Map());
     }
+
+
+    // lobby data shape 
+    // {
+    //     entities: [
+    //         {
+    //         components: {
+    //             Position: { x: 0, y: 0 },
+    //             Health:   { hp: 100 }
+    //         }
+    //         },
+    //         {
+    //         components: {
+    //             Position: { x: 10, y: 10 }
+    //         }
+    //         }
+    //     ]
+    // }
+
+
+    start(lobbyData) {
+        if (!lobbyData) return;
+        for (const entitySpec of lobbyData.entities) {
+            const entity = this.createEntity();
+
+            for (const [componentName, value] of Object.entries(entitySpec.components)) {
+                const Component = this.#componentsByName.get(componentName);
+                if (!Component) {
+                    throw new Error(`Unknown component in lobby data: ${componentName}`);
+                }
+                this.add(entity, Component, value);
+            }
+        }
+    }
+
 
     // Map<entity, value> for the given Component
     #storage(Component) {
@@ -25,6 +65,31 @@ class WorldData {
         return storage;
     }
 
+
+    apply(changes) {
+        for (const change of changes) {
+            switch (change.type) {
+                case 'createEntity': {
+                    const entity = this.createEntity();
+                    for (const { Component, value } of change.components) {
+                        this.add(entity, Component, value);
+                    }
+                    break;
+                }
+                case 'add':
+                    this.add(change.entity, change.Component, change.value);
+                    break;
+                case 'remove':
+                    this.remove(change.entity, change.Component);
+                    break;
+                case 'destroyEntity':
+                    this.destroyEntity(change.entity);
+                    break;
+                default:
+                    throw new Error(`Unknown change type: ${change.type}`);
+            }
+        }
+    }
     // gets all entity ids that have this component 
     getEntityKeys(Component) {
         return this.#storage(Component).keys();
