@@ -1,39 +1,34 @@
 class WorldData {
     #components = new Map();
-    #componentsByName = new Map();
     #nextEntityId = 0;
 
     constructor(components = []) {
         this.register(components)
     }
 
+    // components: array of string component names, e.g. ["Position", "Health"]
     register(components) {
-        for (const Component of components) {
-            this.registerComponent(Component);
+        for (const name of components) {
+            if (this.#components.has(name)) {
+                throw new Error(`Component already registered: ${name}`);
+            }
+            this.#components.set(name, new Map());
         }
     }
 
-    // adds new component that entiies in this world data can be assined to
-    registerComponent(Component) {
-        if (this.#components.has(Component)) {
-            throw new Error(`Component already registered: ${Component.name}`);
-        }
-        this.#components.set(Component, new Map());
-    }
 
-
-    // lobby data shape 
+    // lobby data shape
     // {
     //     entities: [
     //         {
     //         components: {
-    //             Position: { x: 0, y: 0 },
-    //             Health:   { hp: 100 }
+    //             "Position": { x: 0, y: 0 },
+    //             "Health":   { hp: 100 }
     //         }
     //         },
     //         {
     //         components: {
-    //             Position: { x: 10, y: 10 }
+    //             "Position": { x: 10, y: 10 }
     //         }
     //         }
     //     ]
@@ -45,139 +40,162 @@ class WorldData {
         for (const entitySpec of lobbyData.entities) {
             const entity = this.createEntity();
 
-            for (const [componentName, value] of Object.entries(entitySpec.components)) {
-                const Component = this.#componentsByName.get(componentName);
-                if (!Component) {
-                    throw new Error(`Unknown component in lobby data: ${componentName}`);
-                }
-                this.add(entity, Component, value);
+            for (const [name, value] of Object.entries(entitySpec.components)) {
+                this.add(entity, name, value);
             }
         }
     }
 
 
-    // Map<entity, value> for the given Component
-    #storage(Component) {
-        const storage = this.#components.get(Component);
+    // Map<entity, value> for the given component name
+    #storage(name) {
+        const storage = this.#components.get(name);
         if (!storage) {
-            throw new Error(`Component not registered: ${Component.name}`);
+            throw new Error(`Component not registered: ${name}`);
         }
         return storage;
     }
 
 
+    // Creates the next entity always increasing. The Game is short lived enough that this should not be an issue through normal gameplay.
+    // This would eventually fail and cause a crash but that would take many hours of gameplay for at most 30 minute matches.
+    // TODO: Prevent this. Find a way to reuse destroyed entities and have all networked clients agree. 
+    #createEntity() {
+        return this.#nextEntityId++;
+    }
+
+    // Removes an entity from all associated components
+    #destroyEntity(entity) {
+        for (const storage of this.#components.values()) {
+            storage.delete(entity);
+        }
+    }
+
+    // Adds an entity to the specified component name with the given value.
+    // Value must be provided by the caller - WorldData has no notion of defaults/factories.
+    #addComponentToEntity(entity, name, value) {
+        this.#storage(name).set(entity, value);
+    }
+
+    // removes and entity from a specific component
+    #removeComponentFromEntity(entity, name) {
+        return this.#storage(name).delete(entity);
+    }
+
     apply(changes) {
         for (const change of changes) {
             switch (change.type) {
-                case 'createEntity': {
-                    const entity = this.createEntity();
-                    for (const { Component, value } of change.components) {
-                        this.add(entity, Component, value);
+                case 'newEntity': {
+                    const entity = this.#createEntity();
+                    for (const { name, value } of change.components) {
+                        this.add(entity, name, value);
                     }
                     break;
                 }
-                case 'add':
-                    this.add(change.entity, change.Component, change.value);
+                case 'addComponentToEntity':
+                    this.#addComponentToEntity(change.entity, change.name, change.value);
                     break;
-                case 'remove':
-                    this.remove(change.entity, change.Component);
+
+                case 'removeComponentFromEntity':
+                    this.#removeComponentFromEntity(change.entity, change.name);
                     break;
+
+                case 'updateEntityComponents': {
+
+                    this.#updateEntityComponents(change.entity, )
+                    break;
+                }
+
+
+
                 case 'destroyEntity':
-                    this.destroyEntity(change.entity);
+                    this.#destroyEntity(change.entity);
                     break;
+
                 default:
                     throw new Error(`Unknown change type: ${change.type}`);
             }
         }
     }
-    // gets all entity ids that have this component 
-    getEntityKeys(Component) {
-        return this.#storage(Component).keys();
+
+
+    // Returns an iterator over all entity IDs that have this component.
+    getEntityKeys(name) {
+        return this.#storage(name).keys();
     }
 
-    // gets all entity value pairs with this component
-    getEntityKeysAndValues(Component) {
-        return this.#storage(Component).entries();
+    // Returns an iterator over [entity ID, component value] pairs for this component.
+    getEntityKeysAndValues(name) {
+        return this.#storage(name).entries();
     }
 
-    // Adds an entity to the specficed Component and the values to be assined to that component
-    add(entity, Component, value) {
-        this.#storage(Component).set(entity, value);
+
+    // Returns the value of the specified component for an entity.
+    // Returns undefined if the entity does not have the component.
+    // world.get(42, "Position");
+    // { x: 10, y: 20 }
+
+    // world.get(42, "Health");
+    // 100
+
+    // world.get(42, "Velocity"); (if does not have component)
+    // undefined
+    get(entity, name) {
+        return this.#storage(name).get(entity);
     }
 
-    // Returns the value for an entities component. Undefined if none present
-    get(entity, Component) {
-        return this.#storage(Component).get(entity);
-    }
 
-    // Checks if entity has a specified component
-    has(entity, Component) {
-        return this.#storage(Component).has(entity);
-    }
-
-    // removes and entity from a specific component
-    remove(entity, Component) {
-        return this.#storage(Component).delete(entity);
-    }
-
-    // Creates the next entity always increasing. The Game is short lived enough that this should not be an issue through normal gameplay.
-    // This would eventually fail and cause a crash but that would take many hours of gameplay for at most 30 minute matches.
-    // If I time I would like to prevent this.
-    createEntity() {
-        return this.#nextEntityId++;
-    }
-
-    // Removes an entity from all associated components
-    destroyEntity(entity) {
-        for (const storage of this.#components.values()) {
-            storage.delete(entity);
-        }
+    // Returns whether the entity has the specified component.
+    hasComponent(entity, name) {
+        return this.#storage(name).has(entity);
     }
 }
 
 
-// Usage examples generated by cluade
-// class Position { constructor(x, y) { this.x = x; this.y = y; } }
-// class Velocity { constructor(dx, dy) { this.dx = dx; this.dy = dy; } }
-// class Health   { constructor(hp) { this.hp = hp; } }
 
-//  1. Set up world with known component types
-// const world = new WorldData([Position, Velocity, Health]);
 
-// 2. Create entities
-// const player = world.createEntity();  // 0
-// const enemy  = world.createEntity();  // 1
 
-//  3. Attach components
-// world.add(player, Position, new Position(0, 0));
-// world.add(player, Velocity, new Velocity(1, 0));
-// world.add(player, Health, new Health(100));
 
-// world.add(enemy, Position, new Position(10, 10));
-// world.add(enemy, Health, new Health(50));
-// note: enemy has no Velocity — that's fine, components are optional per-entity
 
-//  4. Query single values
-// world.get(player, Health);   // Health { hp: 100 }
-// world.get(enemy, Velocity);  // undefined (enemy has no Velocity)
-
-// world.has(enemy, Velocity);  // false
-// world.has(enemy, Position);  // true
-
-//  5. Iterate a "system" — e.g. movement system only touches entities with both Position & Velocity
-// for (const [entity, vel] of world.getEntityKeysAndValues(Velocity)) {
-//     if (!world.has(entity, Position)) continue;
-//     const pos = world.get(entity, Position);
-//     pos.x += vel.dx;
-//     pos.y += vel.dy;
+// basic example in a system
+// class Position {
+//     static factory() {
+//         return { x: 10, y: 10 };
+//     }
 // }
 
-// 6. Remove a single component from an entity
-// world.remove(enemy, Health); // enemy no longer has Health
 
-// 7. Fully destroy an entity (cleans it out of every component map)
-// world.destroyEntity(player);
-// world.has(player, Position); // false
-// world.has(player, Health);   // false
+// caller resolves the value, WorldData just stores it
+// worldData.add(entity, "Position", Position.factory());
 
 
+
+
+[
+    {
+        type: "createEntity",
+        components: [
+            { name: "Position", value: { x: 0, y: 0 } },
+            { name: "Health", value: { hp: 100 } }
+        ]
+    },
+    {
+        type: "addComponent",
+        entity: 42,
+        name: "Velocity",
+        value: { x: 1, y: 0 }
+    },
+    {
+        type: "removeComponent",
+        entity: 42,
+        name: "Velocity"
+    },
+    {
+        type: "destroyEntity",
+        entity: 42
+    }
+]
+
+worldData.apply(changes)
+
+export default WorldData;

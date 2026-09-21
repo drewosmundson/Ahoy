@@ -37,7 +37,7 @@ export class Engine {
         //  Components are where they can be filtered by the system that require them. 
         //  WorldData is updated on each game tick by systems
         this.worldData = new WorldData();
-        this.worldData.register(Game.Components)                      // simulation & network authoritative state
+        this.worldData.register(Game.Components.name)                      // simulation & network authoritative state
         // ===========================================================
 
 
