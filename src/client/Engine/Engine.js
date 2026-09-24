@@ -55,8 +55,8 @@ export class Engine {
         //  Systems act on the new information polled from buffers sent by interfaces and current world data
         //  They calculate and return the delta change for world data to apply changes 
         this.simulationSystems = Game.SimulationSystems.map(System => new System());
-        this.networkSystems = Game.NetworkSystems.map(System => new System(networkBus, eventSchemas));
-        this.effectSystems = Game.EffectSystems.map(System => new System(localBus, eventSchemas)); 
+        this.networkSystems = Game.NetworkSystems.map(System => new System());
+        this.effectSystems = Game.EffectSystems.map(System => new System()); 
         // ==========================================================
 
 
@@ -142,9 +142,9 @@ export class Engine {
             this.accumulator -= FIXED_DT;
         }
     
-        // animation
+  
         this.presentation(FIXED_DT)
-
+        
     };
 
     presentation(dt) {
@@ -152,9 +152,12 @@ export class Engine {
         for (const system of this.presentationSystems) {
             changes.push(...system.update(dt, this.worldData, this.presentationData, localEvents));
         }
+        
+        worldPresentationData.apply(changes)
+        // Maybe put this all in world data with a presentaiton tag
 
+        this.presentationInterface?.sendEventType(changes.filter(c => c.events))
         this.presentationData.apply(changes);
-
 
         for (const service of this.services) {
             service?.update(this.worldData);
@@ -164,23 +167,26 @@ export class Engine {
     simulation(world, dt) {
         const changes = [];
 
+        // Keyboard Input / ai brain / Collison
         const localEvents  = this.localEventBuffer.poll()
         for (const system of this.simulationSystems) {
             changes.push(...system?.update(dt, world, localEvents));
         }
 
-        this.interfaces.emit(changes)
+        this.networkInterface?.sendComponentType(changes.filter(change => change.component)); 
 
+        // Network Input / reconciliation
         const networkEvents = this.networkEventBuffer.poll()
         for (const system of this.networkSystems) {
             changes.push(...system?.update(dt, world, networkEvents));
         }
 
+        const effectEvents = changes.filter(change => change.events)
         for (const system of this.effectSystems) {
-            changes.push(...system?.update(dt, world, changes));
+            changes.push(...system.update(dt, world, presentaitonEvents))
         }
 
-        world.apply(changes);
+        world.apply(changes)
     }
 }
 
