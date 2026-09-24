@@ -1,54 +1,26 @@
 
+// Game.js
+import { GAME_CONFIG } from './config.js';
+import { RenderManager } from './services/RenderManager.js';
+import { Components } from './components/index.js';
+import { PresentationComponents } from './presentationComponents/index.js';
+import { Interfaces } from './interfaces/index.js';
+import { SimulationSystems } from './systems/simulation/index.js';
+import { NetworkSystems } from './systems/network/index.js';
+import { EffectSystems } from './systems/effect/index.js';
+import { PresentationSystems } from './systems/presentation/index.js';
+import { Services } from './services/index.js';
 
-import {} from "./Components-Simulation";
-import {} from "./Systems";
-import { GAME_CONFIG } from 'Constants.js'
-
-
-
-// Ordering of items here affects execution
 export const Game = {
-    GAME_CONFIG, 
-
-    Renderer: RenderManager,
-
-    Components: [
-
-
-    ],
-
-    Interfaces: [
-
-
-    ],
-    // Simulation Layer: interfaces -> buffer -> poll user updates on game tick + worlddata = changes
-    SimulationSystems: [
-
-    ],
-
-    // changes + world data = changes + presentation emit
-    EventSystems: [
-
-    ],
-
-    // changes + world data = changes + presentation emit
-    NetworkSystems: [
-        
-
-    ],
-
-    // eventData + world data = presenation emit
-    // Event.on 
-
-    // networkEventData + worldData = 
-    // Network.on
-
-
-    // changes are they applied to world data
-    // world data read by engine services and then rendered to the screen or audio effect played
-    Services: [
-        BrowserEvents,
-        CameraManager,
-        AudioManager,
-    ],
+  GAME_CONFIG,
+  Renderer: RenderManager,
+  Components,
+  PresentationComponents,
+  Interfaces,
+  SimulationSystems,
+  NetworkSystems,
+  EffectSystems,
+  PresentationSystems,
+  Services,
 };
+

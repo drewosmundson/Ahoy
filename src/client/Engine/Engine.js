@@ -27,7 +27,7 @@ export class Engine {
         //  Event buffers take an event bus and store a history of events with timestamps to be polled each game tick.
         //  LocalBuffer's purpose is when event triggered and its result must wait for the game loop to reach its next tick 
         //  NetworkBuffers's purpose is when events arrive from the server out of sync with the game loop or out of order.
-        this.localEventBuffer   = new EventBuffer(localBus, eventSchemas.localEventBuffer)       // keydowns buffer
+        this.keydownEventBuffer = new EventBuffer(localBus, eventSchemas.keydownEventBuffer)       // keydowns buffer
         this.networkEventBuffer = new EventBuffer(networkBus, eventSchemas.networkEventBuffer)   // server updates buffer
         // ==========================================================
 
@@ -55,8 +55,8 @@ export class Engine {
         //  Systems act on the new information polled from buffers sent by interfaces and current world data
         //  They calculate and return the delta change for world data to apply changes 
         this.simulationSystems = Game.SimulationSystems.map(System => new System());
-        this.networkSystems = Game.NetworkSystems.map(System => new System(networkBus, localBus, eventSchemas));
-        this.effectSystems = Game.EffectSystems.map(System => new System(localBus, presentationBus, eventSchemas)); 
+        this.networkSystems = Game.NetworkSystems.map(System => new System(networkBus, eventSchemas));
+        this.effectSystems = Game.EffectSystems.map(System => new System(localBus, eventSchemas)); 
         // ==========================================================
 
 
@@ -78,7 +78,7 @@ export class Engine {
 
 
         // Event pipeline Example:
-        // Mouse interface    -> localBus ->  cameraMovement effectSystem (world data(settings and target)) + mouse interface updates) -> presentationBus -> services(updates) camera render service
+        // Mouse interface    -> localBus ->  cameraMovement effectSystem (or presentation systems) (world data(settings and target)) + mouse interface updates) -> presentationBus -> services(updates) camera render service
 
 
 
@@ -143,11 +143,23 @@ export class Engine {
         }
     
         // animation
+        this.presentation(FIXED_DT)
+
+    };
+
+    presentation(dt) {
+        const changes = [];
+        for (const system of this.presentationSystems) {
+            changes.push(...system.update(dt, this.worldData, this.presentationData, localEvents));
+        }
+
+        this.presentationData.apply(changes);
+
+
         for (const service of this.services) {
             service?.update(this.worldData);
         }
-    };
-
+    }
 
     simulation(world, dt) {
         const changes = [];
@@ -157,6 +169,8 @@ export class Engine {
             changes.push(...system?.update(dt, world, localEvents));
         }
 
+        this.interfaces.emit(changes)
+
         const networkEvents = this.networkEventBuffer.poll()
         for (const system of this.networkSystems) {
             changes.push(...system?.update(dt, world, networkEvents));
@@ -165,17 +179,10 @@ export class Engine {
         for (const system of this.effectSystems) {
             changes.push(...system?.update(dt, world, changes));
         }
+
         world.apply(changes);
     }
 }
 
 
 
-// presentation(dt) {
-//     const changes = [];
-//     const localEvents = this.localEventBuffer.poll(); // or a separate, unbuffered peek for lowest latency
-//     for (const system of this.presentationSystems) {
-//         changes.push(...system.update(dt, this.worldData, this.presentationData, localEvents));
-//     }
-//     this.presentationData.apply(changes);
-// }
