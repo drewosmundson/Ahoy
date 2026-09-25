@@ -1,5 +1,19 @@
 
 
+
+
+
+function buildEventBuffers(eventBus, bufferedEvents) {
+    const eventBuffers = [];
+
+    for (const bufferedEvent of bufferedEvents) {
+        const buffer = new EventBuffer(eventBus, bufferedEvent);
+        eventBuffers.push(buffer);
+    }
+
+    return eventBuffers;
+}
+
 class EventBuffer {
     constructor(eventBus, bufferedEvent) {
         this.queue = [];
@@ -20,11 +34,7 @@ class EventBuffer {
         this.queue = [];
         return items;
     }
-
 }
-
-
-
 
 /*
 
