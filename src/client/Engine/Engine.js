@@ -18,27 +18,27 @@ export class Engine {
 
         const eventSchemas  = Game.eventSchemas;
 
-        const localBus      = new LocalEventBus(eventSchemas);             // Intra-process bus for events in the same process like mouse and keyboard
-        const presentationBus = new LocalEventBus(eventSchemas);
+        const simulationBus = new LocalEventBus(eventSchemas);             // Intra-process bus for events in the same process like mouse and keyboard
+        const frameBus      = new LocalEventBus(eventSchemas);
         const networkBus    = new NetworkEventBus(socket, eventSchemas);   // Inter-process bus for events to and from the server
-
+    
 
         // ============ Components and Entity initalization =========
         //  keyboard, mouse, network, touch, gamepad, browser etc.
         this.interfaces = Game.Interfaces.map(
-            Interface => new Interface(localBus, networkBus, presentationBus, eventSchemas)
+            Interface => new Interface(localBus, networkBus, frameBus, eventSchemas)
         );
         // ==========================================================
-
-
+        
+       
 
         // ============ Event Buffers ==============================
         //  Event buffers take an event bus and store a history of events with timestamps to be polled each game tick.
-        //  LocalBuffer's purpose is when event triggered and its result must wait for the game loop to reach its next tick 
+        //  simulation Buffer's purpose is when event triggered and its result must wait for the game loop to reach its next tick 
         //  NetworkBuffers's purpose is when events arrive from the server out of sync with the game loop or out of order.
-        this.simulationEventBuffer = buildEventBuffers(localBus, eventSchemas.simulationEvents)       // keydowns buffer
+        this.simulationEventBuffer = buildEventBuffers(simulationBus, eventSchemas.simulationEvents)       // keydowns buffer
         this.networkEventBuffer = buildEventBuffers(networkBus, eventSchemas.networkEvents)   // server updates buffer
-        this.scyncEventBuffer = buildEventBuffers(presentationBus, eventSchemas.presentationEvents)
+        this.frameEventBuffer = buildEventBuffers(frameBus, eventSchemas.frameEvents) // takes dom input and reads once per AFr frame
         // ==========================================================
 
 
@@ -57,17 +57,18 @@ export class Engine {
         //  They calculate and return the delta change for world data to apply changes 
         this.simulationSystems = Game.SimulationSystems.map(System => new System());
         this.networkSystems = Game.NetworkSystems.map(System => new System());
-        this.effectSystems = Game.EffectSystems.map(System => new System()); 
+        this.perFrameSystems = Game.PerFrameSystems.map(System => new System()); 
         // ==========================================================
-
-
+        
+        // can sustems have .on() ? as long as that they dont manipulate world data at all 
+        // this.domUpdateSystems = Game.domUpdateSystems.map(System => new System()); 
 
         // ======= Engine Services ===================================
         //  Services hold the actual rendering and graphics libray.
         //  They read from world data and actually display the data on the screen.
-        //  They should not directly manipulate world data. These are read only
+        //  They should not manipulate world data. These are read only
         this.services = Game.Services.map(
-            Service => new Service(canvas, localBus, networkBus, eventSchemas)
+            Service => new Service(canvas)
         );
         // ===========================================================
 
