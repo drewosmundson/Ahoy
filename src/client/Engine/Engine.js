@@ -16,28 +16,21 @@ class Engine {
     setup(Game, canvas, socket = null) {
 
         this.renderer = Game.renderer;
-
-        const simulationBus = new LocalEventBus(Game.simulationEvents);             // Intra-process bus for events in the same process like mouse and keyboard
-        const networkBus    = new NetworkEventBus(socket, Game.networkEvents);   // Inter-process bus for events to and from the server
-        const frameBus      = new LocalEventBus(Game.frameEvents);
+        
+        const simulationLocalBus   = new LocalEventBus(Game.simulationEvents);             // Intra-process bus for events in the same process like mouse and keyboard
+        const simulationNetworkBus = new NetworkEventBus(socket, Game.networkEvents);   // Inter-process bus for events to and from the server
+        const frameLocalBus        = new LocalEventBus(Game.frameEvents);
+        const syncLocalBus         = new LocalEventBus(Game.SyncEvents)
 
 
         // ============ Interfaces =================================
         //  keyboard, mouse, network, touch, gamepad, browser etc.
-        this.LocalInterface   = Game.LocalInterface.map(Interface => new Interface(simulationbus, frameBus);
-        this.networkInterface = Game.NetworkInterfaces.map(Interface => new Interface(networkBus));
+        this.simulationInterfaces   = Game.simulationInterface.map(Interface => new Interface(simulationLocalBus));
+        this.networkInterfaces = Game.NetworkInterfaces.map(Interface => new Interface(simulationNetworkBus));
+        this.frameInterfaces   = Game.FrameInterfaces.map(Interface => new Interface(frameLocalBus));
+        this.syncInterfaces    = Game.SyncInterfaces.map(Interface => new Interface(syncLocalBus));
         // ==========================================================
         
-
-        // ============ Event Buffers ==============================
-        //  Event buffers take an event bus and store a history of events with timestamps to be polled each game tick.
-        //  simulation Buffer's purpose is when event triggered and its result must wait for the game loop to reach its next tick 
-        //  NetworkBuffers's purpose is when events arrive from the server out of sync with the game loop or out of order.
-        this.simulationEventBuffer = createEventBuffers(simulationBus, Game.simulationEvents); // keydowns buffer
-        this.networkEventBuffer    = createEventBuffers(networkBus, Game.networkEvents);       // server updates buffer
-        this.frameEventBuffer      = createEventBuffers(frameBus, Game.frameEvents);           // takes dom input and reads once per AFr frame
-        // ==========================================================
-
 
         // ============ Components and Entity initalization =========
         //  Components are where they can be filtered by the system that require them. 
@@ -46,7 +39,20 @@ class Engine {
         // ===========================================================
 
 
+        // Can manipulate world data should be used sparingly can only manipulate changes.events world data
+        this.syncEvents = Game.SyncEvents.map(SyncEvent => new SyncEvent(syncLocalBus, this.worldData, Game.syncEvents))
 
+        // ============ Event Buffers ==============================
+        //  Event buffers take an event bus and store a history of events with timestamps to be polled each game tick.
+        //  simulation Buffer's purpose is when event triggered and its result must wait for the game loop to reach its next tick 
+        //  NetworkBuffers's purpose is when events arrive from the server out of sync with the game loop or out of order.
+        //  These are the input that game systems read from so that systems produce can a change that the world data will apply at once 
+        this.simulationLocalEventBuffer = createEventBuffers(simulationLocalBus, Game.simulationEvents); // keydowns buffer
+        this.simulationNetworkEventBuffer    = createEventBuffers(simulationNetworkBus, Game.networkEvents);       // server updates buffer
+        this.frameEventBuffer      = createEventBuffers(frameLocalBus, Game.frameEvents);           // takes dom input and reads once per AFr frame
+        // ==========================================================
+
+ 
         // ====  Systems  ============================================
         //  Systems act on the new information polled from buffers sent by interfaces and current world data
         //  They calculate and return the delta change for world data to apply changes to after they are updated
@@ -54,7 +60,6 @@ class Engine {
         this.networkSystems    = Game.NetworkSystems.map(System => new System());
         this.frameSystems      = Game.FrameSystems.map(System => new System());
         // ==========================================================
-
 
 
         // ======= Engine Services ===================================
@@ -115,22 +120,26 @@ class Engine {
 
     simulation(dt, worldData) {
         const changes = [];
-
+        const timestamp = performance.now()
+        
         // Keyboard Input / ai brain / Collison
-        const simulationEvents = this.simulationEventBuffer.poll()
+        const simulationEvents = this.simulationLocalEventBuffer.poll()
         for (const system of this.simulationSystems) {
             changes.push(...system?.update(dt, worldData, simulationEvents));
         }
 
-        const timestamp = performance.now()
         for (const networkInterface of this.networkInterfaces) {
-            networkInterface?.send(timestamp, changes);
+            networkInterface?.send(timestamp, changes.filter(change => change.component));
         }
 
         // Network Input / reconciliation
-        const networkEvents = this.networkEventBuffer.poll()
+        const networkEvents = this.simulationNetworkEventBuffer.poll()
         for (const system of this.networkSystems) {
             changes.push(...system.update(dt, worldData, networkEvents));
+        }
+
+        for (const syncInterface of this.syncInterfaces) {
+            syncInterface?.send(timestamp, changes.filter(change => change.syncEvent));
         }
 
         worldData.apply(changes)
