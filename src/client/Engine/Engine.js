@@ -1,6 +1,6 @@
 
 
-import WorldData from "./WorldData.js"
+import WorldData from "./World.js"
 
 // Async and networking events and buffers
 import { LocalEventBus, NetworkEventBus } from '../../shared/eventBus.js';
@@ -8,7 +8,7 @@ import { createEventBuffers } from '../../shared/eventBuffer.js';
 import { FIXED_DT } from '../../shared/CONSTANTS.js'
 
 
-export class Engine {
+class Engine {
     constructor() {
 
     }
@@ -73,7 +73,8 @@ export class Engine {
 
         // One off event to resize the screen to cover case if screen resized while loading
         window.dispatchEvent(new Event("resize"));
-
+        this.previousTime = 0
+        this.accumulator = 0
 
         this.renderer.startAnimation(this.animationLoop)
     }
@@ -99,54 +100,55 @@ export class Engine {
 
         // Simulation loop called 0, 1 or mulitple times per amimation frame request
         while (this.accumulator >= FIXED_DT) {
-            this.simulation(this.world, FIXED_DT);
+            this.simulation(FIXED_DT, this.worldData);
             this.accumulator -= FIXED_DT;
         }
     
         // Presentation loop called every Animation Frame request. Updates te
-        this.presentation(FIXED_DT, this.world)
+        this.presentation(FIXED_DT, this.worldData)
 
         for (const service of this.services) {
-            service?.update(this.world);
+            service?.update(this.worldData);
         }
     };
 
 
 
-    simulation(world, dt) {
+    simulation(dt, worldData) {
         const changes = [];
 
         // Keyboard Input / ai brain / Collison
         const simulationEvents = this.simulationEventBuffer.poll()
         for (const system of this.simulationSystems) {
-            changes.push(...system?.update(dt, world, simulationEvents));
+            changes.push(...system?.update(dt, worldData, simulationEvents));
         }
 
         const timestamp = performance.now()
-        for (const networkInterface of this.interfaces) {
+        for (const networkInterface of this.networkInterfaces) {
             networkInterface?.send(timestamp, changes);
         }
 
         // Network Input / reconciliation
         const networkEvents = this.networkEventBuffer.poll()
         for (const system of this.networkSystems) {
-            changes.push(...system?.update(dt, world, networkEvents));
+            changes.push(...system.update(dt, worldData, networkEvents));
         }
 
-        world.apply(changes)
+        worldData.apply(changes)
     }
 
-    presentation(world, dt) {
+    presentation(dt, worldData) {
         const changes = [];
 
         const frameEvents  = this.frameEventBuffer.poll()
         for (const system of this.frameSystems) {
-            changes.push(...system.update(dt, world, frameEvents));
+            changes.push(...system.update(dt, worldData, frameEvents));
         }
 
-        world.apply(changes)
+        worldData.apply(changes)
     }
 }
 
 
 
+export default Engine

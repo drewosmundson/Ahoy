@@ -38,7 +38,7 @@ class WorldData {
     start(lobbyData) {
         if (!lobbyData) return;
         for (const entitySpec of lobbyData.entities) {
-            const entity = this.createEntity();
+            const entity = this.#createEntity();
 
             for (const [name, value] of Object.entries(entitySpec.components)) {
                 this.add(entity, name, value);
@@ -55,7 +55,6 @@ class WorldData {
         }
         return storage;
     }
-
 
     // Creates the next entity always increasing. The Game is short lived enough that this should not be an issue through normal gameplay.
     // This would eventually fail and cause a crash but that would take many hours of gameplay for at most 30 minute matches.
@@ -82,6 +81,22 @@ class WorldData {
         return this.#storage(name).delete(entity);
     }
 
+    // Updates (overwrites) the values of one or more components already
+    // present on an entity. `components` is an array of { name, value }
+    // pairs, mirroring the shape used by the 'newEntity' change type.
+    #updateEntityComponents(entity, components) {
+        for (const { name, value } of components) {
+            this.#storage(name).set(entity, value);
+        }
+    }
+
+    // Public wrapper: adds a component (with its value) to an entity.
+    // Used both by start() (loading lobby data) and by systems producing
+    // 'addComponentToEntity' / 'newEntity' changes.
+    add(entity, name, value) {
+        this.#addComponentToEntity(entity, name, value);
+    }
+
     apply(changes) {
         for (const change of changes) {
             switch (change.type) {
@@ -101,12 +116,9 @@ class WorldData {
                     break;
 
                 case 'updateEntityComponents': {
-
-                    this.#updateEntityComponents(change.entity, )
+                    this.#updateEntityComponents(change.entity, change.components);
                     break;
                 }
-
-
 
                 case 'destroyEntity':
                     this.#destroyEntity(change.entity);
@@ -128,7 +140,6 @@ class WorldData {
     getEntityKeysAndValues(name) {
         return this.#storage(name).entries();
     }
-
 
     // Returns the value of the specified component for an entity.
     // Returns undefined if the entity does not have the component.
@@ -154,9 +165,6 @@ class WorldData {
 
 
 
-
-
-
 // basic example in a system
 // class Position {
 //     static factory() {
@@ -169,33 +177,41 @@ class WorldData {
 // worldData.add(entity, "Position", Position.factory());
 
 
-
-
-[
-    {
-        type: "createEntity",
-        components: [
-            { name: "Position", value: { x: 0, y: 0 } },
-            { name: "Health", value: { hp: 100 } }
-        ]
-    },
-    {
-        type: "addComponent",
-        entity: 42,
-        name: "Velocity",
-        value: { x: 1, y: 0 }
-    },
-    {
-        type: "removeComponent",
-        entity: 42,
-        name: "Velocity"
-    },
-    {
-        type: "destroyEntity",
-        entity: 42
-    }
-]
-
-worldData.apply(changes)
+// Example of a valid `changes` array passed to worldData.apply(changes).
+// Type strings here match the cases handled in apply() above.
+//
+// [
+//     {
+//         type: "newEntity",
+//         components: [
+//             { name: "Position", value: { x: 0, y: 0 } },
+//             { name: "Health", value: { hp: 100 } }
+//         ]
+//     },
+//     {
+//         type: "addComponentToEntity",
+//         entity: 42,
+//         name: "Velocity",
+//         value: { x: 1, y: 0 }
+//     },
+//     {
+//         type: "updateEntityComponents",
+//         entity: 42,
+//         components: [
+//             { name: "Velocity", value: { x: 2, y: 0 } }
+//         ]
+//     },
+//     {
+//         type: "removeComponentFromEntity",
+//         entity: 42,
+//         name: "Velocity"
+//     },
+//     {
+//         type: "destroyEntity",
+//         entity: 42
+//     }
+// ]
+//
+// worldData.apply(changes)
 
 export default WorldData;
