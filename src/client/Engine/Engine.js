@@ -1,6 +1,6 @@
 
 
-import WorldData from "WorldData.js"
+import WorldData from "./WorldData.js"
 
 // Async and networking events and buffers
 import { LocalEventBus, NetworkEventBus } from '../../shared/eventBus.js';
@@ -21,9 +21,12 @@ export class Engine {
         const networkBus    = new NetworkEventBus(socket, Game.networkEvents);   // Inter-process bus for events to and from the server
         const frameBus      = new LocalEventBus(Game.frameEvents);
 
+
         // ============ Interfaces =================================
         //  keyboard, mouse, network, touch, gamepad, browser etc.
-        this.interfaces = Game.Interfaces.map(Interface => new Interface(localBus, networkBus, frameBus, eventSchemas));
+        this.simulationInterfaces = Game.SimulationInterfaces.map(Interface => new Interface(simulationBus,  Game.simulationEvents));
+        this.networkInterfaces    = Game.NetworkInterfaces.map(Interface => new Interface(networkBus,  Game.networkEvents));
+        this.frameInterfaces      = Game.FrameInterfaces.map(Interface => new Interface(frameBus, Game.frameEvents));
         // ==========================================================
         
 
@@ -49,8 +52,8 @@ export class Engine {
         //  Systems act on the new information polled from buffers sent by interfaces and current world data
         //  They calculate and return the delta change for world data to apply changes to after they are updated
         this.simulationSystems = Game.SimulationSystems.map(System => new System());
-        this.networkSystems = Game.NetworkSystems.map(System => new System());
-        this.frameSystems = Game.FrameSystems.map(System => new System());
+        this.networkSystems    = Game.NetworkSystems.map(System => new System());
+        this.frameSystems      = Game.FrameSystems.map(System => new System());
         // ==========================================================
 
 
@@ -96,15 +99,15 @@ export class Engine {
 
         // Simulation loop called 0, 1 or mulitple times per amimation frame request
         while (this.accumulator >= FIXED_DT) {
-            this.simulation(this.worldData, FIXED_DT);
+            this.simulation(this.world, FIXED_DT);
             this.accumulator -= FIXED_DT;
         }
     
         // Presentation loop called every Animation Frame request. Updates te
-        this.presentation(FIXED_DT)
+        this.presentation(FIXED_DT, this.world)
 
         for (const service of this.services) {
-            service?.update(this.worldData);
+            service?.update(this.world);
         }
     };
 
@@ -120,8 +123,8 @@ export class Engine {
         }
 
         const timestamp = performance.now()
-        for (const networkInterface of this.networkInterfaces) {
-            networkInterface?.send(timestamp, changes));
+        for (const networkInterface of this.interfaces) {
+            networkInterface?.send(timestamp, changes);
         }
 
         // Network Input / reconciliation
