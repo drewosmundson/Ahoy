@@ -6,20 +6,16 @@
 // start socket layer
 
 // Dependancy singleton factories
-import { createNavigation } from "./app/navigation.js";
-import { createDom } from "./app/dom.js";
-import { createUi } from "./app/ui.js"
-import { registerSubscriptions } from "./app/subscriptions.js";
+import { createNavigation } from "./App/navigation.js";
+import { createDom } from "./App/dom.js";
+import { createUi } from "./App/ui.js"
+import { createSubscriptionRegister } from "./App/subscriptions.js";
 
 // Page/feature module archetecture. 
-import { singleplayer } from "./features/singleplayer.js"
-import { host } from "./features/host.js"
-import { participant } from "./features/participant.js";
-import { mmo } from "./features/mmo.js"
-
-// Events
-import { NetworkEventBus } from "../shared/eventBus.js";
-import { lobbyEventSchemas } from "../shared/lobbyEventSchemas.js"
+import { singleplayer } from "./Features/singleplayer.js"
+import { host } from "./Features/host.js"
+import { participant } from "./Features/participant.js";
+import { mmo } from "./Features/mmo.js"
 
 // Game Engine
 import { Engine } from "./Engine/Engine.js";
@@ -29,20 +25,20 @@ import { games } from "./Games/gamesIndex.js"
 
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
-    const lobbyBus = new NetworkEventBus(socket, lobbyEventSchemas)
-    const lobbySubscriptions = registerSubscriptions(lobbyBus)
-
+    
     const dom = createDom();
     const navigate = createNavigation(dom);
     const ui = createUi(dom);
+    const subscriptionRegister = createSubscriptionRegister()
   
     // This creates a shared context and passes it to each feature
     // to create their instances, then initializes each feature's event listeners.
     const context = {
-        lobbySubscriptions,
         dom,
         navigate,
         ui,
+        subscriptionRegister,
+
         Engine,
         games,
     };
@@ -63,5 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // feature.otherFunction(); 
         });
 });
+
+
 
 

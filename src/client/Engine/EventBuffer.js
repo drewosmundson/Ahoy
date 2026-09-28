@@ -3,7 +3,7 @@
 
 
 
-function buildEventBuffers(eventBus, bufferedEvents) {
+export function createEventBuffers(eventBus, bufferedEvents) {
     const eventBuffers = [];
 
     for (const bufferedEvent of bufferedEvents) {

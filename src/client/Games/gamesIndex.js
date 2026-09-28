@@ -1,8 +1,8 @@
 
-import { Ahoy }  from "./Ahoy/Ahoy.js"
+// import { Ahoy }  from "./AhoyCopy/Ahoy.js"
 import { Template  } from "./Template/Template.js"
 
-export const Games = {
-    Ahoy, 
+export const games = {
+    // Ahoy, 
     Template,
 }

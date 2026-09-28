@@ -3,9 +3,9 @@
 import WorldData from "./World.js"
 
 // Async and networking events and buffers
-import { LocalEventBus, NetworkEventBus } from '../../shared/eventBus.js';
-import { createEventBuffers } from '../../shared/eventBuffer.js';
-import { FIXED_DT } from '../../shared/CONSTANTS.js'
+import { LocalEventBus, NetworkEventBus } from './EventBus.js';
+import { createEventBuffers } from './EventBuffer.js';
+import { FIXED_DT } from './Constants.js'
 
 
 class Engine {
@@ -157,6 +157,3 @@ class Engine {
     }
 }
 
-
-
-export default Engine

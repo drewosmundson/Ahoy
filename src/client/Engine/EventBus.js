@@ -1,6 +1,6 @@
 
 // local async bus usage
-class LocalEventBus {
+export class LocalEventBus {
     constructor() {
         this.listeners = new Map();
     }
@@ -93,7 +93,7 @@ function createReceiver(socket, eventSchemas) {
 // networkBus.publish(event, data) // events going from client->server or server -> client
 // networkBus.emit(event, data)   // events going to the same process client -> client or server -> server
 // networkBus.on(event, data)     // does not care if this event comes from a publish or an emit
-class NetworkEventBus extends LocalEventBus {
+export class NetworkEventBus extends LocalEventBus {
     constructor(socket, eventSchemas) {
         super();
         this.socket = socket;
@@ -137,18 +137,6 @@ class NetworkEventBus extends LocalEventBus {
         this.socket.close?.();
     }
 }
-
-// Namespace object 
-export const events = {
-    EventBuffer,
-    LocalEventBus,
-    NetworkEventBus,
-};
-
-
-export { EventBuffer, LocalEventBus, NetworkEventBus };
-
-export default events;
 
 
 

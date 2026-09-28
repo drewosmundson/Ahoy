@@ -1,6 +1,6 @@
 
 // Game.js
-import { GAME_CONFIG } from './config.js';
+import { GAME_CONFIG } from './Config.js';
 import { RenderManager } from './services/RenderManager.js';
 import { Components } from './components/index.js';
 import { PresentationComponents } from './presentationComponents/index.js';
@@ -11,7 +11,7 @@ import { EffectSystems } from './systems/effect/index.js';
 import { PresentationSystems } from './systems/presentation/index.js';
 import { Services } from './services/index.js';
 
-export const Game = {
+export const Template = {
   GAME_CONFIG,
   Renderer: RenderManager,
   Components,

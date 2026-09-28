@@ -4,10 +4,10 @@
 
 
 
-export function registerSubscriptions(bus) {
+export function registerSubscriptions() {
     const subscriptions = [];
 
-    function add(event, handler) {
+    function add(bus, event, handler) {
         const sub = bus.on(event, handler);
         subscriptions.push(sub);
         return sub;
