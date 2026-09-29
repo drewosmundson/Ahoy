@@ -1,6 +1,6 @@
 
 
-import WorldData from "./World.js"
+import WorldData from "./WorldData.js"
 
 // Async and networking events and buffers
 import { LocalEventBus, NetworkEventBus } from './EventBus.js';
@@ -8,19 +8,16 @@ import { createEventBuffers } from './EventBuffer.js';
 import { FIXED_DT } from './Constants.js'
 
 
-class Engine {
+export class Engine {
     constructor() {
 
     }
 
     setup(Game, canvas, socket = null) {
-
-        this.renderer = Game.renderer;
-        
-        const simulationLocalBus   = new LocalEventBus(Game.simulationEvents);             // Intra-process bus for events in the same process like mouse and keyboard
+        const simulationLocalBus   = new LocalEventBus(Game?.simulationEvents);             // Intra-process bus for events in the same process like mouse and keyboard
         const simulationNetworkBus = new NetworkEventBus(socket, Game.networkEvents);   // Inter-process bus for events to and from the server
         const frameLocalBus        = new LocalEventBus(Game.frameEvents);
-        const syncLocalBus         = new LocalEventBus(Game.SyncEvents)
+        const syncLocalBus         = new LocalEventBus(Game.syncEvents)
 
 
         // ============ Interfaces =================================
@@ -69,6 +66,8 @@ class Engine {
         this.services = Game.Services.map(Service => new Service(canvas));
         // ===========================================================
 
+
+        this.renderer = new Game.RendererManager(canvas, syncLocalBus);
     }
 
 

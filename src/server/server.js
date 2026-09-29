@@ -15,14 +15,14 @@ const io = new Server(server);
 // const io = new Server(server, {cors: { origin: ['https://ahoy.io'] }});
 
 server.on('error', (err) => {
-  console.error('HTTP SERVER ERROR');
-  console.error(err);
-  process.exit(1);
+    console.error('HTTP SERVER ERROR');
+    console.error(err);
+    process.exit(1);
 });
 
 // Start server
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
 
 // Serve static files
@@ -32,7 +32,10 @@ app.use(express.static(path.join(__dirname, '../../public')));
 app.use('/client', express.static(path.join(__dirname, '../client')));
 app.use('/shared', express.static(path.join(__dirname, '../shared')));
 
-
+io.on('connection', (socket) => {
+    console.log('Client connected:', socket.id);
+    socket.on('disconnect', () => console.log('Client left:', socket.id));
+});
 
 // // ---- Imports ----
 // import express from 'express';

@@ -1,10 +1,16 @@
 
+
+
+
+
+
+
 export function singleplayer({ dom, navigate, games, Engine }) {
     let engine = null;
     function initEventListeners() {
         dom.buttons.mainToSingleplayer?.addEventListener('click', toMenuScreen);
-        dom.buttons.templateStart?.addEventListener('click', () => startEngine(games.template));
-        dom.buttons.ahoyStart?.addEventListener('click', () => startEngine(games.ahoy));
+        dom.buttons.singleplayerStart?.addEventListener('click', () => startEngine(games.template));
+        //dom.buttons.ahoyStart?.addEventListener('click', () => startEngine(games.ahoy));
     }
 
     function toMenuScreen() {

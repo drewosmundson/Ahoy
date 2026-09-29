@@ -4,7 +4,7 @@
 
 
 
-export function registerSubscriptions() {
+export function createSubscriptionRegister() {
     const subscriptions = [];
 
     function add(bus, event, handler) {

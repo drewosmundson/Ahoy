@@ -43,12 +43,18 @@ document.addEventListener('DOMContentLoaded', () => {
         games,
     };
     
-    // catch if page reloaded with no internet 
-    if (!socket.connected) {
-        navigate.toScreen(dom.screens.offline)
-        singleplayer(context).initEventListeners();
-    }
+    socket.on('connect', () => {
+        console.log('Socket connected:', socket.id);
+    });
 
+    socket.on('connect_error', (err) => {
+        console.error('Socket connect error:', err.message);
+        navigate.toScreen(dom.screens.singleplayer);
+    });
+
+    socket.on('disconnect', (reason) => {
+        console.warn('Socket disconnected:', reason);
+    });
     // As this grows, it may be worth initializing only the
     // event listeners required by for the active features.
     // For now this is fine since each feature only has about 3 listeners.
