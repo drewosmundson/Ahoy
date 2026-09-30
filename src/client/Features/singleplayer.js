@@ -9,7 +9,7 @@ export function singleplayer({ dom, navigate, games, Engine }) {
     let engine = null;
     function initEventListeners() {
         dom.buttons.mainToSingleplayer?.addEventListener('click', toMenuScreen);
-        dom.buttons.singleplayerStart?.addEventListener('click', () => startEngine(games.template));
+        dom.buttons.singleplayerStart?.addEventListener('click', () => startEngine(games.Template));
         //dom.buttons.ahoyStart?.addEventListener('click', () => startEngine(games.ahoy));
     }
 

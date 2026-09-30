@@ -14,7 +14,7 @@ export class Engine {
     }
 
     setup(Game, canvas, socket = null) {
-        const simulationLocalBus   = new LocalEventBus(Game?.simulationEvents);             // Intra-process bus for events in the same process like mouse and keyboard
+        const simulationLocalBus   = new LocalEventBus(Game.simulationEvents);             // Intra-process bus for events in the same process like mouse and keyboard
         const simulationNetworkBus = new NetworkEventBus(socket, Game.networkEvents);   // Inter-process bus for events to and from the server
         const frameLocalBus        = new LocalEventBus(Game.frameEvents);
         const syncLocalBus         = new LocalEventBus(Game.syncEvents)
@@ -22,10 +22,10 @@ export class Engine {
 
         // ============ Interfaces =================================
         //  keyboard, mouse, network, touch, gamepad, browser etc.
-        this.simulationInterfaces   = Game.simulationInterface.map(Interface => new Interface(simulationLocalBus));
-        this.networkInterfaces = Game.NetworkInterfaces.map(Interface => new Interface(simulationNetworkBus));
-        this.frameInterfaces   = Game.FrameInterfaces.map(Interface => new Interface(frameLocalBus));
-        this.syncInterfaces    = Game.SyncInterfaces.map(Interface => new Interface(syncLocalBus));
+        this.simulationInterfaces  = Game.SimulationInterfaces.map(Interface => new Interface(simulationLocalBus));
+        this.networkInterfaces     = Game.NetworkInterfaces.map(Interface => new Interface(simulationNetworkBus));
+        this.frameInterfaces       = Game.FrameInterfaces.map(Interface => new Interface(frameLocalBus));
+        this.syncInterfaces        = Game.SyncInterfaces.map(Interface => new Interface(syncLocalBus));
         // ==========================================================
         
 
@@ -154,5 +154,14 @@ export class Engine {
 
         worldData.apply(changes)
     }
+
+
+
+
+    cleanup() {
+        stop()
+    }
+
+
 }
 
