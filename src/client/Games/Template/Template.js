@@ -8,6 +8,8 @@ import { networkEvents } from './Events/networkEvents.js';
 import { simulationEvents } from './Events/simulationEvents.js';
 import { syncEvents } from './Events/syncEvents.js';
 
+
+import 
 // import { Components } from './components/index.js';
 // import { PresentationComponents } from './presentationComponents/index.js';
 
@@ -22,20 +24,24 @@ export const Template = {
     RendererManager,
 
     // Events
+    simulationEvents,
     frameEvents,
     networkEvents,
-    simulationEvents,
-    syncEvents,
+    syncronousEvents,
 
-    Interfaces,
-    // Services,
-    // Interfaces,
-
-    // Components,
-    // SimulationSystems,
-    // NetworkSystems,
-    // EffectSystems,
-    // PresentationSystems,
-
+    
+    keyboardInterface,
+    networkInterface,
+    mouseInterface,
+    browserInterface, 
+    
+    Components, 
+    
+    SimulationBufferedSystems,
+    NetworkBufferedSystems,
+    FrameBufferedSystems,
+    SyncronousEventSystems,
+    
+    Services, 
 };
 
