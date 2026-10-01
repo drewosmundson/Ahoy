@@ -1,7 +1,7 @@
 
 // Game.js
 // import { Config } from './Config/index.js';
-import { RendererManager } from './Utils/RendererManager.js';
+import { Renderer } from './Utils/RendererManager.js';
 
 import { frameEvents } from './Events/frameEvents.js';
 import { networkEvents } from './Events/networkEvents.js';
@@ -9,7 +9,7 @@ import { simulationEvents } from './Events/simulationEvents.js';
 import { syncEvents } from './Events/syncEvents.js';
 
 
-import 
+
 // import { Components } from './components/index.js';
 // import { PresentationComponents } from './presentationComponents/index.js';
 
@@ -20,8 +20,13 @@ import
 // import { Services } from './services/index.js';
 
 export const Template = {
-    //  --- required ---
-    RendererManager,
+    Renderer,
+
+    // World data component factories
+    Components: [
+
+    ],
+
 
     // Events
     simulationEvents,
@@ -29,19 +34,41 @@ export const Template = {
     networkEvents,
     syncronousEvents,
 
-    
-    keyboardInterface,
-    networkInterface,
-    mouseInterface,
-    browserInterface, 
-    
-    Components, 
-    
-    SimulationBufferedSystems,
-    NetworkBufferedSystems,
-    FrameBufferedSystems,
-    SyncronousEventSystems,
-    
-    Services, 
+
+    // Interfaces
+    simulationInterfaces: [
+
+    ],
+    networkInterfaces: [
+
+    ],
+    mouseInterface: [
+
+    ],
+    browserInterface: [
+
+    ],
+
+
+    // Systems 
+    SimulationBufferedSystems: [
+
+    ],
+    NetworkBufferedSystems: [
+
+    ],
+    FrameBufferedSystems: [
+
+    ],
+
+    SyncronousEventSystems: [
+
+    ],
+
+
+    // Services
+    Services: [
+
+    ],
 };
 

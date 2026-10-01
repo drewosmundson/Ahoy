@@ -27,7 +27,7 @@ export class Engine {
         this.frameInterfaces       = Game.FrameInterfaces.map(Interface => new Interface(frameLocalBus));
         this.syncInterfaces        = Game.SyncInterfaces.map(Interface => new Interface(syncLocalBus));
         // ==========================================================
-        
+
 
         // ============ Components and Entity initalization =========
         //  Components are where they can be filtered by the system that require them. 
@@ -44,9 +44,9 @@ export class Engine {
         //  simulation Buffer's purpose is when event triggered and its result must wait for the game loop to reach its next tick 
         //  NetworkBuffers's purpose is when events arrive from the server out of sync with the game loop or out of order.
         //  These are the input that game systems read from so that systems produce can a change that the world data will apply at once 
-        this.simulationLocalEventBuffer = createEventBuffers(simulationLocalBus, Game.simulationEvents); // keydowns buffer
-        this.simulationNetworkEventBuffer    = createEventBuffers(simulationNetworkBus, Game.networkEvents);       // server updates buffer
-        this.frameEventBuffer      = createEventBuffers(frameLocalBus, Game.frameEvents);           // takes dom input and reads once per AFr frame
+        this.simulationLocalEventBuffer   = createEventBuffers(simulationLocalBus, Game.simulationEvents); // keydowns buffer
+        this.simulationNetworkEventBuffer = createEventBuffers(simulationNetworkBus, Game.networkEvents);       // server updates buffer
+        this.frameEventBuffer             = createEventBuffers(frameLocalBus, Game.frameEvents);           // takes dom input and reads once per AFr frame
         // ==========================================================
 
  
