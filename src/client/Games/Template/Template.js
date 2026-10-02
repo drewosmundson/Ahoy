@@ -23,17 +23,18 @@ export const Template = {
 
     Renderer,
 
+
+    // World data component factories
+    Components: [
+
+    ],
+
     // Events
     simulationEvents,
     frameEvents,
     networkEvents,
     syncronousEvents,
 
-
-    // World data component factories
-    Components: [
-
-    ],
 
 
     // Interfaces
