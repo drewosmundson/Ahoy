@@ -1,7 +1,8 @@
 
 // local async bus usage
 export class LocalEventBus {
-    constructor() {
+    constructor(eventSchemas) {
+        this.eventSchemas = eventSchemas;
         this.listeners = new Map();
     }
 
@@ -46,37 +47,24 @@ export class LocalEventBus {
     }
 }
 
-function createSender(socket, eventSchemas) {
+
+function createSender(socket, eventNames) {
     return function send(event, data) {
-        if (!(event in eventSchemas)) {
+        if (!eventNames.includes(event)) {
             throw new Error(`Unknown event: ${event}`);
         }
-
-        if (!eventSchemas[event](data)) {
-            throw new Error(`Invalid payload`);
-        }
-
         socket.emit(event, { ...data });
     };
 }
 
-
-function createReceiver(socket, eventSchemas) {
+function createReceiver(socket, eventNames) {
     return function subscribe(handler) {
         const cleanup = [];
 
-        for (const event in eventSchemas) {
-            const listener = data => {
-                if (!eventSchemas[event](data)) return;
-
-                handler(event, data);
-            };
-
+        for (const event of eventNames) {
+            const listener = data => handler(event, data);
             socket.on(event, listener);
-
-            cleanup.push(() => {
-                socket.off(event, listener);
-            });
+            cleanup.push(() => socket.off(event, listener));
         }
 
         return {
@@ -86,6 +74,50 @@ function createReceiver(socket, eventSchemas) {
         };
     };
 }
+
+
+
+// TODO ADD THESE FUNCITONS BACK IN WITH EVENT VALIDATORS
+// function createSender(socket, eventSchemas) {
+//     return function send(event, data) {
+//         if (!(event in eventSchemas)) {
+//             throw new Error(`Unknown event: ${event}`);
+//         }
+
+//         if (!eventSchemas[event](data)) {
+//             throw new Error(`Invalid payload`);
+//         }
+
+//         socket.emit(event, { ...data });
+//     };
+// }
+
+
+// function createReceiver(socket, eventSchemas) {
+//     return function subscribe(handler) {
+//         const cleanup = [];
+
+//         for (const event in eventSchemas) {
+//             const listener = data => {
+//                 if (!eventSchemas[event](data)) return;
+
+//                 handler(event, data);
+//             };
+
+//             socket.on(event, listener);
+
+//             cleanup.push(() => {
+//                 socket.off(event, listener);
+//             });
+//         }
+
+//         return {
+//             unsubscribe() {
+//                 cleanup.forEach(func => func());
+//             }
+//         };
+//     };
+// }
 
 
 // IPC bus usage

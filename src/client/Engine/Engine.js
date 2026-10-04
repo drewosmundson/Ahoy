@@ -1,24 +1,20 @@
-
-
 import WorldData from "./WorldData.js"
 
-// Async and networking events and buffers
 import { LocalEventBus, NetworkEventBus } from './EventBus.js';
 import { createEventBuffers } from './EventBuffer.js';
 import { FIXED_DT } from './Constants.js'
 
 
 export class Engine {
-    constructor() {
-
-    }
-
     setup(Game, canvas, socket = null) {
+                console.log('events:', Game.simulationEvents, Game.networkEvents, Game.frameEvents, Game.syncEvents);
         const simulationLocalBus   = new LocalEventBus(Game.simulationEvents);             // Intra-process bus for events in the same process like mouse and keyboard
         const simulationNetworkBus = new NetworkEventBus(socket, Game.networkEvents);   // Inter-process bus for events to and from the server
         const frameLocalBus        = new LocalEventBus(Game.frameEvents);
         const syncLocalBus         = new LocalEventBus(Game.syncEvents)
 
+
+        this.buses = [simulationLocalBus, simulationNetworkBus, frameLocalBus, syncLocalBus];
 
         // ============ Interfaces =================================
         //  keyboard, mouse, network, touch, gamepad, browser etc.
@@ -58,46 +54,39 @@ export class Engine {
         this.frameSystems      = Game.FrameSystems.map(System => new System());
         // ==========================================================
 
+        // Renderer manager owns the single WebGLRenderer; services borrow it
+        this.renderer = new Game.RendererManager(canvas, syncLocalBus);
 
         // ======= Engine Services ===================================
         //  Services hold the actual rendering and graphics libray.
         //  They read from world data and actually display the data on the screen.
         //  They do not manipulate world data. These are read only
-        this.services = Game.Services.map(Service => new Service(canvas));
+        this.services = Game.Services.map(Service => new Service(canvas, this.renderer.renderer));
         // ===========================================================
-
-
-        this.renderer = new Game.RendererManager(canvas, syncLocalBus);
     }
 
-
     start(lobbyData = null) {
-        this.worldData.start(lobbyData)
+        this.worldData.start(lobbyData);
 
         // One off event to resize the screen to cover case if screen resized while loading
         window.dispatchEvent(new Event("resize"));
-        this.previousTime = 0
-        this.accumulator = 0
+        this.previousTime = null;
+        this.accumulator = 0;
 
-        this.renderer.startAnimation(this.animationLoop)
+        this.renderer.startAnimation(this.animationLoop);
     }
 
-    stop() {
-        this.renderer.stopAnimation()
-    }
-
-    pause() {
-        this.renderer.stopAnimation();
-    }
-
-    resume() {
-        this.renderer.startAnimation(this.animationLoop)
+    // temp stop pause resume methods
+    stop()   { this.renderer.stopAnimation(); }
+    pause()  { this.renderer.stopAnimation(); }
+    resume() { 
+        this.previousTime = null;
+        this.renderer.startAnimation(this.animationLoop);
     }
 
 
     animationLoop = (time) => {
         const frameTime = Math.min((time - this.previousTime) * 0.001, 0.25);
-
         this.previousTime = time;
         this.accumulator += frameTime;
 
@@ -108,23 +97,21 @@ export class Engine {
         }
     
         // Presentation loop called every Animation Frame request. Updates te
-        this.presentation(FIXED_DT, this.worldData)
+        this.presentation(frameTime, this.worldData);
 
         for (const service of this.services) {
             service?.update(this.worldData);
         }
     };
 
-
-
     simulation(dt, worldData) {
         const changes = [];
         const timestamp = performance.now()
         
         // Keyboard Input / ai brain / Collison
-        const simulationEvents = this.simulationLocalEventBuffer.poll()
+        const simulationEvents = this.simulationLocalEventBuffer.poll();
         for (const system of this.simulationSystems) {
-            changes.push(...system?.update(dt, worldData, simulationEvents));
+            changes.push(...(system.update(dt, worldData, simulationEvents) ?? []));
         }
 
         for (const networkInterface of this.networkInterfaces) {
@@ -132,9 +119,9 @@ export class Engine {
         }
 
         // Network Input / reconciliation
-        const networkEvents = this.simulationNetworkEventBuffer.poll()
+        const networkEvents = this.simulationNetworkEventBuffer.poll();
         for (const system of this.networkSystems) {
-            changes.push(...system.update(dt, worldData, networkEvents));
+            changes.push(...(system.update(dt, worldData, networkEvents) ?? []));
         }
 
         for (const syncInterface of this.syncInterfaces) {
@@ -144,24 +131,35 @@ export class Engine {
         worldData.apply(changes)
     }
 
+
+
+
+
     presentation(dt, worldData) {
         const changes = [];
 
-        const frameEvents  = this.frameEventBuffer.poll()
+        const frameEvents = this.frameEventBuffer.poll();
         for (const system of this.frameSystems) {
-            changes.push(...system.update(dt, worldData, frameEvents));
+            changes.push(...(system.update(dt, worldData, frameEvents) ?? []));
         }
 
-        worldData.apply(changes)
+        worldData.apply(changes);
     }
 
 
 
-
-    cleanup() {
-        stop()
+    destroy() {
+        this.stop();
+        this.services?.forEach(s => s.dispose?.());
+        [this.simulationInterfaces, this.networkInterfaces, this.frameInterfaces, this.syncInterfaces]
+            .forEach(list => list?.forEach(i => i.dispose?.()));
+        [this.simulationLocalEventBuffer, this.simulationNetworkEventBuffer, this.frameEventBuffer]
+            .forEach(b => b?.dispose());
+        this.renderer?.dispose();
     }
 
-
+    cleanup() { 
+        this.destroy();
+    }
 }
 

@@ -1,39 +1,45 @@
 
 
 
-
-
-export function createEventBuffers(eventBus, bufferedEvents) {
-    const eventBuffers = [];
-
-    for (const bufferedEvent of bufferedEvents) {
-        const buffer = new EventBuffer(eventBus, bufferedEvent);
-        eventBuffers.push(buffer);
-    }
-
-    return eventBuffers;
-}
-
 class EventBuffer {
-    constructor(eventBus, bufferedEvent) {
+    constructor(eventBus, eventName) {
         this.queue = [];
-
-        eventBus.on(bufferedEvent, (data) => {
-            this.queue.push(data);
-        });
+        this.sub = eventBus.on(eventName, data => this.queue.push(data));
     }
-
+ 
     drain() {
         const items = this.queue;
         this.queue = [];
         return items;
     }
-
-    drainSet() {
-        const items = [...new Set(this.queue)];
-        this.queue = [];
-        return items;
+ 
+    dispose() {
+        this.sub.unsubscribe();
     }
+}
+ 
+class EventBufferGroup {
+    constructor(buffers) {
+        this.buffers = buffers; // [[name, EventBuffer], ...]
+    }
+ 
+    // Returns { eventName: [data, ...] } and clears every buffer
+    poll() {
+        const out = {};
+        for (const [name, buffer] of this.buffers) out[name] = buffer.drain();
+        return out;
+    }
+ 
+    dispose() {
+        this.buffers.forEach(([, buffer]) => buffer.dispose());
+    }
+}
+
+ // eventNames: array of strings. For network events pass Object.keys(schemas).
+export function createEventBuffers(eventBus, eventNames) {
+    return new EventBufferGroup(
+        eventNames.map(name => [name, new EventBuffer(eventBus, name)])
+    );
 }
 
 /*
