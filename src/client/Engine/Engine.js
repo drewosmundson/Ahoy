@@ -7,7 +7,6 @@ import { FIXED_DT } from './Constants.js'
 
 export class Engine {
     setup(Game, canvas, socket = null) {
-                console.log('events:', Game.simulationEvents, Game.networkEvents, Game.frameEvents, Game.syncEvents);
         const simulationLocalBus   = new LocalEventBus(Game.simulationEvents);             // Intra-process bus for events in the same process like mouse and keyboard
         const simulationNetworkBus = new NetworkEventBus(socket, Game.networkEvents);   // Inter-process bus for events to and from the server
         const frameLocalBus        = new LocalEventBus(Game.frameEvents);
@@ -33,7 +32,7 @@ export class Engine {
 
 
         // Can manipulate world data should be used sparingly can only manipulate changes.events world data
-        this.syncEvents = Game.SyncEvents.map(SyncEvent => new SyncEvent(syncLocalBus, this.worldData, Game.syncEvents))
+        this.syncSystems = Game.SyncSystems.map(SyncEvent => new SyncEvent(syncLocalBus, this.worldData, Game.syncEvents))
 
         // ============ Event Buffers ==============================
         //  Event buffers take an event bus and store a history of events with timestamps to be polled each game tick.
@@ -55,13 +54,15 @@ export class Engine {
         // ==========================================================
 
         // Renderer manager owns the single WebGLRenderer; services borrow it
-        this.renderer = new Game.RendererManager(canvas, syncLocalBus);
+        this.renderer = new Game.RendererWrapper(canvas, syncLocalBus);
+        
 
         // ======= Engine Services ===================================
         //  Services hold the actual rendering and graphics libray.
         //  They read from world data and actually display the data on the screen.
         //  They do not manipulate world data. These are read only
-        this.services = Game.Services.map(Service => new Service(canvas, this.renderer.renderer));
+        this.services = Game.Services.map(Service => new Service(canvas));
+
         // ===========================================================
     }
 
@@ -73,7 +74,7 @@ export class Engine {
         this.previousTime = null;
         this.accumulator = 0;
 
-        this.renderer.startAnimation(this.animationLoop);
+        this.renderer.setAnimationLoop(this.animationLoop);
     }
 
     // temp stop pause resume methods
@@ -99,9 +100,12 @@ export class Engine {
         // Presentation loop called every Animation Frame request. Updates te
         this.presentation(frameTime, this.worldData);
 
+        // animationLoop
         for (const service of this.services) {
-            service?.update(this.worldData);
+            service.update(this.worldData);          // mutate scene only
         }
+        
+        this.renderer.draw()   
     };
 
     simulation(dt, worldData) {
@@ -155,7 +159,7 @@ export class Engine {
             .forEach(list => list?.forEach(i => i.dispose?.()));
         [this.simulationLocalEventBuffer, this.simulationNetworkEventBuffer, this.frameEventBuffer]
             .forEach(b => b?.dispose());
-        this.renderer?.dispose();
+        this.renderer?.dispose(); 
     }
 
     cleanup() { 

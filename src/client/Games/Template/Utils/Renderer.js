@@ -1,7 +1,19 @@
 
 import * as THREE from 'three';
 
-export class RendererManager {
+
+
+export class Camera {
+
+
+}
+
+export class Scene {
+
+    
+}
+
+export class RendererWrapper {
     constructor(canvas, bus) {
         this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
         this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -21,13 +33,24 @@ export class RendererManager {
         this.renderer.setSize(width, height);
     }
 
-    startAnimation(loop) {
+    setAnimationLoop(loop) {
         this.renderer.setAnimationLoop(loop);
     }
 
-    stopAnimation() {
+    setAnimationLoop() {
         this.renderer.setAnimationLoop(null);
     }
+
+    resize({ width, height }) {
+        this.renderer.setSize(width, height);
+        this.lastAspect = width / height;
+        this.services?.forEach(s => s.setAspect?.(this.lastAspect));
+    }
+
+    draw(scene, camera) {
+        this.renderer.render(scene, camera);
+    }
+        
 
     dispose() {
         this.stopAnimation();
@@ -37,6 +60,4 @@ export class RendererManager {
         this.renderer.dispose();
     }
 }
-
-
 
