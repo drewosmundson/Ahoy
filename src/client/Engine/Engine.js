@@ -7,6 +7,8 @@ import { FIXED_DT } from './Constants.js'
 
 export class Engine {
     setup(Game, canvas, socket = null) {
+
+
         const simulationLocalBus   = new LocalEventBus(Game.simulationEvents);             // Intra-process bus for events in the same process like mouse and keyboard
         const simulationNetworkBus = new NetworkEventBus(socket, Game.networkEvents);   // Inter-process bus for events to and from the server
         const frameLocalBus        = new LocalEventBus(Game.frameEvents);
@@ -53,18 +55,26 @@ export class Engine {
         this.frameSystems      = Game.FrameSystems.map(System => new System());
         // ==========================================================
 
-        // Renderer manager owns the single WebGLRenderer; services borrow it
-        this.renderer = new Game.RendererWrapper(canvas, syncLocalBus);
-        
+
+
+        this.camera = new Game.CameraWrapper()
+        this.scene  = new Game.SceneWrapper()
+
 
         // ======= Engine Services ===================================
         //  Services hold the actual rendering and graphics libray.
         //  They read from world data and actually display the data on the screen.
         //  They do not manipulate world data. These are read only
-        this.services = Game.Services.map(Service => new Service(canvas));
-
+        this.services = Game.Services.map(Service => new Service(this.scene));
+        // Renderer manager owns the single WebGLRenderer; services borrow it
         // ===========================================================
+
+        this.renderer = new Game.RendererWrapper(canvas, syncLocalBus);
+
+
     }
+
+
 
     start(lobbyData = null) {
         this.worldData.start(lobbyData);
@@ -105,7 +115,7 @@ export class Engine {
             service.update(this.worldData);          // mutate scene only
         }
         
-        this.renderer.draw()   
+        this.renderer.draw(this.scene, this.camera)   
     };
 
     simulation(dt, worldData) {
@@ -165,5 +175,9 @@ export class Engine {
     cleanup() { 
         this.destroy();
     }
+
+
+
+    
 }
 

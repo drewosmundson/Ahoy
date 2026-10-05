@@ -3,15 +3,8 @@ import * as THREE from 'three';
 
 
 
-export class Camera {
 
 
-}
-
-export class Scene {
-
-    
-}
 
 export class RendererWrapper {
     constructor(canvas, bus) {
@@ -37,7 +30,7 @@ export class RendererWrapper {
         this.renderer.setAnimationLoop(loop);
     }
 
-    setAnimationLoop() {
+    stopAnimationLoop() {
         this.renderer.setAnimationLoop(null);
     }
 

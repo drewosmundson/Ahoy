@@ -1,8 +1,14 @@
-import { RendererManager } from "./Utils/Renderer.js";
-import { TestRendererService } from './Services/TestService.js';
+import { RendererWrapper } from "./Utils/RendererWrapper.js";
+import { CameraWrapper } from "./Utils/CameraWrapper.js"
+import { SceneWrapper } from "./Utils/SceneWrapper.js"
+
+
+import { RotatingCube } from './Services/RotatingCube.js';
 
 export const Template = {
-    RendererManager,
+    RendererWrapper,
+    CameraWrapper,
+    SceneWrapper,
 
     // WorldData component names
     Components: [],
@@ -23,5 +29,5 @@ export const Template = {
     FrameSystems: [],
     SyncSystems: [],
 
-    Services: [TestRendererService],
+    Services: [RotatingCube],
 };
