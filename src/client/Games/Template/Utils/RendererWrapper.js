@@ -2,11 +2,8 @@
 import * as THREE from 'three';
 
 
-export const camera = new THREE.PerspectiveCamera()
 
-export const scene = new THREE.Scene()
-
-export class RenderManager {
+export class RendererWrapper {
     constructor(canvas, bus) {
         this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
         this.renderer.setPixelRatio(window.devicePixelRatio);
