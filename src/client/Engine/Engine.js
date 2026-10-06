@@ -57,18 +57,17 @@ export class Engine {
         // ==========================================================
 
 
-        this.scene  = new Game.scene(syncLocalBus)
-        this.camera = new Game.camera(syncLocalBus)
-        this.renderer = new Game.renderer(canvas, syncLocalBus);
+        this.sceneManager  = new Game.SceneManager(syncLocalBus)
+        this.cameraManager = new Game.CameraManager(syncLocalBus)
+        this.renderManager = new Game.RenderManager(canvas, syncLocalBus);
 
 
         // ======= Engine Services ===================================
         //  Services hold the actual rendering and graphics libray.
         //  They read from world data and actually display the data on the screen.
         //  They do not manipulate world data. These are read only
-        this.services = Game.Services.map(Service => new Service(scene));
+        this.services = Game.Services.map(Service => new Service(this.sceneManager.get()));
         // ===========================================================
-
 
     }
 
@@ -82,15 +81,15 @@ export class Engine {
         this.previousTime = null;
         this.accumulator = 0;
 
-        this.renderer.setAnimationLoop(this.animationLoop);
+        this.renderManager.setAnimationLoop(this.animationLoop);
     }
 
     // temp stop pause resume methods
-    stop()   { this.renderer.stopAnimation(); }
-    pause()  { this.renderer.stopAnimation(); }
+    stop()   { this.renderManager.stopAnimation(); }
+    pause()  { this.renderManager.stopAnimation(); }
     resume() { 
         this.previousTime = null;
-        this.renderer.startAnimation(this.animationLoop);
+        this.renderManager.startAnimation(this.animationLoop);
     }
 
 
@@ -113,7 +112,7 @@ export class Engine {
             service.update(this.worldData);          // mutate scene only
         }
         
-        this.renderer.draw()   
+        this.renderManager.draw(this.sceneManager.get(), this.cameraManager.get())   
     };
 
     simulation(dt, worldData) {
@@ -145,8 +144,6 @@ export class Engine {
 
 
 
-
-
     presentation(dt, worldData) {
         const changes = [];
 
@@ -167,7 +164,7 @@ export class Engine {
             .forEach(list => list?.forEach(i => i.dispose?.()));
         [this.simulationLocalEventBuffer, this.simulationNetworkEventBuffer, this.frameEventBuffer]
             .forEach(b => b?.dispose());
-        this.renderer?.dispose(); 
+        this.renderManager?.dispose(); 
     }
 
     cleanup() { 

@@ -3,11 +3,11 @@ import * as THREE from 'three';
 
 
 
-export class RendererWrapper {
+export class RenderManager {
     constructor(canvas, bus) {
-        this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.threeRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        this.threeRenderer.setPixelRatio(window.devicePixelRatio);
+        this.threeRenderer.setSize(window.innerWidth, window.innerHeight);
 
         this.subscriptions = [
             bus.on("windowResize", (data) => this.resize(data)),
@@ -20,21 +20,16 @@ export class RendererWrapper {
     }
 
     resize({ width, height }) {
-        this.renderer.setSize(width, height);
+        this.threeRenderer.setSize(width, height);
     }
 
     setAnimationLoop(loop) {
-        this.renderer.setAnimationLoop(loop);
+        this.threeRenderer.setAnimationLoop(loop);
     }
 
-    resize({ width, height }) {
-        this.renderer.setSize(width, height);
-        this.lastAspect = width / height;
-        this.services?.forEach(s => s.setAspect?.(this.lastAspect));
-    }
 
     draw(scene, camera) {
-        this.renderer.render(scene, camera);
+        this.threeRenderer.render(scene, camera);
     }
         
 
@@ -43,7 +38,7 @@ export class RendererWrapper {
         window.removeEventListener('resize', this.onWindowResize);
         this.subscriptions.forEach(sub => sub.unsubscribe());
         this.subscriptions = [];
-        this.renderer.dispose();
+        this.threeRenderer.dispose();
     }
 }
 
