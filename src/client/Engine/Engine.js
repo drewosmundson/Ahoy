@@ -46,6 +46,7 @@ export class Engine {
         this.frameEventBuffer             = createEventBuffers(frameLocalBus, Game.frameEvents);           // takes dom input and reads once per AFr frame
         // ==========================================================
 
+
  
         // ====  Systems  ============================================
         //  Systems act on the new information polled from buffers sent by interfaces and current world data
@@ -56,20 +57,17 @@ export class Engine {
         // ==========================================================
 
 
-
-        this.camera = new Game.CameraWrapper()
-        this.scene  = new Game.SceneWrapper()
+        this.scene  = new Game.scene(syncLocalBus)
+        this.camera = new Game.camera(syncLocalBus)
+        this.renderer = new Game.renderer(canvas, syncLocalBus);
 
 
         // ======= Engine Services ===================================
         //  Services hold the actual rendering and graphics libray.
         //  They read from world data and actually display the data on the screen.
         //  They do not manipulate world data. These are read only
-        this.services = Game.Services.map(Service => new Service(this.scene));
-        // Renderer manager owns the single WebGLRenderer; services borrow it
+        this.services = Game.Services.map(Service => new Service(scene));
         // ===========================================================
-
-        this.renderer = new Game.RendererWrapper(canvas, syncLocalBus);
 
 
     }
@@ -115,7 +113,7 @@ export class Engine {
             service.update(this.worldData);          // mutate scene only
         }
         
-        this.renderer.draw(this.scene, this.camera)   
+        this.renderer.draw()   
     };
 
     simulation(dt, worldData) {

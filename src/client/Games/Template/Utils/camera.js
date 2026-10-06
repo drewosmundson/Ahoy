@@ -5,9 +5,18 @@
 // cameraState Component
 // cameraSystem Event
 
+
+
+export function camera() {
+    const camera = new THREE.PerspectiveCamera();
+
+    return camera
+
+}
+
 class CameraManager {
     constructor() {
-        this.camera = new THREE.PerspectiveCamera();
+
     }
 
     update(world) {

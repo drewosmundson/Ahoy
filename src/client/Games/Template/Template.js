@@ -1,6 +1,6 @@
 import { RendererWrapper } from "./Utils/RendererWrapper.js";
-import { CameraWrapper } from "./Utils/CameraWrapper.js"
-import { SceneWrapper } from "./Utils/SceneWrapper.js"
+import { CameraWrapper } from "./Utils/camera.js"
+import { SceneWrapper } from "./Utils/scene.js"
 
 
 import { RotatingCube } from './Services/RotatingCube.js';

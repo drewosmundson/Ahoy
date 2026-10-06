@@ -2,11 +2,11 @@
 import * as THREE from 'three';
 
 
+export const camera = new THREE.PerspectiveCamera()
 
+export const scene = new THREE.Scene()
 
-
-
-export class RendererWrapper {
+export class RenderManager {
     constructor(canvas, bus) {
         this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
         this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -28,10 +28,6 @@ export class RendererWrapper {
 
     setAnimationLoop(loop) {
         this.renderer.setAnimationLoop(loop);
-    }
-
-    stopAnimationLoop() {
-        this.renderer.setAnimationLoop(null);
     }
 
     resize({ width, height }) {
