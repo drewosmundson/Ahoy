@@ -5,7 +5,7 @@ export class RotatingCube {
 
         this.mesh = new THREE.Mesh(
             new THREE.BoxGeometry(),
-            new THREE.MeshNormalMaterial({ wireframe: true })
+            new THREE.MeshNormalMaterial({ wireframe: false})
         );
         
         scene.add(this.mesh);

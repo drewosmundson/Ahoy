@@ -6,9 +6,8 @@ import { FIXED_DT } from './Constants.js'
 
 
 export class Engine {
+    
     setup(Game, canvas, socket = null) {
-
-
         const simulationLocalBus   = new LocalEventBus(Game.simulationEvents);             // Intra-process bus for events in the same process like mouse and keyboard
         const simulationNetworkBus = new NetworkEventBus(socket, Game.networkEvents);   // Inter-process bus for events to and from the server
         const frameLocalBus        = new LocalEventBus(Game.frameEvents);
@@ -68,28 +67,6 @@ export class Engine {
         //  They do not manipulate world data. These are read only
         this.services = Game.Services.map(Service => new Service(this.sceneManager.get()));
         // ===========================================================
-
-    }
-
-
-
-    start(lobbyData = null) {
-        this.worldData.start(lobbyData);
-
-        // One off event to resize the screen to cover case if screen resized while loading
-        window.dispatchEvent(new Event("resize"));
-        this.previousTime = null;
-        this.accumulator = 0;
-
-        this.renderManager.setAnimationLoop(this.animationLoop);
-    }
-
-    // temp stop pause resume methods
-    stop()   { this.renderManager.stopAnimation(); }
-    pause()  { this.renderManager.stopAnimation(); }
-    resume() { 
-        this.previousTime = null;
-        this.renderManager.startAnimation(this.animationLoop);
     }
 
 
@@ -104,8 +81,9 @@ export class Engine {
             this.accumulator -= FIXED_DT;
         }
     
-        // Presentation loop called every Animation Frame request. Updates te
+        // Presentation loop called every Animation Frame request. Updates every frame. This is for items like camera movement 
         this.presentation(frameTime, this.worldData);
+
 
         // animationLoop
         for (const service of this.services) {
@@ -157,22 +135,44 @@ export class Engine {
 
 
 
+
+
+    start(lobbyData = null) {
+        this.worldData.start(lobbyData);
+
+        // One off event to resize the screen to cover case if screen resized while loading
+        window.dispatchEvent(new Event("resize"));
+        this.previousTime = null;
+        this.accumulator = 0;
+
+        this.renderManager.setAnimationLoop(this.animationLoop);
+    }
+
+
+
+
+
+
+    // temp stop pause resume methods
+    stop()   { this.renderManager.stopAnimation(); }
+    pause()  { this.renderManager.stopAnimation(); }
+    resume() { 
+        this.previousTime = null;
+        this.renderManager.startAnimation(this.animationLoop);
+    }
+
+
+
+
+
     destroy() {
-        this.stop();
-        this.services?.forEach(s => s.dispose?.());
-        [this.simulationInterfaces, this.networkInterfaces, this.frameInterfaces, this.syncInterfaces]
-            .forEach(list => list?.forEach(i => i.dispose?.()));
-        [this.simulationLocalEventBuffer, this.simulationNetworkEventBuffer, this.frameEventBuffer]
-            .forEach(b => b?.dispose());
-        this.renderManager?.dispose(); 
+        // this.stop();
+        // this.services?.forEach(s => s.dispose?.());
+        // [this.simulationInterfaces, this.networkInterfaces, this.frameInterfaces, this.syncInterfaces]
+        //     .forEach(list => list?.forEach(i => i.dispose?.()));
+        // [this.simulationLocalEventBuffer, this.simulationNetworkEventBuffer, this.frameEventBuffer]
+        //     .forEach(b => b?.dispose());
+        // this.renderManager?.dispose(); 
     }
-
-    cleanup() { 
-        this.destroy();
-    }
-
-
-
-    
 }
 
