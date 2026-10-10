@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 
 export class CameraManager {
-    constructor(bus) {
+    constructor(bus, events) {
 
         // const fov = 75;                                          // Field of view (in degrees)
         // const aspect = window.innerWidth / window.innerHeight;   // Aspect ratio
@@ -24,7 +24,7 @@ export class CameraManager {
         // 3. Point the camera at a specific target (e.g., the center of the scene)
         this.threeCamera.lookAt(0, 0, 0); 
         this.subscriptions = [
-            bus.on("windowResize", ({width, height}) => this.resize({width, height})),
+            bus.on("windowResized", ({width, height}) => this.resize({width, height})),
         ];
     }
 

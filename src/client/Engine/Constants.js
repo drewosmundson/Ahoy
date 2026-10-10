@@ -1,7 +1,7 @@
 
 
 
-export const FIXED_DT = 64
+export const FIXED_DT = 1/60
 
 
 

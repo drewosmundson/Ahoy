@@ -1,14 +1,19 @@
 
 // local async bus usage
 export class LocalEventBus {
-    constructor(eventSchemas) {
-        this.eventSchemas = eventSchemas;
+    constructor(events = []) {
+        this.events = [...events];
         this.listeners = new Map();
+    }
+
+    #assertKnown(event) {
+        if (!this.events.includes(event)) throw new Error(`Unknown event: ${event}`);
     }
 
     // const sub = bus.on('foo', myCallback);
     // sub.unsubscribe();
     on(event, callback) {
+        this.#assertKnown(event);
         if (!this.listeners.has(event)) {
             this.listeners.set(event, new Set());
         }
@@ -23,6 +28,7 @@ export class LocalEventBus {
     }
 
     off(event, callback) {
+        this.#assertKnown(event)
         const callbacks = this.listeners.get(event);
 
         if (!callbacks) return;
@@ -35,6 +41,7 @@ export class LocalEventBus {
     }
 
     emit(event, ...args) {
+        this.#assertKnown(event);
         const callbacks = this.listeners.get(event);
         if (!callbacks) return;
         for (const callback of [...callbacks]) {
@@ -48,20 +55,20 @@ export class LocalEventBus {
 }
 
 
-function createSender(socket, eventNames) {
+function createSender(socket, events) {
     return function send(event, data) {
-        if (!eventNames.includes(event)) {
+        if (!events.includes(event)) {
             throw new Error(`Unknown event: ${event}`);
         }
         socket.emit(event, { ...data });
     };
 }
 
-function createReceiver(socket, eventNames) {
+function createReceiver(socket, events) {
     return function subscribe(handler) {
         const cleanup = [];
 
-        for (const event of eventNames) {
+        for (const event of events) {
             const listener = data => handler(event, data);
             socket.on(event, listener);
             cleanup.push(() => socket.off(event, listener));
@@ -126,15 +133,15 @@ function createReceiver(socket, eventNames) {
 // networkBus.emit(event, data)   // events going to the same process client -> client or server -> server
 // networkBus.on(event, data)     // does not care if this event comes from a publish or an emit
 export class NetworkEventBus extends LocalEventBus {
-    constructor(socket, eventSchemas) {
-        super();
+    constructor(socket, events) {
+        super(events);
         this.socket = socket;
 
 
         // publish('message', { text: 'hello' });    // passes checks, calls socket.emit
         // publish('badEvent', { text: 'hi' });      // throws "Unknown event: bogusEvent"
         // publish('badData', { text: 123 });       //throws "Invalid payload" (if schema expects a string)
-        this.publisher = createSender(socket, eventSchemas);
+        this.publisher = createSender(socket, events);
 
         // createReceiver(socket, eventSchemas) returns a subscribe function
         // this function is called immediately with a handler, which runs
@@ -143,7 +150,7 @@ export class NetworkEventBus extends LocalEventBus {
 
         // The handler passes in broadcasts incoming socket events through this bus's own local emit()
         // this is so bus.on(event, data) can happen without caring where that event came from
-        this.detach = createReceiver(socket, eventSchemas)((event, data) => {
+        this.detach = createReceiver(socket, events)((event, data) => {
             this.emit(event, data);
         }).unsubscribe;
 

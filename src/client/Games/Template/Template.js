@@ -2,6 +2,12 @@ import { RenderManager } from "./Utils/RenderManager.js";
 import { CameraManager } from "./Utils/CameraManager.js"
 import { SceneManager } from "./Utils/SceneManager.js"
 
+import {
+    simulationEvents,
+    networkEvents,
+    frameEvents,
+    syncEvents,
+} from "./EventRegistry.js"
 
 import { RotatingCube } from './Services/RotatingCube.js';
 
@@ -15,6 +21,10 @@ export const Template = {
     CameraManager: CameraManager,
     SceneManager:  SceneManager,
 
+    SimulationsEvents: simulationEvents,
+    NetworkEvents: networkEvents,
+    FrameEvents: frameEvents,
+    SyncEvents: syncEvents,
 
     // === ECS ================
     // WorldData component names

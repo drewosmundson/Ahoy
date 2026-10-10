@@ -8,14 +8,34 @@ import { FIXED_DT } from './Constants.js'
 export class Engine {
     
     setup(Game, canvas, socket = null) {
+
+        // ============ Components and Entity initalization =========
+        //  Components are where they can be filtered by the system that require them. 
+        //  WorldData is updated on each game tick by systems
+        this.worldData = new WorldData(Game.Components.name);
+        // ===========================================================
+
+
         const simulationLocalBus   = new LocalEventBus(Game.simulationEvents);             // Intra-process bus for events in the same process like mouse and keyboard
         const simulationNetworkBus = new NetworkEventBus(socket, Game.networkEvents);   // Inter-process bus for events to and from the server
         const frameLocalBus        = new LocalEventBus(Game.frameEvents);
         const syncLocalBus         = new LocalEventBus(Game.syncEvents)
 
 
-        this.buses = [simulationLocalBus, simulationNetworkBus, frameLocalBus, syncLocalBus];
+        //this.buses = [simulationLocalBus, simulationNetworkBus, frameLocalBus, syncLocalBus];
 
+
+        // ============ Event Buffers ==============================
+        //  Event buffers take an event bus and store a history of events with timestamps to be polled each game tick.
+        //  simulation Buffer's purpose is when event triggered and its result must wait for the game loop to reach its next tick 
+        //  NetworkBuffers's purpose is when events arrive from the server out of sync with the game loop or out of order.
+        //  These are the input that game systems read from so that systems produce can a change that the world data will apply at once 
+        this.simulationLocalEventBuffer   = createEventBuffers(simulationLocalBus); // keydowns buffer
+        this.simulationNetworkEventBuffer = createEventBuffers(simulationNetworkBus);       // server updates buffer
+        this.frameEventBuffer             = createEventBuffers(frameLocalBus);           // takes dom input and reads once per AFr frame
+        // ==========================================================
+
+        
         // ============ Interfaces =================================
         //  keyboard, mouse, network, touch, gamepad, browser etc.
         this.simulationInterfaces  = Game.SimulationInterfaces.map(Interface => new Interface(simulationLocalBus));
@@ -25,28 +45,6 @@ export class Engine {
         // ==========================================================
 
 
-        // ============ Components and Entity initalization =========
-        //  Components are where they can be filtered by the system that require them. 
-        //  WorldData is updated on each game tick by systems
-        this.worldData = new WorldData(Game.Components.name);
-        // ===========================================================
-
-
-        // Can manipulate world data should be used sparingly can only manipulate changes.events world data
-        this.syncSystems = Game.SyncSystems.map(SyncEvent => new SyncEvent(syncLocalBus, this.worldData, Game.syncEvents))
-
-        // ============ Event Buffers ==============================
-        //  Event buffers take an event bus and store a history of events with timestamps to be polled each game tick.
-        //  simulation Buffer's purpose is when event triggered and its result must wait for the game loop to reach its next tick 
-        //  NetworkBuffers's purpose is when events arrive from the server out of sync with the game loop or out of order.
-        //  These are the input that game systems read from so that systems produce can a change that the world data will apply at once 
-        this.simulationLocalEventBuffer   = createEventBuffers(simulationLocalBus, Game.simulationEvents); // keydowns buffer
-        this.simulationNetworkEventBuffer = createEventBuffers(simulationNetworkBus, Game.networkEvents);       // server updates buffer
-        this.frameEventBuffer             = createEventBuffers(frameLocalBus, Game.frameEvents);           // takes dom input and reads once per AFr frame
-        // ==========================================================
-
-
- 
         // ====  Systems  ============================================
         //  Systems act on the new information polled from buffers sent by interfaces and current world data
         //  They calculate and return the delta change for world data to apply changes to after they are updated
@@ -55,10 +53,14 @@ export class Engine {
         this.frameSystems      = Game.FrameSystems.map(System => new System());
         // ==========================================================
 
+        // Can manipulate world data should be used sparingly can only manipulate changes.events world data
+        this.syncSystems = Game.SyncSystems.map(SyncEvent => new SyncEvent(syncLocalBus, this.worldData))
+
+
 
         this.sceneManager  = new Game.SceneManager(syncLocalBus)
         this.cameraManager = new Game.CameraManager(syncLocalBus)
-        this.renderManager = new Game.RenderManager(canvas, syncLocalBus);
+        this.renderManager = new Game.RenderManager(syncLocalBus, canvas);
 
 
         // ======= Engine Services ===================================
@@ -99,6 +101,7 @@ export class Engine {
         
         // Keyboard Input / ai brain / Collison
         const simulationEvents = this.simulationLocalEventBuffer.poll();
+        console.log(simulationEvents);
         for (const system of this.simulationSystems) {
             changes.push(...(system.update(dt, worldData, simulationEvents) ?? []));
         }
