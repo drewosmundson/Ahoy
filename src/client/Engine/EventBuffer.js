@@ -36,7 +36,7 @@ class EventBufferGroup {
 }
 
  // eventNames: array of strings. For network events pass Object.keys(schemas).
-export function createEventBuffers(eventBus, eventNames) {
+export function createEventBuffers(eventBus, eventNames = eventBus.events) {
     return new EventBufferGroup(
         eventNames.map(name => [name, new EventBuffer(eventBus, name)])
     );

@@ -1,0 +1,14 @@
+[
+  {
+    "event": "playerSpawnd",
+    "file": "TestMissingEvents.js"
+  },
+  {
+    "event": "inventoryUpdatd",
+    "file": "TestMissingEvents.js"
+  },
+  {
+    "event": "inventpdatd",
+    "file": "TestMissingEvents.js"
+  }
+]

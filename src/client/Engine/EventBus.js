@@ -1,4 +1,7 @@
 
+
+
+
 // local async bus usage
 export class LocalEventBus {
     constructor(events = []) {
@@ -6,14 +9,14 @@ export class LocalEventBus {
         this.listeners = new Map();
     }
 
-    #assertKnown(event) {
+    #isKnown(event) {
         if (!this.events.includes(event)) throw new Error(`Unknown event: ${event}`);
     }
 
     // const sub = bus.on('foo', myCallback);
     // sub.unsubscribe();
     on(event, callback) {
-        this.#assertKnown(event);
+        this.#isKnown(event);
         if (!this.listeners.has(event)) {
             this.listeners.set(event, new Set());
         }
@@ -28,7 +31,7 @@ export class LocalEventBus {
     }
 
     off(event, callback) {
-        this.#assertKnown(event)
+        this.#isKnown(event)
         const callbacks = this.listeners.get(event);
 
         if (!callbacks) return;
@@ -41,7 +44,7 @@ export class LocalEventBus {
     }
 
     emit(event, ...args) {
-        this.#assertKnown(event);
+        this.#isKnown(event);
         const callbacks = this.listeners.get(event);
         if (!callbacks) return;
         for (const callback of [...callbacks]) {
@@ -137,12 +140,7 @@ export class NetworkEventBus extends LocalEventBus {
         super(events);
         this.socket = socket;
 
-
-        // publish('message', { text: 'hello' });    // passes checks, calls socket.emit
-        // publish('badEvent', { text: 'hi' });      // throws "Unknown event: bogusEvent"
-        // publish('badData', { text: 123 });       //throws "Invalid payload" (if schema expects a string)
-        this.publisher = createSender(socket, events);
-
+    
         // createReceiver(socket, eventSchemas) returns a subscribe function
         // this function is called immediately with a handler, which runs
         //    socket.on() for all events in eventSchemas, and returns an unsubscribe function
@@ -150,18 +148,30 @@ export class NetworkEventBus extends LocalEventBus {
 
         // The handler passes in broadcasts incoming socket events through this bus's own local emit()
         // this is so bus.on(event, data) can happen without caring where that event came from
-        this.detach = createReceiver(socket, events)((event, data) => {
-            this.emit(event, data);
-        }).unsubscribe;
 
-        this.connected = true;
-    }
-
-    publish(event, data) {
-        if (!this.connected) {
-            throw new Error('Cannot publish: bus is disconnected');
+    
+        // publish('message', { text: 'hello' });    // passes checks, calls socket.emit
+        // publish('badEvent', { text: 'hi' });      // throws "Unknown event: bogusEvent"
+        // publish('badData', { text: 123 });       //throws "Invalid payload" (if schema expects a string)
+        if (socket == null) {
+            this.publisher = () => {};
+            this.detach = () => {};
+            this.connected = false;
+        } else {
+            this.publisher = createSender(socket, events);
+            this.detach = createReceiver(socket, events)((event, data) => {
+                this.emit(event, data);
+            }).unsubscribe;
+            this.connected = true;
+            }
         }
-        this.publisher(event, data);
+
+    
+    publish(gameEvent, data) {
+        if (!this.connected) {
+            console.log("Not Connected to Socket");
+        }
+        this.publisher(gameEvent, data);
     }
 
     disconnect() {
@@ -176,8 +186,6 @@ export class NetworkEventBus extends LocalEventBus {
         this.socket.close?.();
     }
 }
-
-
 
 // const networkEvents = new events.NetworkEventBus(socket, schemas);  // network lane - to and from the server
 // const effectsEvents = new events.LocalEventBus(schemas);            // presentation lane - fire and forget

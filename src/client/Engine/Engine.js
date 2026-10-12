@@ -5,21 +5,21 @@ import { createEventBuffers } from './EventBuffer.js';
 import { FIXED_DT } from './Constants.js'
 
 
+
 export class Engine {
     
     setup(Game, canvas, socket = null) {
-
+        console.log(socket)
         // ============ Components and Entity initalization =========
         //  Components are where they can be filtered by the system that require them. 
         //  WorldData is updated on each game tick by systems
-        this.worldData = new WorldData(Game.Components.name);
+        this.worldData = new WorldData(Game.Components);
         // ===========================================================
 
-
-        const simulationLocalBus   = new LocalEventBus(Game.simulationEvents);             // Intra-process bus for events in the same process like mouse and keyboard
-        const simulationNetworkBus = new NetworkEventBus(socket, Game.networkEvents);   // Inter-process bus for events to and from the server
-        const frameLocalBus        = new LocalEventBus(Game.frameEvents);
-        const syncLocalBus         = new LocalEventBus(Game.syncEvents)
+        const simulationLocalBus   = new LocalEventBus(Game.events);             // Intra-process bus for events in the same process like mouse and keyboard
+        const simulationNetworkBus = new NetworkEventBus(socket, Game.events);   // Inter-process bus for events to and from the server
+        const frameLocalBus        = new LocalEventBus(Game.events);
+        const syncLocalBus         = new LocalEventBus(Game.events)
 
 
         //this.buses = [simulationLocalBus, simulationNetworkBus, frameLocalBus, syncLocalBus];
@@ -101,7 +101,6 @@ export class Engine {
         
         // Keyboard Input / ai brain / Collison
         const simulationEvents = this.simulationLocalEventBuffer.poll();
-        console.log(simulationEvents);
         for (const system of this.simulationSystems) {
             changes.push(...(system.update(dt, worldData, simulationEvents) ?? []));
         }

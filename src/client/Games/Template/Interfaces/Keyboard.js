@@ -17,7 +17,7 @@ class ClientInput {
         const downActionHandler = (event) => {
             const data = this.handleActionEvent(event);
             if (!data) return;
-            eventBus.emit("buttonPressed", data);
+            eventBus.emit("keyDown", data);
         };
         
         ["keydown", "mousedown"].forEach(type => {
@@ -32,7 +32,7 @@ class ClientInput {
         const upActionHandler = (event) => {
             const data = this.handleActionEvent(event);
             if (!data) return;
-            eventBus.emit("buttonReleased", data);
+            eventBus.emit("keyUp", data);
         };
         
         ["keyup", "mouseup"].forEach(type => {
@@ -45,7 +45,7 @@ class ClientInput {
         // ===================================================
         // Mouse Movement Event 
         document.addEventListener("mousemove", (event) => {
-            eventBus.emit("mouseMovement", event.movementX, event.movementY)
+            eventBus.emit("mouseMoved", event.movementX, event.movementY)
         });
         // ===================================================
     }

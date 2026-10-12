@@ -1,26 +1,24 @@
 
 import * as THREE from 'three';
-
-
+import { EVENTS } from "../EventRegistry.js"
 
 export class RenderManager {
-    constructor(canvas, bus) {
+    constructor(bus, canvas) {
         this.threeRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
         this.threeRenderer.setPixelRatio(window.devicePixelRatio);
         this.threeRenderer.setSize(window.innerWidth, window.innerHeight);
 
-        this.subscriptions = [
-            bus.on("windowResize", (data) => this.resize(data)),
-        ];
+        this.canvas = canvas
 
-        // Temporary: until a sync/frame interface emits "windowResize"
-        this.onWindowResize = () =>
-            this.resize({ width: window.innerWidth, height: window.innerHeight });
-        window.addEventListener('resize', this.onWindowResize);
+        this.subscriptions = [
+            bus.on(EVENTS.WINDOW_RESIZED, () => this.resized()),
+        ];
     }
 
-    resize({ width, height }) {
-        this.threeRenderer.setSize(width, height);
+    resized({ width, height }) {
+        this.canvas.style.width = `${width}px`;
+        this.canvas.style.height = `${height}px`;
+        this.threeRenderer.setSize(width, height, false);
     }
 
     setAnimationLoop(loop) {

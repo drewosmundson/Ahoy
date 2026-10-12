@@ -2,12 +2,11 @@ import { RenderManager } from "./Utils/RenderManager.js";
 import { CameraManager } from "./Utils/CameraManager.js"
 import { SceneManager } from "./Utils/SceneManager.js"
 
-import {
-    simulationEvents,
-    networkEvents,
-    frameEvents,
-    syncEvents,
-} from "./EventRegistry.js"
+import { events } from "./EventRegistry.js"
+
+import { BrowserInterface } from "./Interfaces/Browser.js";
+
+
 
 import { RotatingCube } from './Services/RotatingCube.js';
 
@@ -21,10 +20,7 @@ export const Template = {
     CameraManager: CameraManager,
     SceneManager:  SceneManager,
 
-    SimulationsEvents: simulationEvents,
-    NetworkEvents: networkEvents,
-    FrameEvents: frameEvents,
-    SyncEvents: syncEvents,
+    events: events,
 
     // === ECS ================
     // WorldData component names
@@ -32,14 +28,14 @@ export const Template = {
 
 
     // Event name lists (arrays of strings)
-    simulationEvents: [],
-    networkEvents: [],
-    frameEvents: [],
-    syncEvents: [],
+    // simulationEvents: [],
+    // networkEvents: [],
+    // frameEvents: [],
+    // syncEvents: [],
 
     SimulationInterfaces: [],
     NetworkInterfaces: [],
-    FrameInterfaces: [],
+    FrameInterfaces: [BrowserInterface],
     SyncInterfaces: [],
 
     SimulationSystems: [],
