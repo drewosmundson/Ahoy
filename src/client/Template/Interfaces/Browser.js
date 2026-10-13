@@ -1,13 +1,22 @@
 
+
+
 import { EVENTS } from "../EventRegistry.js"
+
+
+
 
 export class BrowserInterface {
     constructor(bus) {
         this.bus = bus
+
         window.addEventListener("resize", () => this.resize())
     }
+    send() {
+
+    }
+
     resize() {
-        console.log("resized")
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
         let width = windowWidth;

@@ -8,7 +8,7 @@ import { BrowserInterface } from "./Interfaces/Browser.js";
 
 
 
-import { RotatingCube } from './Services/RotatingCube.js';
+import { RotatingCube } from './Components/Services/RotatingCube.js';
 
 
 
@@ -20,23 +20,20 @@ export const Template = {
     CameraManager: CameraManager,
     SceneManager:  SceneManager,
 
+
     events: events,
+
 
     // === ECS ================
     // WorldData component names
     Components: [],
 
 
-    // Event name lists (arrays of strings)
-    // simulationEvents: [],
-    // networkEvents: [],
-    // frameEvents: [],
-    // syncEvents: [],
 
     SimulationInterfaces: [],
     NetworkInterfaces: [],
-    FrameInterfaces: [BrowserInterface],
-    SyncInterfaces: [],
+    FrameInterfaces: [],
+    SyncInterfaces: [BrowserInterface],
 
     SimulationSystems: [],
     NetworkSystems: [],

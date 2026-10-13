@@ -24,18 +24,31 @@ export class CameraManager {
 
         // 3. Point the camera at a specific target (e.g., the center of the scene)
         this.threeCamera.lookAt(0, 0, 0); 
+
         this.subscriptions = [
-            bus.on(EVENTS.WINDOW_RESIZED, ({width, height}) => this.resize({width, height})),
+            bus.on(EVENTS.WINDOW_RESIZED, (size) => this.resized(size)),
         ];
+        this
     }
 
-    resize({ width, height }) {
+    resized({ width, height }) {
         console.log("cameraResized")
         this.threeCamera.aspect = width / height;
         this.threeCamera.updateProjectionMatrix();
     }
 
+    setCamera() {
+
+
+
+    }
+
     get(){
         return this.threeCamera;
+    }
+
+    dispose() {
+        this.subscriptions.forEach(sub => sub.unsubscribe());
+        this.subscriptions = [];
     }
 }

@@ -1,9 +1,0 @@
-
-
-
-
-class ControllablePlayerComponent {
-    constructor() {
-
-    }
-}

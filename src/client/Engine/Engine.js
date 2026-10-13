@@ -4,10 +4,7 @@ import { LocalEventBus, NetworkEventBus } from './EventBus.js';
 import { createEventBuffers } from './EventBuffer.js';
 import { FIXED_DT } from './Constants.js'
 
-
-
 export class Engine {
-    
     setup(Game, canvas, socket = null) {
         console.log(socket)
         // ============ Components and Entity initalization =========
@@ -20,7 +17,6 @@ export class Engine {
         const simulationNetworkBus = new NetworkEventBus(socket, Game.events);   // Inter-process bus for events to and from the server
         const frameLocalBus        = new LocalEventBus(Game.events);
         const syncLocalBus         = new LocalEventBus(Game.events)
-
 
         //this.buses = [simulationLocalBus, simulationNetworkBus, frameLocalBus, syncLocalBus];
 
@@ -57,11 +53,9 @@ export class Engine {
         this.syncSystems = Game.SyncSystems.map(SyncEvent => new SyncEvent(syncLocalBus, this.worldData))
 
 
-
         this.sceneManager  = new Game.SceneManager(syncLocalBus)
         this.cameraManager = new Game.CameraManager(syncLocalBus)
         this.renderManager = new Game.RenderManager(syncLocalBus, canvas);
-
 
         // ======= Engine Services ===================================
         //  Services hold the actual rendering and graphics libray.
@@ -134,9 +128,6 @@ export class Engine {
 
         worldData.apply(changes);
     }
-
-
-
 
 
     start(lobbyData = null) {
