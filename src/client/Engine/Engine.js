@@ -86,7 +86,7 @@ export class Engine {
             service.update(this.worldData);          // mutate scene only
         }
         
-        this.renderManager.draw(this.sceneManager.get(), this.cameraManager.get())   
+        this.renderManager.draw(this.sceneManager.get(), this.cameraManager.get()) 
     };
 
     simulation(dt, worldData) {
@@ -143,9 +143,6 @@ export class Engine {
 
 
 
-
-
-
     // temp stop pause resume methods
     stop()   { this.renderManager.stopAnimation(); }
     pause()  { this.renderManager.stopAnimation(); }
@@ -153,9 +150,6 @@ export class Engine {
         this.previousTime = null;
         this.renderManager.startAnimation(this.animationLoop);
     }
-
-
-
 
 
     destroy() {

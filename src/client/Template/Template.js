@@ -2,13 +2,14 @@ import { RenderManager } from "./Utils/RenderManager.js";
 import { CameraManager } from "./Utils/CameraManager.js"
 import { SceneManager } from "./Utils/SceneManager.js"
 
+
 import { events } from "./EventRegistry.js"
+
 
 import { BrowserInterface } from "./Interfaces/Browser.js";
 
 
-
-import { RotatingCube } from './Components/Services/RotatingCube.js';
+import { RotatingCube } from './Services/RotatingCube.js';
 
 
 
