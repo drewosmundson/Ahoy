@@ -5,7 +5,7 @@ import { createEventBuffers } from './EventBuffer.js';
 import { FIXED_DT } from './Constants.js'
 
 export class Engine {
-    setup(Game, canvas, socket = null) {
+    setup(Game, canvas, socket = null, GraphicsContext) {
         console.log(socket)
         // ============ Components and Entity initalization =========
         //  Components are where they can be filtered by the system that require them. 
@@ -53,15 +53,14 @@ export class Engine {
         this.syncSystems = Game.SyncSystems.map(SyncEvent => new SyncEvent(syncLocalBus, this.worldData))
 
 
-        this.sceneManager  = new Game.SceneManager(syncLocalBus)
-        this.cameraManager = new Game.CameraManager(syncLocalBus)
-        this.renderManager = new Game.RenderManager(syncLocalBus, canvas);
-
+        this.graphics = new GraphicsContext(syncLocalBus, canvas);
         // ======= Engine Services ===================================
         //  Services hold the actual rendering and graphics libray.
         //  They read from world data and actually display the data on the screen.
         //  They do not manipulate world data. These are read only
-        this.services = Game.Services.map(Service => new Service(this.sceneManager.get()));
+        this.services = Game.Services.map(
+            Service => new Service(this.graphics.scene)
+        );
         // ===========================================================
     }
 
@@ -80,14 +79,17 @@ export class Engine {
         // Presentation loop called every Animation Frame request. Updates every frame. This is for items like camera movement 
         this.presentation(frameTime, this.worldData);
 
+        // Apply camera state to the camera.
+        this.cameraService.update();
 
-        // animationLoop
+        // Update scene objects.
         for (const service of this.services) {
             service.update(this.worldData);          // mutate scene only
         }
-        
-        this.renderManager.draw(this.sceneManager.get(), this.cameraManager.get()) 
+        // Render with the latest camera position and orientation.
+        this.graphics.draw();
     };
+
 
     simulation(dt, worldData) {
         const changes = [];
