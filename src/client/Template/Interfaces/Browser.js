@@ -1,32 +1,34 @@
-
-
-
-import { EVENTS } from "../EventRegistry.js"
-
-
-
+import { EVENTS } from "../EventRegistry.js";
 
 export class BrowserInterface {
     constructor(bus) {
-        this.bus = bus
+        this.bus = bus;
+        this.handleResize = () => this.resize();
 
-        window.addEventListener("resize", () => this.resize())
-    }
-    send() {
+        window.addEventListener("resize", this.handleResize);
 
+        this.resize();
     }
 
     resize() {
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
+
         let width = windowWidth;
-        let height = (width * 9) / 16;
+        let height = width * 9 / 16;
 
         if (height > windowHeight) {
-        height = windowHeight;
-        width = (height * 16) / 9;
+            height = windowHeight;
+            width = height * 16 / 9;
         }
 
-        this.bus.emit(EVENTS.WINDOW_RESIZED, { width, height })
+        this.bus.emit(EVENTS.WINDOW_RESIZED, {
+            width,
+            height,
+        });
+    }
+
+    dispose() {
+        window.removeEventListener("resize", this.handleResize);
     }
 }
