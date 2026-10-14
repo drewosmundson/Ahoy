@@ -3,17 +3,24 @@
 
 import { SceneManager } from "./SceneManager.js";
 import { CameraManager } from "./CameraManager.js";
+import { AudioManager } from "three/src/constants.js";
 import { RenderManager } from "./RenderManager.js";
 
 export class GraphicsContext {
     constructor(bus, canvas) {
         this.sceneManager = new SceneManager(bus);
         this.cameraManager = new CameraManager(bus);
+        this.audioManager = new AudioManager(bus);
         this.renderManager = new RenderManager(bus, canvas);
     }
 
     get scene() {
         return this.sceneManager.get();
+    }
+
+    get audio() {
+
+
     }
 
     get camera() {

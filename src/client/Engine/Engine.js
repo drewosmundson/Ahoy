@@ -54,12 +54,13 @@ export class Engine {
 
 
         this.graphics = new GraphicsContext(syncLocalBus, canvas);
+
         // ======= Engine Services ===================================
         //  Services hold the actual rendering and graphics libray.
         //  They read from world data and actually display the data on the screen.
         //  They do not manipulate world data. These are read only
         this.services = Game.Services.map(
-            Service => new Service(this.graphics.scene)
+            Service => new Service(this.graphics)
         );
         // ===========================================================
     }

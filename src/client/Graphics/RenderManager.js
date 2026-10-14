@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { EVENTS } from "../EventRegistry.js";
+import { EVENTS } from "../Template/EventRegistry.js";
 
 export class RenderManager {
     constructor(bus, canvas) {
