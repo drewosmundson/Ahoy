@@ -22,6 +22,7 @@ import { Engine } from "./Engine/Engine.js";
 
 // Playable Games 
 import { games } from "./gamesIndex.js"
+import { GraphicsContext } from "./Graphics/GraphicsContext.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
@@ -39,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ui,
         subscriptionRegister,
 
+        GraphicsContext,
         Engine,
         games,
     };

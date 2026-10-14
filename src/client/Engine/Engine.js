@@ -5,7 +5,7 @@ import { createEventBuffers } from './EventBuffer.js';
 import { FIXED_DT } from './Constants.js'
 
 export class Engine {
-    setup(Game, canvas, socket = null, GraphicsContext) {
+    setup(Game, canvas, GraphicsContext, socket = null, ) {
         console.log(socket)
         // ============ Components and Entity initalization =========
         //  Components are where they can be filtered by the system that require them. 
@@ -26,9 +26,9 @@ export class Engine {
         //  simulation Buffer's purpose is when event triggered and its result must wait for the game loop to reach its next tick 
         //  NetworkBuffers's purpose is when events arrive from the server out of sync with the game loop or out of order.
         //  These are the input that game systems read from so that systems produce can a change that the world data will apply at once 
-        this.simulationLocalEventBuffer   = createEventBuffers(simulationLocalBus); // keydowns buffer
-        this.simulationNetworkEventBuffer = createEventBuffers(simulationNetworkBus);       // server updates buffer
-        this.frameEventBuffer             = createEventBuffers(frameLocalBus);           // takes dom input and reads once per AFr frame
+        this.simulationLocalEventBuffer   = createEventBuffers(simulationLocalBus);       // keydowns buffer
+        this.simulationNetworkEventBuffer = createEventBuffers(simulationNetworkBus);     // server updates buffer
+        this.frameEventBuffer             = createEventBuffers(frameLocalBus);            // takes dom input and reads once per AFr frame
         // ==========================================================
 
         
@@ -53,7 +53,7 @@ export class Engine {
         this.syncSystems = Game.SyncSystems.map(SyncEvent => new SyncEvent(syncLocalBus, this.worldData))
 
 
-        this.graphics = new GraphicsContext(syncLocalBus, canvas);
+        this.graphics = new GraphicsContext(canvas);
 
         // ======= Engine Services ===================================
         //  Services hold the actual rendering and graphics libray.
@@ -67,6 +67,9 @@ export class Engine {
 
 
     animationLoop = (time) => {
+
+        // ============ Game update loop =============================
+        //  world data manipulation
         const frameTime = Math.min((time - this.previousTime) * 0.001, 0.25);
         this.previousTime = time;
         this.accumulator += frameTime;
@@ -79,16 +82,23 @@ export class Engine {
     
         // Presentation loop called every Animation Frame request. Updates every frame. This is for items like camera movement 
         this.presentation(frameTime, this.worldData);
+        // ============================================================
 
-        // Apply camera state to the camera.
-        this.cameraService.update();
+        
+
+        // ======== Graphics Context updates ==========================
+        //  Apply camera state to the camera and Apply Audio updates 
+        //this.graphics.cameraServiceUpdate(this.worldData);
+
+        //this.graphics.audioServiceUpdate(this.worldData);
 
         // Update scene objects.
         for (const service of this.services) {
-            service.update(this.worldData);          // mutate scene only
+            service.update(this.worldData);
         }
         // Render with the latest camera position and orientation.
         this.graphics.draw();
+        // =============================================================
     };
 
 
@@ -141,17 +151,17 @@ export class Engine {
         this.previousTime = null;
         this.accumulator = 0;
 
-        this.renderManager.setAnimationLoop(this.animationLoop);
+        this.graphics.setAnimationLoop(this.animationLoop);
     }
 
 
 
     // temp stop pause resume methods
-    stop()   { this.renderManager.stopAnimation(); }
-    pause()  { this.renderManager.stopAnimation(); }
+    stop()   { this.graphics.stopAnimation(); }
+    pause()  { this.graphics.stopAnimation(); }
     resume() { 
         this.previousTime = null;
-        this.renderManager.startAnimation(this.animationLoop);
+        this.graphics.startAnimation(this.animationLoop);
     }
 
 

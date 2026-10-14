@@ -1,4 +1,4 @@
-import { EVENTS } from "../EventRegistry.js";
+
 
 export class BrowserInterface {
     constructor(bus) {

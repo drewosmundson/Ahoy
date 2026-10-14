@@ -1,14 +1,14 @@
 import * as THREE from 'three';
 
 export class RotatingCube {
-    constructor(scene) {
+    constructor(context) {
 
         this.mesh = new THREE.Mesh(
             new THREE.BoxGeometry(),
             new THREE.MeshNormalMaterial({ wireframe: false})
         );
         
-        scene.add(this.mesh);
+        context.scene.add(this.mesh);
         this.clock = new THREE.Clock();
     }
 

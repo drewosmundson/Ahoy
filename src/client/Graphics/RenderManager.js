@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { EVENTS } from "../Template/EventRegistry.js";
+import { EVENTS } from "../GameTemplate/EventRegistry.js";
 
 export class RenderManager {
-    constructor(bus, canvas) {
+    constructor(canvas) {
         this.canvas = canvas;
 
         this.threeRenderer = new THREE.WebGLRenderer({
@@ -12,12 +12,9 @@ export class RenderManager {
 
         this.threeRenderer.setPixelRatio(window.devicePixelRatio);
 
-        this.subscriptions = [
-            bus.on(EVENTS.WINDOW_RESIZED, (size) => this.resized(size)),
-        ];
     }
 
-    resized({ width, height }) {
+    resize({ width, height }) {
         this.canvas.style.width = `${width}px`;
         this.canvas.style.height = `${height}px`;
 
@@ -34,9 +31,6 @@ export class RenderManager {
 
     dispose() {
         this.threeRenderer.setAnimationLoop(null);
-
-        this.subscriptions.forEach(sub => sub.unsubscribe());
-        this.subscriptions = [];
 
         this.threeRenderer.dispose();
     }

@@ -3,7 +3,7 @@ import * as THREE from 'three';
 
 
 export class SceneManager {
-    constructor(bus) {
+    constructor() {
         this.threeScene = new THREE.Scene();
     }
 

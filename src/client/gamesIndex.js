@@ -1,6 +1,6 @@
 
 // import { Ahoy }  from "./AhoyCopy/Ahoy.js"
-import { Template  } from "./Template/Template.js"
+import { Template  } from "./GameTemplate/Template.js"
 
 
 export const games = {

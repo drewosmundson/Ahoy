@@ -3,7 +3,6 @@
 
 import { events } from "./EventRegistry.js"
 
-import { BrowserInterface } from "./Interfaces/Browser.js";
 
 import { RotatingCube } from './Services/RotatingCube.js';
 
@@ -19,7 +18,7 @@ export const Template = {
     SimulationInterfaces: [],
     NetworkInterfaces: [],
     FrameInterfaces: [],
-    SyncInterfaces: [BrowserInterface],
+    SyncInterfaces: [],
 
     SimulationSystems: [],
     NetworkSystems: [],

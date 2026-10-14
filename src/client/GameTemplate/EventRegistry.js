@@ -5,7 +5,6 @@ export const EVENTS = Object.freeze({
     
     MOUSE_MOVE:     "mouseMoved",
 
-    WINDOW_RESIZED: "windowResized",
 });
 
 

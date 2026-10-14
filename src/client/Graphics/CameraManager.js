@@ -1,12 +1,8 @@
 
-
-
-
 import * as THREE from 'three';
-import { EVENTS } from "../EventRegistry.js"
 
 export class CameraManager {
-    constructor(bus) {
+    constructor() {
 
         // const fov = 75;                                          // Field of view (in degrees)
         // const aspect = window.innerWidth / window.innerHeight;   // Aspect ratio
@@ -25,13 +21,9 @@ export class CameraManager {
         // 3. Point the camera at a specific target (e.g., the center of the scene)
         this.threeCamera.lookAt(0, 0, 0); 
 
-        this.subscriptions = [
-            bus.on(EVENTS.WINDOW_RESIZED, (size) => this.resized(size)),
-        ];
-        this
     }
 
-    resized({ width, height }) {
+    resize( width, height ) {
         console.log("cameraResized")
         this.threeCamera.aspect = width / height;
         this.threeCamera.updateProjectionMatrix();

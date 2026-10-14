@@ -5,7 +5,7 @@
 
 
 
-export function singleplayer({ dom, navigate, games, Engine }) {
+export function singleplayer({ dom, navigate, games, Engine, GraphicsContext}) {
     let engine = null;
     function initEventListeners() {
         dom.buttons.mainToSingleplayer?.addEventListener('click', toMenuScreen);
@@ -17,14 +17,25 @@ export function singleplayer({ dom, navigate, games, Engine }) {
         navigate.toScreen(dom.screens.singleplayer)
     }
 
+
+
     function startEngine(selectedGame) {
-        engine?.destroy();
-        engine = new Engine()
         const canvas = dom.canvas.game;
-        engine.setup(selectedGame, canvas);
+
+        console.log("Canvas:", canvas);
+        console.log("Is canvas:", canvas instanceof HTMLCanvasElement);
+        console.log("Connected:", canvas?.isConnected);
+        console.log("Game:", selectedGame);
+
+        engine?.destroy();
+        engine = new Engine();
+
+        engine.setup(selectedGame, canvas, GraphicsContext);
         navigate.toScreen(dom.screens.game);
         engine.start();
     }
+
+
 
     return {
         initEventListeners,
