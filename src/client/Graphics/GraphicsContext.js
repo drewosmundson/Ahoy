@@ -15,7 +15,6 @@ export class GraphicsContext {
 
     }
 
-
     resize = () => {
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
@@ -33,7 +32,6 @@ export class GraphicsContext {
     };
 
 
-
     get scene() {
         return this.sceneManager.get();
     }
@@ -44,7 +42,7 @@ export class GraphicsContext {
     }
 
 
-    
+
     draw() {
         this.renderManager.draw(this.scene, this.camera);
     }

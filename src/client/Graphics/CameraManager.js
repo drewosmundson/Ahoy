@@ -11,9 +11,9 @@ export class CameraManager {
 
         // const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 
-        this.aspect = 16 / 9;
+        const aspect = 16 / 9;
         
-        this.threeCamera = new THREE.PerspectiveCamera( 75, this.aspect, 0.1, 1000 );
+        this.threeCamera = new THREE.PerspectiveCamera( 75, aspect, 0.1, 1000 );
 
         // 2. Set the camera position (X, Y, Z)
         this.threeCamera.position.set(0, 5, 10); 
@@ -24,7 +24,7 @@ export class CameraManager {
     }
 
     resize( width, height ) {
-        console.log("cameraResized")
+        console.log("Camera Resized")
         this.threeCamera.aspect = width / height;
         this.threeCamera.updateProjectionMatrix();
     }

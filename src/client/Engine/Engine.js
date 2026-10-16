@@ -62,6 +62,17 @@ export class Engine {
         this.services = Game.Services.map(
             Service => new Service(this.graphics)
         );
+
+
+
+        console.log("Services initialized:", this.services.length);
+        console.log("Scene children:", this.graphics.scene.children.length);
+        console.log("Canvas dimensions:", {
+            width: canvas.width,
+            height: canvas.height,
+            clientWidth: canvas.clientWidth,
+            clientHeight: canvas.clientHeight,
+        }); 
         // ===========================================================
     }
 

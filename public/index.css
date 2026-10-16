@@ -74,7 +74,7 @@
 
   /* Canvas Styling */
   /* set to 100 100 if ever an issue with margin on top or bottom */
-  #gameCanvas {
+  #canvas-game {
     display: none;
     border-radius: 10px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);

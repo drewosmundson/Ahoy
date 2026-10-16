@@ -14,7 +14,8 @@ export class RenderManager {
 
     }
 
-    resize({ width, height }) {
+    resize(width, height) {
+        console.log("Renderer resized")
         this.canvas.style.width = `${width}px`;
         this.canvas.style.height = `${height}px`;
 
