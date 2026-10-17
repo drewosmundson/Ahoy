@@ -22,16 +22,16 @@ export class Engine {
         const simulationLocalBus   = new LocalEventBus(Game.events);             // Intra-process bus for events in the same process like mouse and keyboard
         const simulationNetworkBus = new NetworkEventBus(socket, Game.events);   // Inter-process bus for events to and from the server
         const frameLocalBus        = new LocalEventBus(Game.events);
-        const syncLocalBus         = new LocalEventBus(Game.events)
 
-        //this.buses = [simulationLocalBus, simulationNetworkBus, frameLocalBus, syncLocalBus];
+
+
         
         // ============ Interfaces =================================
         //  keyboard, mouse, network, touch, gamepad, browser etc.
         this.simulationInterfaces  = Game.SimulationInterfaces.map(Interface => new Interface(simulationLocalBus));
         this.networkInterfaces     = Game.NetworkInterfaces.map(Interface => new Interface(simulationNetworkBus));
         this.frameInterfaces       = Game.FrameInterfaces.map(Interface => new Interface(frameLocalBus));
-        this.syncInterfaces        = Game.SyncInterfaces.map(Interface => new Interface(syncLocalBus));
+
         // ==========================================================
 
 
@@ -55,10 +55,6 @@ export class Engine {
         this.frameSystems      = Game.FrameSystems.map(System => new System());
         // ==========================================================
 
-        // Can manipulate world data should be used sparingly can only manipulate changes.events world data
-        this.syncSystems = Game.SyncSystems.map(SyncEvent => new SyncEvent(syncLocalBus, this.worldData))
-
-
         this.graphics = new GraphicsContext(canvas);
 
         // ======= Engine Services ===================================
@@ -73,8 +69,11 @@ export class Engine {
         
         // ===========================================================
 
-        this.game = Game;
-
+    
+        // this.game = Game;
+        // this.buses = [simulationLocalBus, simulationNetworkBus, frameLocalBus, syncLocalBus];
+        // this.syncInterfaces        = Game.SyncInterfaces.map(Interface => new Interface(syncLocalBus));
+        // this.syncSystems = Game.SyncSystems.map(SyncEvent => new SyncEvent(syncLocalBus, this.worldData))
     }
 
 
