@@ -3,12 +3,15 @@
 
 import { SceneManager } from "./SceneManager.js";
 import { CameraManager } from "./CameraManager.js";
+import { AudioManager } from "./AudioManager.js"
 import { RenderManager } from "./RenderManager.js";
 
 export class GraphicsContext {
     constructor(canvas) {
         this.sceneManager = new SceneManager();
         this.cameraManager = new CameraManager();
+        this.audioManager = new AudioManager();
+
         this.renderManager = new RenderManager(canvas);
 
         window.addEventListener("resize", this.resize);
@@ -41,8 +44,7 @@ export class GraphicsContext {
         return this.cameraManager.get();
     }
 
-
-
+    
     draw() {
         this.renderManager.draw(this.scene, this.camera);
     }

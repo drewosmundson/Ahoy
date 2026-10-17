@@ -19,6 +19,14 @@ export class Engine {
         const syncLocalBus         = new LocalEventBus(Game.events)
 
         //this.buses = [simulationLocalBus, simulationNetworkBus, frameLocalBus, syncLocalBus];
+        
+        // ============ Interfaces =================================
+        //  keyboard, mouse, network, touch, gamepad, browser etc.
+        this.simulationInterfaces  = Game.SimulationInterfaces.map(Interface => new Interface(simulationLocalBus));
+        this.networkInterfaces     = Game.NetworkInterfaces.map(Interface => new Interface(simulationNetworkBus));
+        this.frameInterfaces       = Game.FrameInterfaces.map(Interface => new Interface(frameLocalBus));
+        this.syncInterfaces        = Game.SyncInterfaces.map(Interface => new Interface(syncLocalBus));
+        // ==========================================================
 
 
         // ============ Event Buffers ==============================
@@ -31,14 +39,6 @@ export class Engine {
         this.frameEventBuffer             = createEventBuffers(frameLocalBus);            // takes dom input and reads once per AFr frame
         // ==========================================================
 
-        
-        // ============ Interfaces =================================
-        //  keyboard, mouse, network, touch, gamepad, browser etc.
-        this.simulationInterfaces  = Game.SimulationInterfaces.map(Interface => new Interface(simulationLocalBus));
-        this.networkInterfaces     = Game.NetworkInterfaces.map(Interface => new Interface(simulationNetworkBus));
-        this.frameInterfaces       = Game.FrameInterfaces.map(Interface => new Interface(frameLocalBus));
-        this.syncInterfaces        = Game.SyncInterfaces.map(Interface => new Interface(syncLocalBus));
-        // ==========================================================
 
 
         // ====  Systems  ============================================
@@ -63,16 +63,7 @@ export class Engine {
             Service => new Service(this.graphics)
         );
 
-
-
         console.log("Services initialized:", this.services.length);
-        console.log("Scene children:", this.graphics.scene.children.length);
-        console.log("Canvas dimensions:", {
-            width: canvas.width,
-            height: canvas.height,
-            clientWidth: canvas.clientWidth,
-            clientHeight: canvas.clientHeight,
-        }); 
         // ===========================================================
     }
 
@@ -98,12 +89,8 @@ export class Engine {
         
 
         // ======== Graphics Context updates ==========================
-        //  Apply camera state to the camera and Apply Audio updates 
-        //this.graphics.cameraServiceUpdate(this.worldData);
 
-        //this.graphics.audioServiceUpdate(this.worldData);
-
-        // Update scene objects.
+        // Update scene / camera / audio and other three objects if using this Three libray
         for (const service of this.services) {
             service.update(this.worldData);
         }

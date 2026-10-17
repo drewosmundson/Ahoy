@@ -35,6 +35,17 @@ export class CameraManager {
 
     }
 
+    moveCamera() {
+
+
+    }
+
+
+    rotateCamera() {
+
+
+    }
+
     get(){
         return this.threeCamera;
     }
