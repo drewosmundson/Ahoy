@@ -32,7 +32,9 @@ export function singleplayer({ dom, navigate, games, Engine, GraphicsContext}) {
 
         engine.setup(selectedGame, canvas, GraphicsContext);
         navigate.toScreen(dom.screens.game);
-        engine.start();
+
+
+        engine.start()
     }
 
 

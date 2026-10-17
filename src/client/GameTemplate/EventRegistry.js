@@ -5,6 +5,10 @@ export const EVENTS = Object.freeze({
     
     MOUSE_MOVE:     "mouseMoved",
 
+    MOUSE_WHEEL:  "wheel",
+    CAMERA_DRAG_START: "cameraDragStart", 
+    CAMERA_DRAG_END: "cameraDragEnd",
+
 });
 
 

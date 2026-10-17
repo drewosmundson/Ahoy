@@ -4,8 +4,14 @@ import { LocalEventBus, NetworkEventBus } from './EventBus.js';
 import { createEventBuffers } from './EventBuffer.js';
 import { FIXED_DT } from './Constants.js'
 
+
+
+
+
+
 export class Engine {
     setup(Game, canvas, GraphicsContext, socket = null, ) {
+        console.log("Components:", Game.Components, "Systems:", Game.SimulationSystems.map(s => s.name));
         console.log(socket)
         // ============ Components and Entity initalization =========
         //  Components are where they can be filtered by the system that require them. 
@@ -64,7 +70,11 @@ export class Engine {
         );
 
         console.log("Services initialized:", this.services.length);
+        
         // ===========================================================
+
+        this.game = Game;
+
     }
 
 
@@ -141,10 +151,9 @@ export class Engine {
     }
 
 
-    start(lobbyData = null) {
+    start(lobbyData = this.game.lobbyData?.() ?? null) {
         this.worldData.start(lobbyData);
 
-        // One off event to resize the screen to cover case if screen resized while loading
         window.dispatchEvent(new Event("resize"));
         this.previousTime = null;
         this.accumulator = 0;

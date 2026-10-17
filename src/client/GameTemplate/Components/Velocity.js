@@ -3,7 +3,7 @@
 
 
 
-class Velocity {
+export class Velocity {
     static createVelocityComponent(initalLocation) {
         return { 
             x: initalLocation.x ?? 0,

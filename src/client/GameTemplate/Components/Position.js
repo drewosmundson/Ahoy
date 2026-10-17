@@ -2,7 +2,7 @@
 
 
 
-class Position {
+export class Position {
     static createPositionComponent(initalLocation) {
         return { 
             x: initalLocation.x ?? 0,
