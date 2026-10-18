@@ -3,7 +3,7 @@
 
 
 export class Position {
-    static createPositionComponent(initalLocation) {
+    static create(initalLocation) {
         return { 
             x: initalLocation.x ?? 0,
             y: initalLocation.y ?? 0,

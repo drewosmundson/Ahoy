@@ -42,10 +42,9 @@ export class PlayerInputSystem {
             changes.push({
                 type: "updateEntityComponents",
                 entity,
-                components: [{
-                    name: "Velocity",
-                    value: { x: x * speed, y: y * speed, z: z * speed },
-                }],
+                components: {
+                    Velocity: { x: x * speed, y: y * speed, z: z * speed },
+                },
             });
         }
         return changes;

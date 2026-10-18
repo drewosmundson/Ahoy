@@ -4,7 +4,7 @@
 
 
 export class Velocity {
-    static createVelocityComponent(initalLocation) {
+    static create(initalLocation) {
         return { 
             x: initalLocation.x ?? 0,
             y: initalLocation.y ?? 0,

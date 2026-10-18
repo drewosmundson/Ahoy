@@ -27,6 +27,7 @@ form-<purpose>
 </head>
 <body>
 
+
     <!-- Main Menu -->
     <div id="screen-main" class="section">
         <h1>Ahoy.io</h1>
@@ -36,15 +37,21 @@ form-<purpose>
         <button id="button-main-mmo">Join MMO</button>
     </div>
 
+
+
     <!-- Singleplayer Menu -->
     <div id="screen-singleplayer" class="section hidden">
         <button id="button-singleplayer-start">Start Game</button>
     </div>
 
+
+
     <!-- MMO Menu -->
     <div id="screen-mmo" class="section hidden">
         <button id="button-mmo-start">Start Game</button>
     </div>
+
+
 
     <!-- Host's Create Lobby Menu -->
     <div id="screen-lobby-create" class="section hidden">
@@ -53,12 +60,15 @@ form-<purpose>
         <button id="button-lobby-create">Create Lobby</button>
     </div>
 
+
+
     <!-- Participant's Join lobby Menu -->
     <div id="screen-lobby-join" class="section hidden">
         <label for="input-lobby-code">Lobby Code:</label>
         <input type="text" id="input-lobby-code" name="lobbyCode" required />
         <button id="button-lobby-join">Join Lobby</button>
     </div>
+
 
     <!-- Host's Lobby -->
     <div id="screen-lobby-host" class="section hidden">
@@ -69,6 +79,7 @@ form-<purpose>
         <button id="button-host-leave">Leave Lobby</button>
     </div>
 
+
     <!-- Participant's Lobby -->
     <div id="screen-lobby-participant" class="section hidden">
         <p>Lobby Code: <span id="display-participant-lobby-code"></span></p>
@@ -78,10 +89,12 @@ form-<purpose>
         <h2>Waiting for host to start the game...</h2>
     </div>
 
+
     <!-- Game Container -->
     <div id="screen-game" class="hidden">
         <canvas id="canvas-game"></canvas>
     </div>
+
 
     <script type="module" src="../client/main.js"></script>
     <script src="/socket.io/socket.io.js"></script>

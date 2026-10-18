@@ -6,13 +6,9 @@ import { FIXED_DT } from './Constants.js'
 
 
 
-
-
-
 export class Engine {
-    setup(Game, canvas, GraphicsContext, socket = null, ) {
-        console.log("Components:", Game.Components, "Systems:", Game.SimulationSystems.map(s => s.name));
-        console.log(socket)
+    setup(Game, canvas, GraphicsContext, socket = null) {
+
         // ============ Components and Entity initalization =========
         //  Components are where they can be filtered by the system that require them. 
         //  WorldData is updated on each game tick by systems
@@ -22,18 +18,13 @@ export class Engine {
         const simulationLocalBus   = new LocalEventBus(Game.events);             // Intra-process bus for events in the same process like mouse and keyboard
         const simulationNetworkBus = new NetworkEventBus(socket, Game.events);   // Inter-process bus for events to and from the server
         const frameLocalBus        = new LocalEventBus(Game.events);
-
-
-
         
         // ============ Interfaces =================================
         //  keyboard, mouse, network, touch, gamepad, browser etc.
         this.simulationInterfaces  = Game.SimulationInterfaces.map(Interface => new Interface(simulationLocalBus));
         this.networkInterfaces     = Game.NetworkInterfaces.map(Interface => new Interface(simulationNetworkBus));
         this.frameInterfaces       = Game.FrameInterfaces.map(Interface => new Interface(frameLocalBus));
-
         // ==========================================================
-
 
         // ============ Event Buffers ==============================
         //  Event buffers take an event bus and store a history of events with timestamps to be polled each game tick.
@@ -45,14 +36,12 @@ export class Engine {
         this.frameEventBuffer             = createEventBuffers(frameLocalBus);            // takes dom input and reads once per AFr frame
         // ==========================================================
 
-
-
-        // ====  Systems  ============================================
+        // ========= Systems =========================================
         //  Systems act on the new information polled from buffers sent by interfaces and current world data
         //  They calculate and return the delta change for world data to apply changes to after they are updated
-        this.simulationSystems = Game.SimulationSystems.map(System => new System());
-        this.networkSystems    = Game.NetworkSystems.map(System => new System());
-        this.frameSystems      = Game.FrameSystems.map(System => new System());
+        this.simulationSystems = Game.SimulationSystems.map(System => new System(Game.Components));
+        this.networkSystems    = Game.NetworkSystems.map(System => new System(Game.Components));
+        this.frameSystems      = Game.FrameSystems.map(System => new System(Game.Components));
         // ==========================================================
 
         this.graphics = new GraphicsContext(canvas);
@@ -61,15 +50,12 @@ export class Engine {
         //  Services hold the actual rendering and graphics libray.
         //  They read from world data and actually display the data on the screen.
         //  They do not manipulate world data. These are read only
-        this.services = Game.Services.map(
-            Service => new Service(this.graphics)
-        );
-
-        console.log("Services initialized:", this.services.length);
-        
+        this.services = Game.Services.map(Service => new Service(this.graphics));
         // ===========================================================
-
     
+
+        this.initalizationLog(Game, canvas, GraphicsContext, socket = null)
+
         // this.game = Game;
         // this.buses = [simulationLocalBus, simulationNetworkBus, frameLocalBus, syncLocalBus];
         // this.syncInterfaces        = Game.SyncInterfaces.map(Interface => new Interface(syncLocalBus));
@@ -77,8 +63,33 @@ export class Engine {
     }
 
 
-    animationLoop = (time) => {
+    start(lobbyData = null) {
+        const changes = [];
 
+        for (const system of this.simulationSystems) {
+            changes.push(...(system.start?.(lobbyData) ?? []));
+        }
+        for (const system of this.networkSystems) {
+            changes.push(...(system.start?.(lobbyData) ?? []));
+        }
+        for (const system of this.frameSystems) {
+            changes.push(...(system.start?.(lobbyData) ?? []));
+        }
+
+        this.worldData.apply(changes)
+
+        window.dispatchEvent(new Event("resize"));
+        this.previousTime = null;
+        this.accumulator = 0;
+
+        this.graphics.setAnimationLoop(this.animationLoop);
+    }
+
+
+
+
+
+    animationLoop = (time) => {
         // ============ Game update loop =============================
         //  world data manipulation
         const frameTime = Math.min((time - this.previousTime) * 0.001, 0.25);
@@ -116,7 +127,7 @@ export class Engine {
         // Keyboard Input / ai brain / Collison
         const simulationEvents = this.simulationLocalEventBuffer.poll();
         for (const system of this.simulationSystems) {
-            changes.push(...(system.update(dt, worldData, simulationEvents) ?? []));
+            changes.push(...(system.update?.(dt, worldData, simulationEvents) ?? []));
         }
 
         for (const networkInterface of this.networkInterfaces) {
@@ -126,11 +137,7 @@ export class Engine {
         // Network Input / reconciliation
         const networkEvents = this.simulationNetworkEventBuffer.poll();
         for (const system of this.networkSystems) {
-            changes.push(...(system.update(dt, worldData, networkEvents) ?? []));
-        }
-
-        for (const syncInterface of this.syncInterfaces) {
-            syncInterface?.send(timestamp, changes.filter(change => change.syncEvent));
+            changes.push(...(system.update?.(dt, worldData, networkEvents) ?? []));
         }
 
         worldData.apply(changes)
@@ -150,26 +157,17 @@ export class Engine {
     }
 
 
-    start(lobbyData = this.game.lobbyData?.() ?? null) {
-        this.worldData.start(lobbyData);
-
-        window.dispatchEvent(new Event("resize"));
-        this.previousTime = null;
-        this.accumulator = 0;
-
-        this.graphics.setAnimationLoop(this.animationLoop);
-    }
-
-
-
     // temp stop pause resume methods
-    stop()   { this.graphics.stopAnimation(); }
-    pause()  { this.graphics.stopAnimation(); }
+    stop()   { 
+        this.graphics.stopAnimation();
+    }
+    pause()  { 
+        this.graphics.stopAnimation();
+    }
     resume() { 
         this.previousTime = null;
         this.graphics.startAnimation(this.animationLoop);
     }
-
 
     destroy() {
         // this.stop();
@@ -179,6 +177,25 @@ export class Engine {
         // [this.simulationLocalEventBuffer, this.simulationNetworkEventBuffer, this.frameEventBuffer]
         //     .forEach(b => b?.dispose());
         // this.renderManager?.dispose(); 
+    }
+
+    initalizationLog(Game, socket) {
+        console.log(
+            "Components: ",            Game.Components,
+
+            "Event: ",                 Game.Events,
+
+            "Simulation Systems: ",    Game.SimulationSystems.map(s => s.name),
+            "Simulation Interfaces: ", Game.SimulationInterfaces.map(s => s.name),
+
+            "Network Systems: ",       Game.NetworkInterfaces.map(s => s.name),
+            "Network Interfaces: ",    Game.NetworkSystems.map(s => s.name),
+
+            "Frame Systems: ",         Game.FrameInterfaces.map(s => s.name),
+            "Frame Interfaces: ",      Game.FrameSystems.map(s => s.name),
+            
+            "socket:", socket
+        );
     }
 }
 

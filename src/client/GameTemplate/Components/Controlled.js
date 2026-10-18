@@ -4,7 +4,7 @@
 
 
 export class Controlled {
-    static createControlledComponent({ speed } = {}) {
+    static create({ speed } = {}) {
         return {
             speed: speed ?? 5,
         };

@@ -2,7 +2,7 @@
 
 
 class CameraState {
-    createCameraPositionComponent(initalData) {
+    create(initalData) {
         return {
             targetEntity: initalData.targetEntity ?? 0,
             distance: initalData.distance ?? 0,
