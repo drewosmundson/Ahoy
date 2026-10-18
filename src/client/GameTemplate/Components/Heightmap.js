@@ -5,6 +5,65 @@
 // Terrain.js - Handles terrain generation and rendering
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
 
+    
+const BASE = {
+            scale: 0.015,
+            octaves: 4,
+            persistence: 0.5,
+            lacunarity: 2,
+            falloff: true,           // Keep island falloff for center
+            falloffStrength: 4,
+            falloffScale: 0.9,
+            inversefalloffStrength: 3,
+            inversefalloffScale: 0.8,
+            inverseFalloff: false,
+
+            mountainBarrier: true,
+            barrierWidth: 0.1,        // Width of barrier as fraction of map size (0.15 = 15%)
+            barrierHeight: 0.6,        // Height of barrier (0-1)
+            barrierFalloff: 0.5,       // How sharply barrier falls off inward
+            barrierNoise: true,        // Add noise to barrier for natural look
+            barrierNoiseScale: 0.04    // Scale of noise applied to barrier
+ };
+
+const OVERLAY = {
+            scale: 0.01,
+            octaves: 2,
+            persistence: 0.5,
+            lacunarity: 2,
+            falloff: false,
+            falloffStrength: 5,
+            falloffScale: 0.9,
+            inversefalloffStrength: 12,
+            inversefalloffScale: 10,
+            inverseFalloff: false,
+
+            mountainBarrier: true,
+            barrierWidth: 0.4,        // Width of barrier as fraction of map size (0.15 = 15%)
+            barrierHeight: 0.9,        // Height of barrier (0-1)
+            barrierFalloff: 2.0,       // How sharply barrier falls off inward
+            barrierNoise: true,        // Add noise to barrier for natural look
+            barrierNoiseScale: 0.04    // Scale of noise applied to barrier
+}
+const defaults = {
+    scale: 0.02,
+    octaves: 4,
+    persistence: 0.5,
+    lacunarity: 2,
+    falloff: true,
+    falloffStrength: 3,
+    falloffScale: 0.8,
+    inversefalloffStrength: 3,
+    inversefalloffScale: 0.8,
+    inverseFalloff: false,
+    // Mountain barrier options
+    mountainBarrier: true,
+    barrierWidth: 0.15,        // Width of barrier as fraction of map size (0.15 = 15%)
+    barrierHeight: 0.9,        // Height of barrier (0-1)
+    barrierFalloff: 2.0,       // How sharply barrier falls off inward
+    barrierNoise: true,        // Add noise to barrier for natural look
+    barrierNoiseScale: 0.05    // Scale of noise applied to barrier
+    };
 
 
 // the intnedtion of this class is that all charectors get the same heightmap
@@ -26,47 +85,11 @@ export class Heightmap {
 
     generateTerrain() {
         const base = new NoiseGenerator();
-        this.heightmap = base.generateHeightmap(this.mapSize, {
-            scale: 0.015,
-            octaves: 4,
-            persistence: 0.5,
-            lacunarity: 2,
-            falloff: true,           // Keep island falloff for center
-            falloffStrength: 4,
-            falloffScale: 0.9,
-            inversefalloffStrength: 3,
-            inversefalloffScale: 0.8,
-            inverseFalloff: false,
-
-            mountainBarrier: true,
-            barrierWidth: 0.1,        // Width of barrier as fraction of map size (0.15 = 15%)
-            barrierHeight: 0.6,        // Height of barrier (0-1)
-            barrierFalloff: 0.5,       // How sharply barrier falls off inward
-            barrierNoise: true,        // Add noise to barrier for natural look
-            barrierNoiseScale: 0.04    // Scale of noise applied to barrier
-        });
+        this.heightmap = base.generateHeightmap(this.mapSize, BASE)
 
         const overlay = new NoiseGenerator();
-        this.heightmapOverlay = overlay.generateHeightmap(this.mapSize, {
-            scale: 0.01,
-            octaves: 2,
-            persistence: 0.5,
-            lacunarity: 2,
-            falloff: false,
-            falloffStrength: 5,
-            falloffScale: 0.9,
-            inversefalloffStrength: 12,
-            inversefalloffScale: 10,
-            inverseFalloff: false,
-
-            mountainBarrier: true,
-            barrierWidth: 0.4,        // Width of barrier as fraction of map size (0.15 = 15%)
-            barrierHeight: 0.9,        // Height of barrier (0-1)
-            barrierFalloff: 2.0,       // How sharply barrier falls off inward
-            barrierNoise: true,        // Add noise to barrier for natural look
-            barrierNoiseScale: 0.04    // Scale of noise applied to barrier
-        });
-
+        this.heightmapOverlay = overlay.generateHeightmap(this.mapSize, OVERLAY) 
+        
         this.heightmap = this.combineHeightmaps(base, overlay);
     }
 
@@ -85,7 +108,6 @@ export class Heightmap {
 
 
 
-
 // NoiseGenerator.js - Utility for generating noise-based heightmaps with mountain barrier
 class NoiseGenerator {
 constructor() {
@@ -98,35 +120,8 @@ constructor() {
  * @param {Object} options - Generation options
  * @returns {Array<Array<number>>} 2D array of height values (0-1)
  */
-generateHeightmap(size, options = {}) {
-    // Default options
-    const defaults = {
-    scale: 0.02,
-    octaves: 4,
-    persistence: 0.5,
-    lacunarity: 2,
-    falloff: true,
-    falloffStrength: 3,
-    falloffScale: 0.8,
-    inversefalloffStrength: 3,
-    inversefalloffScale: 0.8,
-    inverseFalloff: false,
-    // Mountain barrier options
-    mountainBarrier: true,
-    barrierWidth: 0.15,        // Width of barrier as fraction of map size (0.15 = 15%)
-    barrierHeight: 0.9,        // Height of barrier (0-1)
-    barrierFalloff: 2.0,       // How sharply barrier falls off inward
-    barrierNoise: true,        // Add noise to barrier for natural look
-    barrierNoiseScale: 0.05    // Scale of noise applied to barrier
-    };
-
-    // Merge options with defaults
-    const config = { ...defaults, ...options };
-
-    // Create heightmap array
+generateHeightmap(size, config) {
     const heightmap = Array(size).fill().map(() => Array(size).fill(0));
-
-    // Generate falloff map if needed
     const falloffMap = config.falloff ? this.generateFalloffMap(size, config) : null;
     const inverseFalloffMap = config.inverseFalloff ? this.generateInverseFalloffMap(size, config) : null;
     
