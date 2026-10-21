@@ -29,6 +29,12 @@ export class TerrainService {
         this.underMesh = this.createUnderMesh();
         this.scene.add(this.underMesh);
     }
+    
+    update(worldData) {
+        worldData.heightmapChanges
+        
+        
+    }
 
     createUnderMesh() {
         const size = this.mapSize ;
