@@ -31,8 +31,13 @@ export class TerrainService {
     }
     
     update(worldData) {
-        worldData.heightmapChanges
         
+        //datashape heightmapChanges {x, y, change}
+
+        const x = worldData.heightmapChanges.x 
+        const y = worldData.heightmapChanges.y
+        const change = worldData.heightmapChanges
+        worldData.heightmap[x][y] += change
         
     }
 
