@@ -1,0 +1,14 @@
+
+
+
+
+
+
+class TerrainDestruction {
+
+
+    update() {}
+
+
+
+}
