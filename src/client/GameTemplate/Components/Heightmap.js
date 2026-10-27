@@ -1,11 +1,6 @@
 
 
 
-
-// Terrain.js - Handles terrain generation and rendering
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js';
-
-    
 const PRESET_VALUES = {
     scale: 0.015,
     octaves: 4,
@@ -82,56 +77,54 @@ class NoiseGenerator {
 
         // Generate noise values
         for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-            // Start with slight negative bias to ensure some water areas
-            let value = -0.7;
-            let amplitude = 1;
-            let frequency = 0.7;
-            let maxValue = 0;
+            for (let x = 0; x < size; x++) {
+                // Start with slight negative bias to ensure some water areas
+                let value = -0.7;
+                let amplitude = 1;
+                let frequency = 0.7;
+                let maxValue = 0;
 
-            // Add multiple octaves of noise
-            for (let i = 0; i < config.octaves; i++) {
-            const noiseValue = this.simplex.noise(
-                x * config.scale * frequency, 
-                y * config.scale * frequency
-            );
+                // Add multiple octaves of noise
+                for (let i = 0; i < config.octaves; i++) {
+                    const noiseValue = this.simplex.noise(
+                        x * config.scale * frequency, 
+                        y * config.scale * frequency
+                    );
 
-            value += amplitude * noiseValue;
-            maxValue += amplitude;
+                    value += amplitude * noiseValue;
+                    maxValue += amplitude;
 
-            // Update values for next octave
-            amplitude *= config.persistence;
-            frequency *= config.lacunarity;
+                    // Update values for next octave
+                    amplitude *= config.persistence;
+                    frequency *= config.lacunarity;
+                }
+
+                // Normalize to [0,1] range
+                value = (value / maxValue + 1) / 2;
+
+                // Apply falloff if enabled
+                if (falloffMap) {
+                    const falloffValue = falloffMap[y][x];
+                    value = Math.max(0, value - falloffValue);
+                }
+                if (inverseFalloffMap) {
+                    const inversefalloffValue = inverseFalloffMap[y][x];
+                    value = Math.max(0, value - inversefalloffValue);
+                }
+
+                // Apply mountain barrier - this should be done AFTER other modifications
+                if (barrierMap) {
+                    const barrierValue = barrierMap[y][x];
+                    // Use max to ensure barrier always dominates in border areas
+                    value = Math.max(value, barrierValue);
+                }
+
+                // Store in heightmap
+                heightmap[y][x] = value;
             }
-
-            // Normalize to [0,1] range
-            value = (value / maxValue + 1) / 2;
-
-            // Apply falloff if enabled
-            if (falloffMap) {
-            const falloffValue = falloffMap[y][x];
-            value = Math.max(0, value - falloffValue);
-            }
-            if (inverseFalloffMap) {
-            const inversefalloffValue = inverseFalloffMap[y][x];
-            value = Math.max(0, value - inversefalloffValue);
-            }
-
-            // Apply mountain barrier - this should be done AFTER other modifications
-            if (barrierMap) {
-            const barrierValue = barrierMap[y][x];
-            // Use max to ensure barrier always dominates in border areas
-            value = Math.max(value, barrierValue);
-            }
-
-            // Store in heightmap
-            heightmap[y][x] = value;
+            return heightmap;
         }
-        }
-
-        return heightmap;
     }
-
     /**
      * Generate mountain barrier map for edges
      * @param {number} size - Size of the map
