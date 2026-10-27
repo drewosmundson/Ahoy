@@ -4,11 +4,11 @@
 
 
 export class Velocity {
-    static create(initalLocation) {
+    static create(initalSpeed) {
         return { 
-            x: initalLocation.x ?? 0,
-            y: initalLocation.y ?? 0,
-            z: initalLocation.z ?? 0,
+            x: initalSpeed.x ?? 0,
+            y: initalSpeed.y ?? 0,
+            z: initalSpeed.z ?? 0,
         }
     }
 }
