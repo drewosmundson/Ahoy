@@ -21,6 +21,7 @@ export class SingleplayerInit {
 
 
     start(lobbyData) {
+        console.log("testObjectsInitialized")
         return this.entities.map(components => ({
             type: "newEntity",
             components,

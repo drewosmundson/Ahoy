@@ -76,6 +76,7 @@ export class Engine {
             changes.push(...(system.start?.(lobbyData) ?? []));
         }
 
+        console.log(changes)
         this.worldData.apply(changes)
 
         window.dispatchEvent(new Event("resize"));

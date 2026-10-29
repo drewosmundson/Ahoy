@@ -12,7 +12,7 @@ import { PlayerInputSystem } from "./Systems/PlayerInputSystem.js";
 import { CubeMoveSystem } from './Systems/CubeMoveSystem.js';
 import { SingleplayerInit } from "./Systems/SingleplayerInit.js";
 
-import { RotatingCubeService } from './Services/RotatingCubeService.js';
+import { BoatService } from './Services/RotatingCubeService.js';
 
 
 
@@ -38,5 +38,5 @@ export const Template = {
 
     // Services read world data that was updated by systems 
     // They tell the scene what to add given world data info.
-    Services: [RotatingCubeService],
+    Services: [ BoatService ],
 };
