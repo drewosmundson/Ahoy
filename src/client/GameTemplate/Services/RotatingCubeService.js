@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 
 export class RotatingCubeService {
-    constructor(context) {
-        this.context = context;
+    constructor(graphicsContext) {
+        this.graphicsContext = graphicsContext;
         this.meshes = new Map(); // entityId -> mesh
         this.geometry = new THREE.BoxGeometry();
         this.material = new THREE.MeshNormalMaterial();
@@ -14,7 +14,7 @@ export class RotatingCubeService {
             let mesh = this.meshes.get(entity);
             if (!mesh) {
                 mesh = new THREE.Mesh(this.geometry, this.material);
-                this.context.scene.add(mesh);
+                this.graphicsContext.scene.add(mesh);
                 this.meshes.set(entity, mesh);
             }
             mesh.position.set(pos.x, pos.y, pos.z);
@@ -23,7 +23,7 @@ export class RotatingCubeService {
         // remove meshes for destroyed entities
         for (const [entity, mesh] of this.meshes) {
             if (!worldData.hasComponent(entity, "Position")) {
-                this.context.scene.remove(mesh);
+                this.graphicsContext.scene.remove(mesh);
                 this.meshes.delete(entity);
             }
         }
@@ -42,7 +42,7 @@ export class RotatingCubeService {
 
 export class BoatService {
     constructor(context) {
-        this.context = context;
+        this.graphicsContext = context;
         this.meshes = new Map(); // entityId -> boat model
     }
 
@@ -54,7 +54,7 @@ export class BoatService {
             if (!boat) {
                 boat = this.createBoatModel();
 
-                this.context.scene.add(boat);
+                this.graphicsContext.scene.add(boat);
                 this.meshes.set(entity, boat);
             }
 
@@ -65,7 +65,7 @@ export class BoatService {
         // Remove boats for destroyed entities
         for (const [entity, boat] of this.meshes) {
             if (!worldData.hasComponent(entity, "Position")) {
-                this.context.scene.remove(boat);
+                this.graphicsContext.scene.remove(boat);
                 this.meshes.delete(entity);
             }
         }
@@ -170,7 +170,7 @@ export class BoatService {
     dispose() {
         // Remove boats from scene
         for (const boat of this.meshes.values()) {
-            this.context.scene.remove(boat);
+            this.graphicsContext.scene.remove(boat);
         }
 
         this.meshes.clear();
