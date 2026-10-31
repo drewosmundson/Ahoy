@@ -122,8 +122,8 @@ class NoiseGenerator {
                 // Store in heightmap
                 heightmap[y][x] = value;
             }
-            return heightmap;
         }
+        return heightmap;
     }
     /**
      * Generate mountain barrier map for edges

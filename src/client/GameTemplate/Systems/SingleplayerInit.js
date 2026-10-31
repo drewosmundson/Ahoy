@@ -1,6 +1,10 @@
+
 export class SingleplayerInit {
     constructor(components) {
         this.entities = [
+            { 
+                Heightmap: components.Heightmap.create({}),
+            },
             {
                 Position: components.Position.create({}),
                 Velocity: components.Velocity.create({ x: 2 }),

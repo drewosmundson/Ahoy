@@ -50,7 +50,7 @@ export class Engine {
         //  Services hold the actual rendering and graphics libray.
         //  They read from world data and actually display the data on the screen.
         //  They do not manipulate world data. These are read only
-        this.services = Game.Services.map(Service => new Service(this.graphics));
+        this.services = Game.Services.map(Service => new Service(this.graphics, this.worldData));
         // ===========================================================
     
 
@@ -75,13 +75,17 @@ export class Engine {
         for (const system of this.frameSystems) {
             changes.push(...(system.start?.(lobbyData) ?? []));
         }
-
         console.log(changes)
         this.worldData.apply(changes)
 
         window.dispatchEvent(new Event("resize"));
         this.previousTime = null;
         this.accumulator = 0;
+
+        for (const service of this.services) {
+            service.start?.(this.worldData);
+        }
+
 
         this.graphics.setAnimationLoop(this.animationLoop);
     }

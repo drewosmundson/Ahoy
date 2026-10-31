@@ -4,40 +4,51 @@
 
 
 
-
-
+import * as THREE from 'three';
 
 
 
 
 export class TerrainService {
-    constructor(scene, heightmap) {
-        this.scene = scene;
+    constructor(graphicsContext, worldData) {
+        this.scene = graphicsContext.scene;
         this.lowPoly = true;
 
-        if(!heightmap) {
-            this.heightmap = []
-        }
-        else {
-            this.heightmap = heightmap
+    }
+
+    start(worldData) {
+        const entity = worldData.getEntityKeys("Heightmap").next().value;
+
+        if (entity === undefined) {
+            console.error("No entity with Heightmap component found");
+            return;
         }
 
-        this.mapSize = this.heightmap.length
+        this.heightmap = worldData.get(entity, "Heightmap");
+
+        if (!Array.isArray(this.heightmap) || this.heightmap.length < 2) {
+            throw new Error("Invalid heightmap component");
+        }
+
+        this.mapSize = this.heightmap.length;
+
+        console.log("Terrain map size:", this.mapSize);
+        console.log("First height value:", this.heightmap[0][0]);
 
         this.mesh = this.createTerrainMesh();
         this.scene.add(this.mesh);
+
         this.underMesh = this.createUnderMesh();
         this.scene.add(this.underMesh);
     }
-    
     update(worldData) {
         
-        //datashape heightmapChanges {x, y, change}
+        // //datashape heightmapChanges {x, y, change}
 
-        const x = worldData.heightmapChanges.x 
-        const y = worldData.heightmapChanges.y
-        const change = worldData.heightmapChanges
-        worldData.heightmap[x][y] += change
+        // const x = worldData.heightmapChanges.x 
+        // const y = worldData.heightmapChanges.y
+        // const change = worldData.heightmapChanges
+        // worldData.heightmap[x][y] += change
         
     }
 

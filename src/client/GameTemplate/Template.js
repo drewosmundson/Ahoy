@@ -13,7 +13,8 @@ import { CubeMoveSystem } from './Systems/CubeMoveSystem.js';
 import { SingleplayerInit } from "./Systems/SingleplayerInit.js";
 
 import { BoatService } from './Services/RotatingCubeService.js';
-
+import { TerrainService } from "./Services/Terrain.js";
+import { Heightmap } from "./Components/Heightmap.js";
 
 
 
@@ -21,7 +22,7 @@ export const Template = {
 
     // === ECS ================
     // WorldData component names
-    Components: { Position, Velocity, Controlled },
+    Components: { Position, Velocity, Controlled, Heightmap},
 
 
     events: events,
@@ -38,5 +39,8 @@ export const Template = {
 
     // Services read world data that was updated by systems 
     // They tell the scene what to add given world data info.
-    Services: [ BoatService ],
+    Services: [ 
+        BoatService, 
+        TerrainService,
+    ],
 };
