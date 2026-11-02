@@ -2,8 +2,11 @@ import WorldData from "./WorldData.js"
 
 import { LocalEventBus, NetworkEventBus } from './EventBus.js';
 import { createEventBuffers } from './EventBuffer.js';
-import { FIXED_DT } from './Constants.js'
 
+
+const FIXED_DT                   = 1/60
+const MILLISECONDS_TO_SECONDS    = 0.001
+const MAXIMUM_ALLOWED_FRAME_TIME = 0.25
 
 
 export class Engine {
@@ -69,9 +72,7 @@ export class Engine {
         for (const system of this.simulationSystems) {
             changes.push(...(system.start?.(lobbyData) ?? []));
         }
-        for (const system of this.networkSystems) {
-            changes.push(...(system.start?.(lobbyData) ?? []));
-        }
+
         for (const system of this.frameSystems) {
             changes.push(...(system.start?.(lobbyData) ?? []));
         }
@@ -91,14 +92,21 @@ export class Engine {
     }
 
 
-
-
-
     animationLoop = (time) => {
         // ============ Game update loop =============================
         //  world data manipulation
-        const frameTime = Math.min((time - this.previousTime) * 0.001, 0.25);
-        this.previousTime = time;
+        const timeInSeconds = time * MILLISECONDS_TO_SECONDS;
+
+        if (this.previousTime === null) {
+            this.previousTime = timeInSeconds;
+            return;
+        }
+        const frameTime = Math.min(
+            timeInSeconds - this.previousTime,
+            MAXIMUM_ALLOWED_FRAME_TIME
+        );
+
+        this.previousTime = timeInSeconds;
         this.accumulator += frameTime;
 
         // Simulation loop called 0, 1 or mulitple times per amimation frame request
@@ -111,10 +119,8 @@ export class Engine {
         this.presentation(frameTime, this.worldData);
         // ============================================================
 
-        
 
-        // ======== Graphics Context updates ==========================
-
+        // ======== Graphics Context updates ========================== 
         // Update scene / camera / audio and other three objects if using this Three libray
         for (const service of this.services) {
             service.update(this.worldData);
@@ -123,6 +129,7 @@ export class Engine {
         this.graphics.draw();
         // =============================================================
     };
+
 
 
     simulation(dt, worldData) {

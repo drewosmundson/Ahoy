@@ -11,7 +11,7 @@ export class CameraManager {
 
         // const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 
-        const aspect = 16 / 9;
+        const aspect = 1.7777777777777777; // (16 / 9)
         
         this.threeCamera = new THREE.PerspectiveCamera( 75, aspect, 0.1, 1000 );
 

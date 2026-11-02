@@ -3,6 +3,7 @@ import { events } from "./EventRegistry.js"
 import { Position } from './Components/Position.js';
 import { Velocity } from './Components/Velocity.js';
 import { Controlled } from './Components/Controlled.js';
+import { CameraState } from "./Components/CameraState.js"
 
 import { KeypressInterface } from './Interfaces/Keypress.js'
 
@@ -22,7 +23,14 @@ export const Template = {
 
     // === ECS ================
     // WorldData component names
-    Components: { Position, Velocity, Controlled, Heightmap},
+    Components: {
+        Position,
+        Velocity,
+        Controlled,
+        Heightmap,
+        CameraState,
+    },
+
 
 
     events: events,

@@ -1,5 +1,7 @@
 // Systems/CubeMoveSystem.js
 export class CubeMoveSystem {
+
+
     update(dt, worldData, events) {
         const changes = [];
 

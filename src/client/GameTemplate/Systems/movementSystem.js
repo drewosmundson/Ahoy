@@ -3,7 +3,6 @@
 
 
 class movementSystem {
-
     update() {
         const changes = [];
         for (const [entity, vel] of worldData.getEntityKeysAndValues("Velocity")) {
@@ -23,34 +22,7 @@ class movementSystem {
                     },
                 },
             });
-            return changes;
-            
-    }
-
-} 
-
-// Systems/CubeMoveSystem.js
-export class CubeMoveSystem {
-    update(dt, worldData, events) {
-
-
-
-
-
-
-            changes.push({
-                type: "updateEntityComponents",
-                entity,
-                components: {
-                    Position: {
-                        ...pos,
-                        x: pos.x + vel.x * dt,
-                        y: pos.y + vel.y * dt,
-                        z: pos.z + vel.z * dt,
-                    },
-                },
-            });
         }
-
+        return changes;
     }
 }

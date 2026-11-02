@@ -11,11 +11,9 @@ export class GraphicsContext {
         this.sceneManager = new SceneManager();
         this.cameraManager = new CameraManager();
         this.audioManager = new AudioManager();
-
         this.renderManager = new RenderManager(canvas);
 
         window.addEventListener("resize", this.resize);
-
     }
 
     resize = () => {
@@ -23,11 +21,11 @@ export class GraphicsContext {
         const windowHeight = window.innerHeight;
 
         let width = windowWidth;
-        let height = width * 9 / 16;
+        let height = width * 0.5625; // (9 / 16)
 
         if (height > windowHeight) {
             height = windowHeight;
-            width = height * 16 / 9;
+            width = height * 1.7777777777777777; // (16 / 9)
         }
 
         this.cameraManager.resize(width, height);

@@ -6,6 +6,14 @@ export class SingleplayerInit {
                 Heightmap: components.Heightmap.create({}),
             },
             {
+                CameraState: components.CameraState.create({
+                    targetEntity: 1,
+                    distance: 10,
+                    yaw: 0,
+                    pitch: 0,
+                }),
+            },
+            {
                 Position: components.Position.create({}),
                 Velocity: components.Velocity.create({ x: 2 }),
                 Controlled: components.Controlled.create({ speed: 5 }),

@@ -22,7 +22,7 @@ import { Engine } from "./Engine/Engine.js";
 
 // Playable Games 
 import { games } from "./gamesIndex.js"
-import { GraphicsContext } from "./Graphics/GraphicsContext.js";
+import { GraphicsContext } from "./Rendering/GraphicsContext.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
