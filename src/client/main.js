@@ -25,21 +25,17 @@ import { games } from "./gamesIndex.js"
 import { GraphicsContext } from "./Rendering/GraphicsContext.js";
 
 document.addEventListener('DOMContentLoaded', () => {
-    const socket = io();
-    
-    const dom = createDom();
+    const socket   = io();
+    const dom      = createDom();
     const navigate = createNavigation(dom);
-    const ui = createUi(dom);
+    const ui       = createUi(dom);
     const subscriptionRegister = createSubscriptionRegister()
-  
-    // This creates a shared context and passes it to each feature
-    // to create their instances, then initializes each feature's event listeners.
+    // This creates a shared context for each feature
     const context = {
         dom,
         navigate,
         ui,
         subscriptionRegister,
-
         GraphicsContext,
         Engine,
         games,
@@ -65,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .forEach(feature => { 
             feature.initEventListeners();
             // feature.otherFunction(); 
-        });
+    });
 });
 
 
