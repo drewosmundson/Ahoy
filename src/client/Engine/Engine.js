@@ -24,9 +24,9 @@ export class Engine {
         
         // ============ Interfaces =================================
         //  keyboard, mouse, network, touch, gamepad, browser etc.
-        this.simulationInterfaces  = Game.SimulationInterfaces.map(Interface => new Interface(simulationLocalBus));
-        this.networkInterfaces     = Game.NetworkInterfaces.map(Interface => new Interface(simulationNetworkBus));
-        this.frameInterfaces       = Game.FrameInterfaces.map(Interface => new Interface(frameLocalBus));
+        this.simulationInterfaces = Game.SimulationInterfaces.map(Interface => new Interface(simulationLocalBus, canvas));
+        this.networkInterfaces    = Game.NetworkInterfaces.map(Interface => new Interface(simulationNetworkBus, canvas));
+        this.frameInterfaces      = Game.FrameInterfaces.map(Interface => new Interface(frameLocalBus, canvas));
         // ==========================================================
 
         // ============ Event Buffers ==============================

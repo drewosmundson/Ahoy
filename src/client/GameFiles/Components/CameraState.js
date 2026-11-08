@@ -2,7 +2,7 @@
 
 
 export class CameraState {
-    create(initalData) {
+    static create(initalData) {
         return {
             targetEntity: initalData.targetEntity ?? 0,
             followDistance: initalData.followDistance ?? 0,

@@ -24,11 +24,6 @@ export class KeypressInterface {
         ["keyup", "mouseup"].forEach(type => {
             document.addEventListener(type, upActionHandler);
         });
-
-        document.addEventListener("mousemove", (event) => {
-            // One object: EventBuffer only stores the first argument
-            eventBus.emit("mouseMoved", { dx: event.movementX, dy: event.movementY });
-        });
     }
 
     handleActionEvent(event) {

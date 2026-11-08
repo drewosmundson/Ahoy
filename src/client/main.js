@@ -21,8 +21,14 @@ import { mmo } from "./Features/mmo.js"
 import { Engine } from "./Engine/Engine.js";
 
 // Playable Games 
-import { games } from "./gamesIndex.js"
 import { GraphicsContext } from "./Rendering/GraphicsContext.js";
+
+import { Template } from "./GameFiles/Template.js"
+
+const games  = {
+    Template
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
     const socket   = io();

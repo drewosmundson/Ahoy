@@ -9,7 +9,6 @@ export class RotatingCubeService {
     }
 
     update(worldData) {
-        console.log("update")
         for (const [entity, pos] of worldData.getEntityKeysAndValues("Position")) {
             let mesh = this.meshes.get(entity);
             if (!mesh) {
@@ -60,6 +59,7 @@ export class BoatService {
 
             // Update boat position
             boat.position.set(pos.x, pos.y, pos.z);
+            boat.rotation.y = pos.yaw;
         }
 
         // Remove boats for destroyed entities
