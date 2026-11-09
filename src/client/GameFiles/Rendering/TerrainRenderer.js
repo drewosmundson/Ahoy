@@ -1,12 +1,7 @@
 
 
 
-
-
-
 import * as THREE from 'three';
-
-
 
 
 export class TerrainService {
@@ -17,7 +12,8 @@ export class TerrainService {
     }
 
     start(worldData) {
-        const entity = worldData.getEntityKeys("Heightmap").next().value;
+
+        const entity = worldData.getComponent("Heightmap").next().value;
 
         if (entity === undefined) {
             console.error("No entity with Heightmap component found");
@@ -31,9 +27,6 @@ export class TerrainService {
         }
 
         this.mapSize = this.heightmap.length;
-
-        console.log("Terrain map size:", this.mapSize);
-        console.log("First height value:", this.heightmap[0][0]);
 
         this.mesh = this.createTerrainMesh();
         this.scene.add(this.mesh);

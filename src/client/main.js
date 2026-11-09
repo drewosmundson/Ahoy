@@ -21,7 +21,7 @@ import { mmo } from "./Features/mmo.js"
 import { Engine } from "./Engine/Engine.js";
 
 // Playable Games 
-import { GraphicsContext } from "./Rendering/GraphicsContext.js";
+import { GraphicsContext } from "./Graphics/GraphicsContext.js";
 
 import { Template } from "./GameFiles/Template.js"
 

@@ -1,7 +1,5 @@
 const HEIGHT = 5;
 // top of the file
-let lastLog = 0;
-
 
 export class CameraService {
     constructor(graphics) { this.graphics = graphics; }
@@ -20,16 +18,7 @@ export class CameraService {
                 t.z + Math.cos(cam.yaw) * cp * d,
             );
             camera.lookAt(t.x, t.y, t.z);
-            const now = performance.now();
-            if (now - lastLog > 500) {
-                lastLog = now;
-                console.log(
-                    "yaw", cam.yaw.toFixed(3),
-                    "| camera x,z", camera.position.x.toFixed(1), camera.position.z.toFixed(1),
-                    "| target x,z", t.x.toFixed(1), t.z.toFixed(1),
-                    "| locked", document.pointerLockElement !== null
-                );
-            }
+                                                      
             return;
         }
     }

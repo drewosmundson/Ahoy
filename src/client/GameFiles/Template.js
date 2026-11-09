@@ -3,6 +3,9 @@ import { Position } from './Components/Position.js';
 import { Velocity } from './Components/Velocity.js';
 import { Controlled } from './Components/Controlled.js';
 import { CameraState } from "./Components/CameraState.js"
+import { Heightmap } from "./Components/Heightmap.js";
+
+
 
 import { KeypressInterface } from './Interfaces/Keypress.js'
 import { MouseInterface } from './Interfaces/Mouse.js';
@@ -14,10 +17,9 @@ import { SingleplayerInit } from "./Systems/SingleplayerInit.js";
 import { CameraSystem } from './Systems/CameraSystem.js';
 
 
-import { BoatService } from './Services/RotatingCubeService.js';
-import { TerrainService } from "./Services/Terrain.js";
-import { Heightmap } from "./Components/Heightmap.js";
-import { CameraService } from './Services/CameraService.js';
+import { BoatService } from './Rendering/RotatingCubeService.js';
+import { TerrainService } from "./Rendering/Terrain.js";
+import { CameraService } from './Rendering/CameraService.js';
 
 // EventRegistery.js
 const EVENTS = Object.freeze({
@@ -65,3 +67,31 @@ export const Template = {
         CameraService,
     ],
 };
+
+
+
+
+
+
+
+
+
+
+
+// Systems: {
+//     simulation: {
+//         local: [
+//             SingleplayerInit,
+//             PlayerInputSystem,
+//             CubeMoveSystem,
+//         ],
+
+//         network: [],
+//     },
+
+//     presentation: {
+//         frame: [
+//             CameraSystem,
+//         ],
+//     },
+// },

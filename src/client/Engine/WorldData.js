@@ -14,6 +14,14 @@
     // case 'destroyEntity'
 
 
+
+// getEntitiesWithComponent(name)
+// getEntitiesWithComponentData(name)
+// getComponent(entity, name)
+// hasComponent(entity, name)
+
+
+
 export class WorldData {
     #components = new Map();
     #nextEntityId = 0;
@@ -68,37 +76,58 @@ export class WorldData {
     }
 
 
-    // Returns an iterator over all entity IDs that have this component.
-    getEntityKeys(name) {
+    /**
+     * Returns an iterator of entity IDs that contain the specified component.
+     *
+     * @param {string} name - Registered component name.
+     * @returns {MapIterator<number>}  Iterator of entity IDs.
+     */
+    getEntitiesWithComponent(name) {
         return this.#storage(name).keys();
     }
 
-
-    // Returns an iterator over [entity ID, component value] pairs for this component.
-    getEntityKeysAndValues(name) {
+    /**
+     * Returns an iterator of [entity ID, component value] entries for all
+     * entities containing the specified component.
+     *
+     * @param {string} name - Registered component name.
+     * @returns {MapIterator<[number, any]>} Iterator of entity-component entries.
+     */
+    getEntitiesWithComponentData(name) {
         return this.#storage(name).entries();
     }
 
-    // Returns the value of the specified component for an entity.
-    // Returns undefined if the entity does not have the component.
-    // world.get(42, "Position");
-    // { x: 10, y: 20 }
-
-    // world.get(42, "Health");
-    // 100
-
-    // world.get(42, "Velocity"); (if does not have component)
-    // undefined
-    get(entity, name) {
+    /**
+     * Returns the value of a specific component belonging to an entity.
+     *
+     * Returns undefined if the entity does not have the specified component.
+     * Throws an error if the component is not registered.
+     *
+     * @param {number} entity - Entity ID.
+     * @param {string} name - Registered component name.
+     * @returns {*} Component value, or undefined if the entity does not have it.
+     *
+     * @example
+     * world.get(42, 'Position'); // { x: 10, y: 20 }
+     * world.get(42, 'Health');   // 100
+     * world.get(42, 'Velqspoocity'); // undefined
+     */
+    getComponent(entity, name) {
         return this.#storage(name).get(entity);
     }
 
-
-    // Returns whether the entity has the specified component.
+    /**
+     * Checks whether an entity contains the specified component.
+     *
+     * Throws an error if the component is not registered.
+     *
+     * @param {number} entity - Entity ID.
+     * @param {string} name - Registered component name.
+     * @returns {boolean} True if the entity has the component; otherwise false.
+     */
     hasComponent(entity, name) {
         return this.#storage(name).has(entity);
     }
-
 
 
     
@@ -154,3 +183,67 @@ export class WorldData {
 
 
 export default WorldData;
+
+
+
+
+
+
+
+/**
+ * WorldData manages entity-component storage.
+ *
+ * Usage:
+ *
+ * const world = new WorldData({
+ *     Position: {},
+ *     Health: {},
+ *     Velocity: {},
+ * });
+ *
+ * // Initialize entities
+ * world.start([
+ *     {
+ *         Position: { x: 10, y: 20 },
+ *         Health: 100,
+ *     },
+ * ]);
+ *
+ * // Query components
+ * world.get(0, 'Position');       // { x: 10, y: 20 }
+ * world.hasComponent(0, 'Health'); // true
+ * 
+ * // Iterate over entities with a component
+ * for (const [entity, position] of world.getEntityKeysAndValues('Position')) {
+ *     console.log(entity, position);
+ * }
+ * 
+ * // Apply changes
+ * world.apply([
+ *     {
+ *         type: 'addComponentToEntity',
+ *         entity: 0,
+ *         name: 'Velocity',
+ *         value: { x: 1, y: 0 },
+ *     },
+ *     {
+ *         type: 'updateEntityComponents',
+ *         entity: 0,
+ *         components: { Health: 90 },
+ *     },
+ *     {
+ *         type: 'removeComponentFromEntity',
+ *         entity: 0,
+ *         name: 'Velocity',
+ *     },
+ *     {
+ *         type: 'newEntity',
+ *         components: { Health: 100 },
+ *     },
+ *     {
+ *         type: 'destroyEntity',
+ *         entity: 0,
+ *     },
+ * ]);
+ *
+ */

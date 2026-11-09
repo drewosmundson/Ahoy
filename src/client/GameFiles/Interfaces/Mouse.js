@@ -1,6 +1,5 @@
 export class MouseInterface {
     constructor(eventBus, canvas) {
-        console.log("MOUSE INTERFACE v3 loaded");
         const isLocked = () => document.pointerLockElement === canvas;
 
         canvas.addEventListener("click", () => {

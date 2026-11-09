@@ -4,9 +4,14 @@
 
 
 export class Controlled {
-    static create({ speed } = {}) {
+    static create(controlledBy) {
+
+        if (!controlledBy) {
+
+        }
+
         return {
-            speed: speed ?? 5,
+            ControlledBy: controlledBy
         };
     }
 }
