@@ -6,7 +6,6 @@ import { CameraState } from "./Components/CameraState.js"
 import { Heightmap } from "./Components/Heightmap.js";
 
 
-
 import { KeypressInterface } from './Interfaces/Keypress.js'
 import { MouseInterface } from './Interfaces/Mouse.js';
 
@@ -21,20 +20,6 @@ import { BoatService } from './Rendering/RotatingCubeService.js';
 import { TerrainService } from "./Rendering/Terrain.js";
 import { CameraService } from './Rendering/CameraService.js';
 
-// EventRegistery.js
-const EVENTS = Object.freeze({
-    KEY_DOWN:     "keyDown",
-    KEY_UP:       "keyUp",
-    
-    MOUSE_MOVE:   "mouseMoved",
-
-    MOUSE_WHEEL:  "wheel",
-    CAMERA_DRAG_START: "cameraDragStart", 
-    CAMERA_DRAG_END: "cameraDragEnd",
-
-});
-
-const events = Object.values(EVENTS);
 
 export const Template = {
     // === ECS ================
@@ -47,7 +32,12 @@ export const Template = {
         CameraState,
     },
 
-    events: events,
+    Events: {
+        "keyDown",
+         "keyUp",
+        "mouseMoved",
+         "mouseWheel",
+    } 
 
     SimulationInterfaces: [KeypressInterface],
     NetworkInterfaces: [],
@@ -60,11 +50,19 @@ export const Template = {
 
 
     // Services read world data that was updated by systems 
-    // They tell the scene what to add given world data info.
+    // They tell the scene, audio, and camera what to add given world data info.
     Services: [ 
+        // Scene
         BoatService, 
+        ProjectileService,
         TerrainService,
+        
+        // Camera
         CameraService,
+        
+        // Audio 
+        MusicService,
+        SoundEffectService
     ],
 };
 
