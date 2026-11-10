@@ -4,6 +4,7 @@ export class SingleplayerInit {
         this.entities = [
             { 
                 Heightmap: components.Heightmap.create({}),
+                Water: components.Water.create()
             },
             {
                 CameraState: components.CameraState.create({
