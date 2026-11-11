@@ -8,7 +8,6 @@ const FIXED_DT                   = 1/60
 const MILLISECONDS_TO_SECONDS    = 0.001
 const MAXIMUM_ALLOWED_FRAME_TIME = 0.25
 
-
 export class Engine {
     setup(Game, canvas, GraphicsContext, socket = null) {
 

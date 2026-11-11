@@ -12,15 +12,14 @@ export class TerrainService {
     }
 
     start(worldData) {
-
-        const entity = worldData.getComponent("Heightmap").next().value;
+        const entity = worldData.getFirstEntityWithComponent("Heightmap");
 
         if (entity === undefined) {
             console.error("No entity with Heightmap component found");
             return;
         }
 
-        this.heightmap = worldData.get(entity, "Heightmap");
+        this.heightmap = worldData.getComponent(entity, "Heightmap");
 
         if (!Array.isArray(this.heightmap) || this.heightmap.length < 2) {
             throw new Error("Invalid heightmap component");

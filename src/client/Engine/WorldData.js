@@ -75,7 +75,17 @@ export class WorldData {
         }
     }
 
-
+    /**
+     * Returns the first entity ID containing the specified component.
+     *
+     * Returns undefined if no entity contains the component.
+     *
+     * @param {string} name - Registered component name.
+     * @returns {number | undefined} Entity ID, or undefined if none exists.
+     */
+    getFirstEntityWithComponent(name) {
+        return this.#storage(name).keys().next().value;
+    }
     /**
      * Returns an iterator of entity IDs that contain the specified component.
      *
