@@ -10,7 +10,6 @@ export class GraphicsContext {
     constructor(canvas) {
         this.sceneManager = new SceneManager(canvas);
         this.cameraManager = new CameraManager(canvas);
-        this.audioManager = new AudioManager(canvas);
         this.renderManager = new RenderManager(canvas);
 
         window.addEventListener("resize", this.resize);
