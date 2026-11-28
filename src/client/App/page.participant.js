@@ -9,10 +9,13 @@ export function participant({ dom, navigate, emit, game }) {
   function initEventListeners(){ 
     dom.buttons.mainToParticipant?.addEventListener('click', () => toScreen);
     dom.buttons.participantStart?.addEventListener('click', () => start);
+
   }
 
   function toMenuScreen() {
     navigate.toScreen(dom.screens.participant);
+    
+    
   }
 
   function start(){

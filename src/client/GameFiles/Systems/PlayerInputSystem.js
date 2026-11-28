@@ -23,8 +23,8 @@ export class PlayerInputSystem {
         const turn   = (this.held.has("moveLeft")    ? 1 : 0) - (this.held.has("moveRight")    ? 1 : 0);
 
         const changes = [];
-        for (const [entity, { speed }] of worldData.getEntityKeysAndValues("Controlled")) {
-            const pos = worldData.get(entity, "Position");
+        for (const [entity, { speed }] of worldData.getEntitiesWithComponentData("Controlled")) {
+            const pos = worldData.getComponent(entity, "Position");
             if (!pos) continue;
 
             const s = thrust * speed;

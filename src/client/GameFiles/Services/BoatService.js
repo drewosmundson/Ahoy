@@ -10,7 +10,7 @@ export class BoatRenderer {
 
     update(worldData) {
         for (const [entity] of worldData.getEntity("Boat")) {
-            for (const [entity, pos] of worldData.getEntityKeysAndValues("Position")) {
+            for (const [entity, pos] of worldData.getEntitiesWithComponentData("Position")) {
                 let mesh = this.meshes.get(entity);
                 if (!mesh) {
                     mesh = new THREE.Mesh(this.geometry, this.material);
@@ -48,7 +48,7 @@ export class BoatService {
 
     update(worldData) {
         // Create or update boats for entities with Position
-        for (const [entity, pos] of worldData.getEntityKeysAndValues("Position")) {
+        for (const [entity, pos] of worldData.getEntitiesWithComponentData("Position")) {
             let boat = this.meshes.get(entity);
 
             if (!boat) {

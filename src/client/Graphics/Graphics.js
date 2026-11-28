@@ -1,10 +1,9 @@
 
 
 
-import { SceneManager } from "./SceneManager.js";
-import { CameraManager } from "./CameraManager.js";
-import { AudioManager } from "./AudioManager.js"
-import { RenderManager } from "./RenderManager.js";
+import { SceneManager } from "./ThreeScene.js";
+import { CameraManager } from "./ThreeCamera.js";
+import { RenderManager } from "./ThreeRenderer.js";
 
 export class GraphicsContext {
     constructor(canvas) {
@@ -27,16 +26,19 @@ export class GraphicsContext {
             width = height * 1.7777777777777777; // (16 / 9)
         }
 
+
         this.cameraManager.resize(width, height);
         this.renderManager.resize(width, height);
+        
     };
+
 
 
     get scene() {
         return this.sceneManager.get();
     }
 
-
+ 
     get camera() {
         return this.cameraManager.get();
     }

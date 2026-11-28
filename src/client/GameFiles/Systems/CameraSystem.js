@@ -20,7 +20,7 @@ export class CameraSystem {
         if (dYaw === 0 && dPitch === 0 && dZoom === 0) return [];
 
         const changes = [];
-        for (const [entity, cam] of worldData.getEntityKeysAndValues("CameraState")) {
+        for (const [entity, cam] of worldData.getEntitiesWithComponentData("CameraState")) {
             changes.push({
                 type: "updateEntityComponents",
                 entity,

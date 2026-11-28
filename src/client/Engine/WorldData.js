@@ -2,23 +2,20 @@
 
 
 // to modify world data
-
     // case 'newEntity'
-
     // case 'addComponentToEntity':
-
     // case 'removeComponentFromEntity'
-
     // case 'updateEntityComponents'
-
     // case 'destroyEntity'
 
 
 
-// getEntitiesWithComponent(name)
-// getEntitiesWithComponentData(name)
-// getComponent(entity, name)
-// hasComponent(entity, name)
+// to retrive component data
+    // getFirstEntityWithComponent(name)
+    // getEntitiesWithComponent(name)
+    // getEntitiesWithComponentData(name)
+    // getComponent(entity, name)
+    // hasComponent(entity, name)
 
 
 
@@ -116,11 +113,11 @@ export class WorldData {
      * @param {number} entity - Entity ID.
      * @param {string} name - Registered component name.
      * @returns {*} Component value, or undefined if the entity does not have it.
-     *
+     * 
      * @example
-     * world.get(42, 'Position'); // { x: 10, y: 20 }
-     * world.get(42, 'Health');   // 100
-     * world.get(42, 'Velqspoocity'); // undefined
+     * world.getComponent(42, 'Position'); // { x: 10, y: 20 }
+     * world.getComponent(42, 'Health');   // 100
+     * world.getComponent(42, 'Velqspoocity'); // undefined
      */
     getComponent(entity, name) {
         return this.#storage(name).get(entity);
@@ -224,7 +221,7 @@ export default WorldData;
  * world.hasComponent(0, 'Health'); // true
  * 
  * // Iterate over entities with a component
- * for (const [entity, position] of world.getEntityKeysAndValues('Position')) {
+ * for (const [entity, position] of world.getEntitiesWithComponentData('Position')) {
  *     console.log(entity, position);
  * }
  * 

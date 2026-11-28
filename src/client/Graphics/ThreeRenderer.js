@@ -24,9 +24,12 @@ export class RenderManager {
 
     setAnimationLoop(loop) {
         this.threeRenderer.setAnimationLoop(loop);
+
+
     }
 
     draw(scene, camera) {
+        
         this.threeRenderer.render(scene, camera);
     }
 

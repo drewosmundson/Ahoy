@@ -1,0 +1,34 @@
+# Query: getEntityKeysAndValues
+# ContextLines: 1
+
+6 results - 6 files
+
+Games/Ahoy/src/client/Engine/WorldData.js:
+  226   * // Iterate over entities with a component
+  227:  * for (const [entity, position] of world.getEntitiesWithComponentData('Position')) {
+  228   *     console.log(entity, position);
+
+Games/Ahoy/src/client/GameFiles/Services/BoatService.js:
+  50          // Create or update boats for entities with Position
+  51:         for (const [entity, pos] of worldData.getEntitiesWithComponentData("Position")) {
+  52              let boat = this.meshes.get(entity);
+
+Games/Ahoy/src/client/GameFiles/Services/CameraService.js:
+  7      update(worldData) {
+  8:         for (const [, cam] of worldData.getEntitiesWithComponentData("CameraState")) {
+  9              if (!worldData.hasComponent(cam.targetEntity, "Position")) return;
+
+Games/Ahoy/src/client/GameFiles/Systems/CameraSystem.js:
+  22          const changes = [];
+  23:         for (const [entity, cam] of worldData.getEntitiesWithComponentData("CameraState")) {
+  24              changes.push({
+
+Games/Ahoy/src/client/GameFiles/Systems/MovementSystem.js:
+  6  
+  7:         for (const [entity, vel] of worldData.getEntitiesWithComponentData("Velocity")) {
+  8              if (!worldData.hasComponent(entity, "Position")) continue;
+
+Games/Ahoy/src/client/GameFiles/Systems/PlayerInputSystem.js:
+  25          const changes = [];
+  26:         for (const [entity, { speed }] of worldData.getEntitiesWithComponentData("Controlled")) {
+  27              const pos = worldData.get(entity, "Position");

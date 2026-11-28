@@ -5,9 +5,9 @@ export class CameraService {
     constructor(graphics) { this.graphics = graphics; }
 
     update(worldData) {
-        for (const [, cam] of worldData.getEntityKeysAndValues("CameraState")) {
+        for (const [, cam] of worldData.getEntitiesWithComponentData("CameraState")) {
             if (!worldData.hasComponent(cam.targetEntity, "Position")) return;
-            const t  = worldData.get(cam.targetEntity, "Position");
+            const t  = worldData.getComponent(cam.targetEntity, "Position");
             const d  = cam.followDistance;
             const cp = Math.cos(cam.pitch);
 

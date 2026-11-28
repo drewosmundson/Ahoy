@@ -12,10 +12,12 @@ export function host({ dom, navigate, subscriptions, Engine }) {
         dom.buttons.host?.addEventListener('click', toMenuScreen);
         dom.buttons.hostStart?.addEventListener('click', start);
         dom.buttons.hostStart?.addEventListener('click', startHosting);
+        
     }
 
     function toMenuScreen() {
         navigate.toScreen(dom.screens.host);
+
     }
     function startHosting() {
         subscriptions.add('player-joined', handlePlayerJoined);

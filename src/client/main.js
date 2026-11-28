@@ -6,22 +6,22 @@
 // start socket layer
 
 // Dependancy singleton factories
-import { createNavigation } from "./App/navigation.js";
-import { createDom } from "./App/dom.js";
-import { createUi } from "./App/ui.js"
-import { createSubscriptionRegister } from "./App/subscriptions.js";
+import { createNavigation } from "./App/utils.navigation.js";
+import { createDom } from "./App/utils.dom.js";
+import { createUi } from "./App/utils.ui.js"
+import { createSubscriptionRegister } from "./App/utils.subscriptions.js";
 
 // Page/feature module archetecture. 
-import { singleplayer } from "./Features/singleplayer.js"
-import { host } from "./Features/host.js"
-import { participant } from "./Features/participant.js";
-import { mmo } from "./Features/mmo.js"
+import { singleplayer } from "./App/page.singleplayer.js"
+import { host } from "./App/page.host.js"
+import { participant } from "./App/page.participant.js";
+import { mmo } from "./App/page.mmo.js"
 
 // Game Engine
 import { Engine } from "./Engine/Engine.js";
 
 // Playable Games 
-import { GraphicsContext } from "./Graphics/GraphicsContext.js";
+import { GraphicsContext } from "./Graphics/Graphics.js";
 
 import { Template } from "./GameFiles/Template.js"
 

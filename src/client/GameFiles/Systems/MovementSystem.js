@@ -4,11 +4,11 @@ export class MovementSystem {
     update(dt, worldData, events) {
         const changes = [];
 
-        for (const [entity, vel] of worldData.getEntityKeysAndValues("Velocity")) {
+        for (const [entity, vel] of worldData.getEntitiesWithComponentData("Velocity")) {
             if (!worldData.hasComponent(entity, "Position")) continue;
             if (vel.x === 0 && vel.y === 0 && vel.z === 0 && !vel.yawRate) continue;
 
-            const pos = worldData.get(entity, "Position");
+            const pos = worldData.getComponent(entity, "Position");
 
             changes.push({
                 type: "updateEntityComponents",
